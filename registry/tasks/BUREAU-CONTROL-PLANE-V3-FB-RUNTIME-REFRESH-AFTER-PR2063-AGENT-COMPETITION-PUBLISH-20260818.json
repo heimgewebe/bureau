@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-AGENT-COMPETITION-PUBLISH-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2063 für Agent-Competition-Publikation",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 3ea976fb891e6e5413b0f467bc51499a86c46442 liegt hinter dem nach PR #2063 beobachteten main 4be7f02924ff16d8002e869b3806f71142f7395a. Zweck ist ausschließlich, den Runtime-/Registry-Drift zu beseitigen, damit der bereits quellgebundene und reviewte Follow-up GRABOWSKI-OPERATOR-SURFACE-V1-FU-AGENT-COMPETITION-BUREAU-LEASE-PURITY-20260817 über den normalen revisionsgebundenen Bureau-Publikations- und Claim-Pfad fortgeführt werden kann. Diese Authority verändert weder den Follow-up noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

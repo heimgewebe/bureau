@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
-  "state": "ready",
+  "state": "cancelled",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",

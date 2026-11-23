@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2146-WELTGEWEBE-T048-CLOSEOUT-20260822",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2146 für Weltgewebe T048 Closeout",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen neuen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss PR #2138 mit dem Scheduler-Konvergenzvertrag, PR #2146 mit der getrennten Controller-Fähigkeit operator-approval, diese neue Authority-TaskSpec und alle legitimen Zwischenmerges enthalten. Zweck ist ausschließlich, den vorhandenen Run BUR-RUN-20260819T091805Z-f3350c4ca3 wieder über den kanonischen Same-Run-Recovery- und typed-Acceptance-Closeout-Pfad für WELTGEWEBE-OS-V1-T048 arbeitsfähig zu machen. Der vorherige PR2145-gebundene Refresh-Versuch auf target 853dc94917fadb9030fbd263cbd761d1bbdfba117b2e2940037f5ffc161a4caf begann einen Effekt, scheiterte mit scheduler-convergence-rolled-back, stellte den exakten Vorzustand wieder her und endete status=unclear mit safe_to_retry=false; weder seine Authority noch sein Target oder Intent dürfen wiederverwendet werden. Diese Authority implementiert oder verifiziert T048 nicht selbst, erzeugt keinen neuen T048-Lauf, verändert Weltgewebe nicht, verändert keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

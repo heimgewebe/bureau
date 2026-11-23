@@ -105,6 +105,6 @@
     "browser"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Add source-bound aggregate-only public region context"
 }

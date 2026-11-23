@@ -4,7 +4,7 @@
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "title": "Queue-Entfernung und Task-Terminalisierung atomar binden",
   "goal": "Verhindere, dass Bureau-Reparaturen einen Task wegen effektiver Terminalität aus aktiven Queue-Lanes entfernen, während sein kanonisches Task-Dokument nonterminal bleibt. Führe einen engen fail-closed Vertrag ein: Entweder terminalisiert dieselbe geprüfte Registry-Transaktion den Task mit gültigem task_sha256, plan_sha256 und Abschlussbeleg, oder sie hinterlegt einen expliziten strukturierten Nonterminal-Ausschluss, der in Doctor und Frontier sichtbar ist. Ergänze Regressionstests für das bei RPU-V1-T035 beobachtete Split-Closeout.",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 26

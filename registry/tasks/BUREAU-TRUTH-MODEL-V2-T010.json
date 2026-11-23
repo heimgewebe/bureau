@@ -36,7 +36,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T010",
   "title": "Revalidate stale Live Register candidates",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Compare old candidate observations with current Registry, PR and runtime evidence so resolved work does not remain operationally open forever.",
   "priority": {
     "lane": "later",

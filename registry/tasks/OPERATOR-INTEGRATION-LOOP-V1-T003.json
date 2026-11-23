@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T003",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Wire a minimal operator event outbox",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 390

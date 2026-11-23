@@ -104,6 +104,6 @@
     "strategy": "If a bounded-retention or external-artifact design weakens exact release readback, rollback integrity, GitHub Pages compatibility or T040 conflict resistance, revert the lifecycle changes together and retain append-only history while a safer design is developed."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Bound immutable release-history growth safely"
 }

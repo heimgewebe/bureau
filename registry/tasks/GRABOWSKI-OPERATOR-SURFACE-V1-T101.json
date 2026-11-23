@@ -224,6 +224,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Direkte Operator-Leasen serverauthentifiziert an Captain delegieren"
 }

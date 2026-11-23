@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T069",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Native sichere Auditrotation vor dem Append-Hardlimit bereitstellen",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Grabowski soll sein Auditlog vor Erreichen des 16-MiB-Append-Hardlimits über eine typisierte, atomare und recovery-fähige Operatoroberfläche selbst sicher rotieren können, ohne manuelle direkte Dateimanipulation oder stillschweigende Unterbrechung der Hashkette.",
   "priority": {
     "lane": "next",

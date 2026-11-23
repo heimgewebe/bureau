@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T001",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Expose the canonical operator entry as a typed Grabowski surface",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Let a fresh ChatGPT operator read the canonical heim-pc operator entry, its content hash and resolved local locators through one typed read-only Grabowski call, then select the correct primary truth source without relying on conversation memory or broad filesystem discovery.",
   "priority": {
     "lane": "next",

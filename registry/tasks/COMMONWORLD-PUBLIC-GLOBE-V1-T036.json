@@ -194,6 +194,6 @@
     "strategy": "Promote locales through separable commits and releases. Revert a failed locale promotion with its generated pages, registry status, runtime labels, catalogue localization and tests together while preserving the verified registry architecture and previously released locales; regenerate and verify the restored exact release."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Generalize and release Commonworld interface locales in evidence-bound waves"
 }

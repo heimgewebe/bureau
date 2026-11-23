@@ -116,6 +116,6 @@
     "metarepo"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Repository-Verifikation aus PR #1721 auf Metarepo-Cutover übernehmen"
 }

@@ -96,6 +96,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Terminalen Pickup-Retry aus Journal idempotent wiederverwenden"
 }

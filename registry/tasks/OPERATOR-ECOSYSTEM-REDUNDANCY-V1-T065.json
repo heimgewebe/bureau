@@ -144,6 +144,6 @@
     "strategy": "Revertiere nur die Systemkatalog-Bindungsänderung und regeneriere den vorherigen Artefaktstand; lösche weder das historische Repository noch Bureau-Historie."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Aktuelle Audio-Produktwahrheit auf heimgewebe/audio binden"
 }

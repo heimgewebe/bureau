@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T049",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Bind obsolete lease reconciliation to monotonic lease generations",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Replace the conservative wall-clock ordering fallback with a canonical monotonic lease generation or receipt-embedded lease snapshot digest so terminal evidence binds the exact lease generation without weakening fail-closed exact overlap.",
   "priority": {
     "lane": "later",

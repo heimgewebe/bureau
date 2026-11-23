@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Nachfolger für Bureau-Runtime-Refresh registrieren",
   "goal": "Nach dem belegten Verbrauch der vorherigen Single-Use-Runtime-Refresh-Autorität genau eine neue, eigenständige und unverbrauchte Break-Glass-Autorität bereitstellen. Nach Merge dieser TaskSpec und autoritativem StateStore-Preflight darf genau ein kontrollierter Bureau-Runtime-Refresh auf den unmittelbar davor frisch beobachteten, reviewten und CI-grünen aktuellen main erfolgen. Ziel ist ausschließlich, den immutable Bureau-Release wieder mit der kanonischen Registry zu konvergieren, damit der stale Run BUR-RUN-20260812T074000Z-a9c26c239c über den bestehenden CAS-gebundenen Orphan-Reconcile-Pfad terminalisiert und anschließend der bereits registrierte Task GRABOWSKI-OPERATOR-SURFACE-V1-FU-PICKUP-EXPIRED-SAME-OWNER-LEASE-RECOVERY-20260812 regulär geclaimt werden kann.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

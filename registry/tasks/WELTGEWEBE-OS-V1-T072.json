@@ -119,6 +119,6 @@
     "strategy": "Die fokussierten Vorschau- oder Routingänderungen auf den letzten nachweislich funktionierenden Vorschauvertrag zurücksetzen. Bei unklarer Anbieterwirkung fail-closed bleiben und Produktion unverändert lassen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Öffentliche Exact-Head-Vorschau zuverlässig prüfbar machen"
 }

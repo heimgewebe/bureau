@@ -19,7 +19,7 @@
   ],
   "id": "GRIP-ROADMAP-V1-T010",
   "title": "Define real Captain execution authority contract",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Design and implement the explicit contract for any future real Captain execution path, including evaluation-vs-execution authority naming, cryptographic evidence binding, dispatcher or webhook boundaries, and separate review gates.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T005",

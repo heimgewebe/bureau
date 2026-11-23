@@ -125,6 +125,6 @@
     "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Truth behaupten. Letzten integritätsgültigen immutable Bureau-Release als Rückfallkante beibehalten bzw. den bestehenden Runtime-Refresh-Rollbackpfad verwenden; keine Registry-/StateStore-Historie zurückschreiben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Browser-Control-Resource-Bootstrap einmalig in Bureau-Runtime übernehmen"
 }

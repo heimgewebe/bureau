@@ -113,6 +113,6 @@
     "strategy": "Den optimierten Nachweispfad vollständig revertieren und auf die in PR #534 gemergte doppelte vollständige Tree-Prüfung zurückfallen. Keine Fallback-Option darf auf mtime-, Größen- oder ungebundene Cache-Wahrheit wechseln."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Registry-Binding ohne TOCTOU-Verlust beschleunigen"
 }

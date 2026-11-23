@@ -80,6 +80,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Perform one bounded Bureau maintenance repair"
 }

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AUDIO-T022-UNBLOCK-20260822",
   "title": "Single-Use Bureau-Runtime-Refresh für Audio T022 Claim-Unblock",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten und nach dem früheren unklaren T048-Refresh wieder als last-known-good belegten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss mindestens den bei Registrierung autoritativen Stand aa13d635402b2aa52711d8f435e9b3f1db147d00, diese neue Authority-TaskSpec und alle legitimen Zwischenmerges enthalten. Zweck ist ausschließlich, die release-registry-identity-mismatch-Sperre zu beseitigen, damit AUDIO-CONTROL-PLANE-V1-T022 anschließend über den normalen Bureau-Pickup-Pfad geclaimt werden kann. Diese Authority claimt, implementiert oder verifiziert T022 nicht selbst, erzeugt keine Audioeffekte, verändert keine Queue oder fremde Arbeit und wiederholt weder die frühere T048-Authority noch deren Target oder Intent.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T005",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Consolidate RepoGround documentation proof task and CI control planes",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 3

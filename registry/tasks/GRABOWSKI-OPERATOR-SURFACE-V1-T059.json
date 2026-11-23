@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T059",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Return structured exact-path denials from nonconflict assessment",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Restore the stable navigation contract of T046 by making grabowski_resource_nonconflict_assess return the intentional machine-readable exact-path denial instead of crashing its public wrapper while trying to read a nonexistent proof.",
   "priority": {
     "lane": "next",

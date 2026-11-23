@@ -109,6 +109,6 @@
     "strategy": "Bei Regression den revisionsgebundenen Implementierungsmerge normal revertieren; bis zur korrigierten Version stale Supply-Reports weiterhin fail-closed ablehnen und keine historischen Supply-Metriken als aktuelle Frontier-Wahrheit behandeln."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Supply-Reports revisionsgebunden an aktuelle Registry-Wahrheit binden"
 }

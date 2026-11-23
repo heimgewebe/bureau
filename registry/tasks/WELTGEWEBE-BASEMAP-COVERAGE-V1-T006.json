@@ -73,6 +73,6 @@
     "strategy": "Bei Wrapperabweichung keine Produktion mutieren; auf die letzte hashgebundene Toolchain zurückgehen und verbliebene eigene Hilfscontainer nach Identitätsprüfung entfernen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Gepinnten pnpm-Containerwrapper produktionsfest machen"
 }

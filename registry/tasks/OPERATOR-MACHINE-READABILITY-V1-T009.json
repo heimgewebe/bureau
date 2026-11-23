@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T009",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Generate optional heim-pc state only with source provenance",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Replace the former placeholder idea with an optional, provenance-bound host-state projection that is absent when no trustworthy scan exists and can never use null or zero values to simulate current machine knowledge.",
   "priority": {
     "lane": "next",

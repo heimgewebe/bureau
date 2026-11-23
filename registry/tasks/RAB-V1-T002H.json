@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002H",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Prepare and separately authorize a fresh pair after executable hardening",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "After T002G is merged and verified and provider availability is no longer known to be blocked, create entirely new requests, bindings, output paths and reviewed one-shot authorization for exactly one baseline and one treatment process.",
   "priority": {
     "lane": "later",

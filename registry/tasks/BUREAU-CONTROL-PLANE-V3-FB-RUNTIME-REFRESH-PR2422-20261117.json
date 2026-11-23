@@ -281,6 +281,6 @@
     "strategy": "Keep immutable previous release 0e98081848c7fede031c546533f99ee5ff1d5c7d and manifest 776b251febf3d69224dd565397bf81b383ba5efd8cedff057436c14534f86063 for rollback; reconcile unclear effects, preserve StateStore and foreign work."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Refresh immutable Bureau runtime after merged PR #2422"
 }

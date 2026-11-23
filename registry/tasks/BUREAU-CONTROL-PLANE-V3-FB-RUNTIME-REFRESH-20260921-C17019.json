@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-20260921-C17019",
   "title": "Single-use Bureau runtime refresh for current main (candidate 17019)",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Execute exactly one new target-bound Bureau runtime refresh from the currently installed, ancestry-proven source 85ddb3ec42698f80740866447c2572e929ec5746 to the freshly observed protected heimgewebe/bureau main. The immediate purpose is to restore Bureau runtime/Registry identity so normal reviewed task publication can resume, including promotion of the kindeswohlgefaehrdung repository-registration follow-up. This authority grants no queue, claim, dispatch, product-code, foreign-work or general repository authority.",
   "priority": {
     "lane": "now",

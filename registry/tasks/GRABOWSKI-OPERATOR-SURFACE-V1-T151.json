@@ -114,6 +114,6 @@
     "strategy": "Bei Schema-, Generator- oder Kompatibilitätsabweichung den PR nicht mergen, die gemeinsame Enum-Bindung zurücknehmen und den bisherigen Runtime-Validator unverändert belassen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Task-Start-Selectorvertrag im veröffentlichten Schema schließen"
 }

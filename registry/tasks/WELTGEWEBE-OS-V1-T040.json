@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "PostgreSQL-Pool-Multi-Instance-Budget und Lifecycle-Grenzen ergänzen",
   "goal": "Den nach der Deduplizierung von PERF-FIND-001 verbleibenden Prüfumfang ergänzend zu WELTGEWEBE-OS-V1-T030 absichern: zuerst den tatsächlich umgesetzten T030-Endzustand prüfen und nur noch fehlende Multi-Instance-Kapazitätsbudgetierung sowie explizite Acquire-/Idle-/Lifetime-Grenzen und deren Sättigungsverhalten umsetzen, ohne bereits erfüllte T030-Arbeit zu duplizieren.",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "next",
     "rank": 40

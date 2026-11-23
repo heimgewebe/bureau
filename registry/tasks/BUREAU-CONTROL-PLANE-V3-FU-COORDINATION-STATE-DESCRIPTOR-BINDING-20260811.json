@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Coordination-State-Effektgrenze descriptorgebunden schließen",
   "goal": "Die verbleibende Filesystem-TOCTOU-Grenze zwischen dem letzten canonical_coordination_state_binding-Recheck und StateStore-Open beziehungsweise -Erzeugung für mutierende Coordination-State-Pfade schließen oder auf Plattformen ohne gleichwertige Primitiven explizit fail-closed klassifizieren.",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "next",
     "rank": 56

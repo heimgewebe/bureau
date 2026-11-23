@@ -159,6 +159,6 @@
     "strategy": "Der aktuell integrity-valid installierte Bureau-Release bleibt bis zu einem eindeutigen neuen Install- und Readback-Receipt Deployment-Wahrheit. Bei unklarem Ergebnis wird nicht blind wiederholt; vorhandene Attempt-, Backup-, Manifest-, Registry-, Intent-, Authority- und Lease-Evidenz wird zuerst klassifiziert."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Single-Use Bureau-Runtime-Refresh zum T121-Unblock"
 }

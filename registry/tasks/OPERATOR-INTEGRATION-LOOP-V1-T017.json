@@ -148,6 +148,6 @@
     "strategy": "Revertiere ausschließlich die host-Ressourcennormalisierung und ihre Tests. Ohne die Änderung bleiben host-Schlüssel wie bisher fail-closed unclaimbar; vorhandene Repo-, Pfad-, Service-, Task-, Queue-, Audit- und Lease-Wahrheit wird weder umgeschrieben noch gelöscht."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Host-Ressourcen im koordinierten Bureau-Pickup leasbar machen"
 }

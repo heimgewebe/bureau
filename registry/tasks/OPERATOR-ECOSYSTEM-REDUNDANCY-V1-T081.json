@@ -124,6 +124,6 @@
     "strategy": "Bei Regression den Intake-/Binding-Fix auf den letzten geprüften Stand zurücksetzen. Bereits source-bound registrierte Tasks nicht löschen oder auf andere Identitäten umbiegen; betroffene Renovate-PRs bleiben bis zur erneuten eindeutigen Bindung fail-closed blockiert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Renovate-PRs kanonisch an Bureau-Tasks binden"
 }

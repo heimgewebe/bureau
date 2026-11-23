@@ -62,6 +62,6 @@
     "strategy": "Revert only the directory-sync hardening commit. The existing SOPS ciphertext, runtime materialization and dispatcher contract remain valid and independently recoverable."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Harden SOPS ntfy materialization crash durability"
 }

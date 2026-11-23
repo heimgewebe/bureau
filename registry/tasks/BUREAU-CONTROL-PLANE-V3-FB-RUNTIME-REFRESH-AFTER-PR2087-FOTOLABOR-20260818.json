@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2087-FOTOLABOR-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2087 für Fotolabor-Fortsetzung",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand fe41fe6e12569eb433542c47b8f2bdd84902789a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf cc9432032f4546fed8ed97455099ed9854995ed2 und enthält PR #2087. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, die durch Release-/Registry-Drift blockierte normale operator-native Proposal-, Review- und Publikationskette wieder freizuschalten. Diese Authority publiziert oder implementiert keine Fotolabor-Tasks, verändert weder Fotolabor noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

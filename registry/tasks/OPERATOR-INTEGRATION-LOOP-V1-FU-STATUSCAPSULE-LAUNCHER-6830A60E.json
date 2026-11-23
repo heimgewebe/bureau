@@ -100,6 +100,6 @@
     "runtime-observability"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Status-Capsule an immutable Bureau-Runtime binden"
 }

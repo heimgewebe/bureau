@@ -103,6 +103,6 @@
     "recovery"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "HA-Referenzbeweis mess- und wartungsfest härten"
 }

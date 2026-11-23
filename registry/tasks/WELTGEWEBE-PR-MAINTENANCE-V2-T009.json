@@ -121,6 +121,6 @@
     "product-map"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Kontrollierte Themen aus PR #1722 als Knoten-Farbwahrheit übernehmen"
 }

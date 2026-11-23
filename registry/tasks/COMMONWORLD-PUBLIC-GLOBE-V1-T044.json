@@ -104,6 +104,6 @@
     "strategy": "If physical Android verification exposes a regression, retain the failing evidence and revert only any new corrective change that worsens label visibility, accessibility or desktop motion; the deployed static-label workaround remains the safe baseline until a proven replacement exists."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Verify ring labels on physical Android after deploy"
 }

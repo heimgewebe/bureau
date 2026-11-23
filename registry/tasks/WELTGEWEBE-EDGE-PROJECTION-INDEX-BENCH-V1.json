@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-EDGE-PROJECTION-INDEX-BENCH-V1",
   "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
   "title": "Weltgewebe: Edge-Projektionen mit 500.000 Kanten profilieren und bedarfsgerecht indexieren",
-  "state": "inbox",
+  "state": "cancelled",
   "goal": "Die nach PR #1461 verbleibenden linearen Scans unter repräsentativer Höchstlast messen und nur bei belegter Budgetüberschreitung einen konsistenten Source-, Target- oder Ablaufindex einführen.",
   "priority": {
     "lane": "later",

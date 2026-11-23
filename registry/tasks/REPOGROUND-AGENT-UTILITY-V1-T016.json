@@ -119,6 +119,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Slice-Abschluss und Produkt-Outcome ohne zweite Taskwahrheit verbinden"
 }

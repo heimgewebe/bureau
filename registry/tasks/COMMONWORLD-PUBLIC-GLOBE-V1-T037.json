@@ -113,6 +113,6 @@
     "strategy": "Revert the locale-aware summary policy, validator and tests together, regenerate the previous release surface and verify the restored exact release; do not remove the project-specific summaries introduced by PR #173."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Make summary boilerplate validation locale-aware"
 }

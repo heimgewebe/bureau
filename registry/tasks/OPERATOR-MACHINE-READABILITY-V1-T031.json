@@ -112,6 +112,6 @@
     "strategy": "Entferne fail wieder aus der Coordination-State-Kommandomenge und revertiere die zugehörigen Regressionen gemeinsam; complete und die fail-closed Defaultklassifikation unbekannter Mutationen bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Fail als Coordination-State-Mutation klassifizieren"
 }

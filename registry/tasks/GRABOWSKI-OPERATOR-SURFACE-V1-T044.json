@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T044",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Measure and improve tool metadata and naming",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Audit public tool names and descriptions against real operator intents, add explicit application and exclusion cues, and use a reproducible golden-prompt evaluation to justify metadata or naming changes instead of relying on intuition.",
   "priority": {"lane": "next", "rank": 440},
   "execution": {

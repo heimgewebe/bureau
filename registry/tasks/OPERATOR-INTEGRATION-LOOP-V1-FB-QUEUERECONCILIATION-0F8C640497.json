@@ -79,6 +79,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Reconcile one Bureau queue drift"
 }

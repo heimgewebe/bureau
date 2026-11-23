@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-DOMAIN-SCALE-HARDENING-V1-T001",
   "initiative": "WELTGEWEBE-DOMAIN-SCALE-HARDENING-V1",
   "title": "Align domain-scale fixtures and CI with production contracts",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Harden the merged PR #1442 benchmark so identifiers, timestamps, cursor workloads and CI assertions remain deterministic while representing production contracts and preserving fail-closed fixture validation.",
   "depends_on": [],
   "priority": {

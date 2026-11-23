@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T004",
   "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
   "title": "Deutschland-PMTiles real bauen und revisionsgebunden freigeben",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Einen aktuellen und messbaren Deutschland-PMTiles-Build auf dem Heim-PC in isoliertem Staging herstellen, tief validieren und über den echten Caddy-Pfad sowie Desktop und iPad beweisen. Eine spätere öffentliche Freigabe bleibt ein getrennter Operatorentscheid und ist nicht Teil dieses Tasks.",
   "depends_on": [
     "WELTGEWEBE-BASEMAP-COVERAGE-V1-T001",

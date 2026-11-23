@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T022",
   "initiative": "BUR-2026-005",
   "title": "Decouple runtime refresh from Grabowski aggregate DB schema",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

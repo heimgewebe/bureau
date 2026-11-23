@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T045",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Run an evidence-bound observe-connector canary",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Decide whether a separate narrow observe connector improves least-privilege operation or tool selection enough to justify a second registered connector, using a bounded A/B canary rather than assuming that tool count implies context loading cost.",
   "priority": {"lane": "later", "rank": 450},
   "execution": {

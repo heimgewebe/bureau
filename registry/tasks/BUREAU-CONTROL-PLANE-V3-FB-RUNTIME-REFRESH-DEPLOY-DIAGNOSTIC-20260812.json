@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Deploy-Diagnose-Task einmalig in Bureau-Runtime übernehmen",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten Bureau-Runtime-Refresh auf den dann aktuellen, CI-grünen main ausführen, damit der bereits gemergte Task GRABOWSKI-OPERATOR-SURFACE-V1-FU-T161-DEPLOY-PRIMARY-FAILURE-20260812 in den immutable Registry-Snapshot und damit in die reguläre Bureau-Claim-Autorität gelangt. Die Wirkung bleibt frisch an main, Merge-PR, Pflichtchecks, target_sha256, diese exakte Task-ID und die erforderlichen Live-Leases gebunden.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 8

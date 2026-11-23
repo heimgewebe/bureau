@@ -251,6 +251,6 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime at 8da2115b296cbe5c0e3aec53de694c3d33492e4a remains authoritative until a separately break-glass-authorized new immutable result is fully read back. If publication/adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, leases or any later runtime effect becomes unclear, preserve all evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh successor for stale T121 pickup on 2026-09-07"
 }

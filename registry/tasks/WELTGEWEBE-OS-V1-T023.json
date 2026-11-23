@@ -86,6 +86,6 @@
     "deployment"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Produktive CSP ohne unsafe-inline weiter härten"
 }

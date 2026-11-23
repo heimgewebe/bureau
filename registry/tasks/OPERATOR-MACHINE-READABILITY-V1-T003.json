@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T003",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Enforce lease write ownership and attribute foreign writes",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Turn a Grabowski write lease from an advisory coordination record into an enforceable or at least complete attribution boundary so an unknown same-user process cannot silently rewrite a leased worktree during review.",
   "priority": {
     "lane": "next",

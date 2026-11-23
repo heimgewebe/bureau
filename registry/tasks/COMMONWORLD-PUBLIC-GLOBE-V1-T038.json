@@ -106,6 +106,6 @@
     "strategy": "If a corrective detail policy regresses hierarchy, accessibility or layout, revert the device-specific policy and regenerated release artifacts together while retaining the physical-device evidence and threshold decision for a revised implementation."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Profile adaptive ring bundles on physical iPad Safari"
 }

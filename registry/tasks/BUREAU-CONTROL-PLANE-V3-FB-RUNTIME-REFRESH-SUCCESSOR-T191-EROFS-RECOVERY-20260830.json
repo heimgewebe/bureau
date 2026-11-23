@@ -337,6 +337,6 @@
     "strategy": "The currently deployed Bureau runtime at 90647998ade46187d9042e822d468c71f5f597f8 remains authoritative until a new immutable result is fully read back. The predecessor workspace, target binding, intent/result and unclear-attempt leases remain evidence and are not retried or force-released. If this successor source ancestry, target freshness, execution-context preflight, CI, deployment/Registry identity or runtime effect becomes unclear, preserve all evidence and stop; any further effect requires another separately reviewed successor."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Single-Use Bureau Runtime Refresh successor after T191 EROFS reconciliation"
 }

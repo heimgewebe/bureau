@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T010",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Clarify SSH command construction",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Document or encapsulate remote SSH command construction that uses exec plus shlex.join so safety assumptions and validation responsibilities are explicit.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"

@@ -206,6 +206,6 @@
     "strategy": "Restore only the T059-owned controlled proof input, remove any temporary private evidence fixture, and return the affected watchdog and tunnel units to their exact pre-proof active state. Do not redeploy or revert the existing runtime; code rollback requires a separate repository task."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Prove stale-poll recovery on the deployed runtime"
 }

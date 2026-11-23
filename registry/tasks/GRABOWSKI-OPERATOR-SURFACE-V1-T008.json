@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T008",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add bundle registry cache invalidation",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Replace runtime-only merge semantics for latest_complete_bundles with an explicit bundle registry cache strategy that records manifest-directory mtime or equivalent invalidation evidence.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"

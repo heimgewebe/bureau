@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T013",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Konvergenzregelkreis mit Weltgewebe-OS-Wirkungsmodell verbinden",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Den öffentlichen Konvergenzregelkreis als portablen Soll-Ist-Wirkungs- und Rücknahmevertrag mit Weltgewebe OS verbinden, sobald sein Repository und seine Ressource kanonisch registriert sind.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001",

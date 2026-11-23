@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T006",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Repair README metrics-schema validation example to match remote-schema handling",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 96

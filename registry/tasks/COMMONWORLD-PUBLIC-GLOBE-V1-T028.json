@@ -130,6 +130,6 @@
     "strategy": "Restore the compact build-bound bootstrap and complete generated recovery catalogue, disable visible shard-native delivery, retain immutable generation artifacts for diagnosis, and verify the restored public surface before any subsequent cutover attempt."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Prove 1k and 10k catalog cutover"
 }

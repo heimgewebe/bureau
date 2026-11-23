@@ -132,6 +132,6 @@
     "strategy": "Den cgroup-v2-Produktionsrunner deaktivieren, seine eigene Unit-/State- und Artefaktgeneration ownergebunden entfernen und auf den externen, nicht produktionsfreigegebenen T004-Sidecar zurückfallen; Registry-, Quell- und Evaluationshistorie bleiben erhalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Patch-Evaluation-Produktionssandbox mit aggregierten cgroup-v2-Budgets"
 }

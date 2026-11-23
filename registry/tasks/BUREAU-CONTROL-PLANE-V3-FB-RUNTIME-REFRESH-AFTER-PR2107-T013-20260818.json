@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2107-T013-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2107 für T013 Live-Cutover",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand d2046e7c52598b8be0e2241b5eb765d17ff8d995 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei der revidierten Registrierung steht main auf e517fad89ff261de25a7ed899777e8fd02926bc7 und enthält den gemergten T013-Hard-Cutover aus PR #2107 sowie jeden bis dahin regulär integrierten Main-Fortschritt. Das tatsächliche Target wird erst nach Merge und missing-only StateStore-Adoption dieser Authority vor prepare-intent frisch bestimmt und muss diese Authority-TaskSpec enthalten. Zweck ist ausschließlich, den normalen revisionsgebundenen Live-Acceptance-/Closeout-Pfad für BUREAU-CONTROL-PLANE-V3-T013 freizuschalten. Diese Authority verändert keine Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

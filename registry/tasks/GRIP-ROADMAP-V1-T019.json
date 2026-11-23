@@ -3,7 +3,7 @@
   "id": "GRIP-ROADMAP-V1-T019",
   "initiative": "GRIP-ROADMAP-V1",
   "title": "Bind pr-merge verification to base branch head",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Extend captain-run pr-merge verification so the observed base branch head is bound to the observed mergeCommit or classified when it advanced after execution.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T014"

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T007",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Extract rLens bundle helpers",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Separate the rLens bundle registry helper functions from grabowski_mcp.py into a clearer internal module or equivalent structure without changing the public MCP contract.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"

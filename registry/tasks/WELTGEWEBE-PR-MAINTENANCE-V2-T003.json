@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
   "title": "Measure and decide the post-JSONL graph mutation architecture",
   "goal": "Measure production graph size, mutation rate, rewrite latency and failure exposure, then decide whether to retire JSONL writes in favor of PostgreSQL-only persistence and whether GraphService extraction, append/compaction or cache-structure changes have justified value.",
-  "state": "ready",
+  "state": "cancelled",
   "depends_on": [],
   "priority": {
     "lane": "later",

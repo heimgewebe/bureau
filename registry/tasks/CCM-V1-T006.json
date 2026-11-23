@@ -3,7 +3,7 @@
   "id": "CCM-V1-T006",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Chronik-Ledger-Snapshot bei ungültigem UTF-8 bytegenau binden",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Den Ledger-Snapshot aus Chronik PR #220 auch bei ungültigem UTF-8 an die tatsächlich gelesenen Rohbytes bis zur letzten vollständigen JSONL-Zeile binden, ohne historische Semantik, v1-Ausgabeformate oder das fail-closed Einfrieren zu verändern.",
   "priority": {
     "lane": "later",

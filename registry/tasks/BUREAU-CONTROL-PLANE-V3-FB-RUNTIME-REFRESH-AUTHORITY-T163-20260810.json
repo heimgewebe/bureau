@@ -101,6 +101,6 @@
     "strategy": "Bei fehlgeschlagenem oder unklarem Cutover keine neue Deployment-Wahrheit behaupten. Letzten integritätsgültigen Release beibehalten und ausschließlich den bestehenden Runtime-Refresh-Readback-/Rollbackpfad verwenden; keine operative Historie zurückschreiben."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Einmaligen Bureau-Runtime-Refresh nach T163-Registry-Merge autorisieren"
 }

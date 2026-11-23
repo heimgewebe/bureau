@@ -30,7 +30,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T005",
   "title": "Make repository frontier the primary work view",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Present the active or safely claimable ball per repository by combining tasks, queue weight, claims, leases, runs, PRs and blockers.",
   "priority": {
     "lane": "later",

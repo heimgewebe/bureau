@@ -138,6 +138,6 @@
     "strategy": "Performanceinstrumentierung oder Optimierungen auf den letzten vollständig getesteten Fadenrendervertrag zurücksetzen, falls Rundheit, Fachsemantik, Kartenstabilität oder Speicherverhalten regressieren. Messartefakte und Baseline erhalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Faden-Dichte und Renderbudget verbindlich messen"
 }

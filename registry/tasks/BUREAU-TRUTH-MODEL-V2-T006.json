@@ -31,7 +31,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T006",
   "title": "Classify and revalidate long-lived backlog tasks",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Classify later-lane tasks before any bulk cleanup and record why each sampled task still exists.",
   "priority": {
     "lane": "later",

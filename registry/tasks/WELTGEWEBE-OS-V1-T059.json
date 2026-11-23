@@ -120,6 +120,6 @@
     "task_profile": "repo_change"
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Großen Web-Client-Chunk messungsgebunden entlasten"
 }

@@ -103,6 +103,6 @@
     "strategy": "If a corrective change regresses localization, Arabic directionality, proposal validation, globe interaction or deterministic release generation, revert the runtime change and generated release artifacts together while retaining the physical-device failure evidence and controlled fault harness for a revised fix."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Verify Wave-1 globe fallback on physical iPad Safari"
 }

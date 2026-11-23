@@ -79,6 +79,6 @@
     "repository"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Make test_grips independently importable and order-independent"
 }

@@ -126,6 +126,6 @@
     "testing"
   ],
   "schema_version": 1.0,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Lokale Grabowski-Python-3.12-Testumgebung reproduzierbar machen"
 }

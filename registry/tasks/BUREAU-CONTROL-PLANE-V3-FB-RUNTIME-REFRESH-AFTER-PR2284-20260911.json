@@ -291,6 +291,6 @@
     "strategy": "The integrity-valid deployed Bureau runtime at 3a0528da71fbd99ae8b6564770102bd8cc6a9a80 remains authoritative until a separately break-glass-authorized new immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability or any later runtime result becomes unclear, preserve evidence and do not retry; reconcile through a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Single-Use Bureau-Runtime-Refresh successor after PR #2284"
 }

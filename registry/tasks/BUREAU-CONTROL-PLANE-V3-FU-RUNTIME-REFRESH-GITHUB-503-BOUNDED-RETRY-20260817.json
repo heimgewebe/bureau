@@ -148,6 +148,6 @@
     "strategy": "Bei jeder Ausweitung auf GitHub-Mutationen, unbounded Retry, oder Retry nach Attempt-/Effect-Beginn Änderung nicht mergen bzw. revertieren; bisherige fail-closed Einmal-Ausführung bleibt Fallback."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Bureau Runtime-Refresh gegen transiente GitHub-GraphQL-503s härten"
 }

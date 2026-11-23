@@ -91,6 +91,6 @@
     "deployment"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Runtime-Deploy muss primäre Tunnel-Fehlerursache erhalten"
 }

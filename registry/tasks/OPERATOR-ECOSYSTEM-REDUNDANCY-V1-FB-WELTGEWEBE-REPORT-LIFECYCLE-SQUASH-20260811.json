@@ -90,6 +90,6 @@
     "strategy": "Revert only the squash-stable report-lifecycle provenance change and its generated artifacts/tests, then regenerate through the prior canonical generator if rollback is required; do not alter unrelated T048 Kubernetes bootstrap hardening."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Make Weltgewebe report provenance squash-stable"
 }

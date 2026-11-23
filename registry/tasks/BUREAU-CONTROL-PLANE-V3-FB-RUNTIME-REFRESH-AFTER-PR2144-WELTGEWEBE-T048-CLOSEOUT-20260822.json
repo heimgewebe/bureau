@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2144-WELTGEWEBE-T048-CLOSEOUT-20260822",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2144 für Weltgewebe T048 Closeout",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss PR #2144, den seit PR #2127 vorhandenen Same-Run-Orphan-Resume-Vertrag und diese neue Authority-TaskSpec enthalten; legitime zwischenzeitliche Main-Merges dürfen enthalten sein. Zweck ist ausschließlich, den bereits existierenden Lauf BUR-RUN-20260819T091805Z-f3350c4ca3 wieder über den kanonischen Same-Run-Recovery- und typed-Acceptance-Closeout-Pfad für WELTGEWEBE-OS-V1-T048 arbeitsfähig zu machen, nachdem Weltgewebe PR #1777 gemergt und grün belegt ist. Diese Authority implementiert oder verifiziert T048 nicht selbst, erzeugt keinen neuen T048-Lauf, verändert Weltgewebe nicht, verändert keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -4,7 +4,7 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Globalen Task-Reconcile begrenzen und fortsetzbar machen",
   "goal": "Reproduziere und isoliere den live beobachteten Timeout des globalen persistenten Task-Reconcile bei großer Task- und Attention-Projektion. Messe die Kosten getrennt für Terminalisierungs-Recovery, Kandidatenselektion, Systembeobachtung und Ergebniserzeugung; optimiere nur den belegten dominanten Pfad. Der öffentliche Check muss begrenzt, paginierbar und fortsetzbar werden, ohne Task-, Lease- oder Terminalisierungswahrheit zu verlieren.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "next",
     "rank": 2

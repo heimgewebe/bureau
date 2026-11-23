@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T010",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Prove end-to-end canonical operator-entry consumption",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Demonstrate with a fresh, conversation-independent ChatGPT/Grabowski session that the operator lands on the canonical heim-pc entry, resolves the correct truth sources and completes bounded read scenarios without human shell assistance or hidden memory.",
   "priority": {
     "lane": "next",

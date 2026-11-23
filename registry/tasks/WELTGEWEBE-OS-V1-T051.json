@@ -92,6 +92,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Kartenorchestrierung in einen expliziten Zustandsautomaten überführen"
 }

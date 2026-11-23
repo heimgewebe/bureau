@@ -133,6 +133,6 @@
     "strategy": "Before disabling or removing each startup/service component record the exact service/startup entry and restoration path. Re-enable any component whose required photo, backup, scanner, security or remote-access function regresses."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Remove Jörg laptop software performance leaks"
 }

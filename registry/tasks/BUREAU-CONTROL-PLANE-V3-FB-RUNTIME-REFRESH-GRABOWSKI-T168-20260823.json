@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-GRABOWSKI-T168-20260823",
   "title": "Single-Use Bureau-Runtime-Refresh für Grabowski T168",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh von der unmittelbar vor Ausführung frisch integrity-valid beobachteten aktiven Bureau-Runtime auf den dann frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst über einen geschützten Ein-Datei-PR gemergt und missing-only in den autoritativen StateStore adoptiert wurde. Der bei Registrierung beobachtete Stand 047181c585779d82ee3b33e6086696060db9116a bleibt nur Last-known-good-Anker: auch ein zwischenzeitlich durch eine andere legitime Authority deployter, frisch als Vorfahr des neuen Ziel-main verifizierter Runtime-Stand ist als Ausgangspunkt zulässig. Übersprungen werden darf der Effekt ausschließlich, wenn aktive Runtime-Source und kanonischer Registry-Snapshot bereits exakt den frisch beobachteten Zielstand mit dieser Authority binden. Zweck ist ausschließlich, den release-registry-identity-mismatch zu schließen, der den normalen typisierten Proposal-/Review-/Publish-Pfad für candidate-c7cb64aeaae945b041ed5b27 / GRABOWSKI-OPERATOR-SURFACE-V1-T168 blockiert. Diese Authority publiziert, claimt oder implementiert T168 nicht selbst und verändert weder Queue noch Dispatch noch fremde Arbeit.",
   "priority": {
     "lane": "now",

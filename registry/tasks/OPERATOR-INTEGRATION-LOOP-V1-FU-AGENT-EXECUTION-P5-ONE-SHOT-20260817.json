@@ -172,6 +172,6 @@
     "strategy": "Bei Authority-, Lifecycle-, Retry- oder Provenance-Drift den neuen Frontdoor nicht mergen beziehungsweise den Slice zurücknehmen. Die bereits deployten P1-P4-Contracts, PR-#818-Grip und candidate-integration-ready bleiben unverändert nutzbar; keine bestehende Lane oder Candidate-Evidenz wird rückwirkend umgeschrieben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Agent Execution Fabric bis zum echten One-Shot-Start schließen"
 }

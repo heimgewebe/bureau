@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach Historical-Closeout-Fix #1938",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Der Zielstand muss PR #1938 / Merge-Commit 26764a80c160c4459b77d587ab7d608ba3d590a7 enthalten. Zweck ist ausschließlich, den historischen Runtime-Authority-Closeout-Fix in die laufende Bureau-Runtime zu bringen; keine alte Runtime-Authority wird wiederverwendet, kein historischer Deploy wiederholt und kein Runtime-Pointer zurückgerollt.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

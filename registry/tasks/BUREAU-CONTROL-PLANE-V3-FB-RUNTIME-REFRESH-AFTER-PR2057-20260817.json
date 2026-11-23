@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2057-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2057",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 4a4712abe7872e8456e0ba173b40f03d5a82bf56 liegt hinter dem nach PR #2057 beobachteten main 67c03ac5fcaf52c441d1e554a5c53c9734847e2a. Zweck ist ausschließlich, den durch die nachfolgende TaskSpec-Publikation entstandenen Registry-/Runtime-Drift zu beseitigen, damit BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-GITHUB-503-BOUNDED-RETRY-20260817 gegen aktuelle Registry-/StateStore-Wahrheit live verifiziert und terminalisiert werden kann. Diese Authority verändert weder Queue, Claims, Dispatch noch fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

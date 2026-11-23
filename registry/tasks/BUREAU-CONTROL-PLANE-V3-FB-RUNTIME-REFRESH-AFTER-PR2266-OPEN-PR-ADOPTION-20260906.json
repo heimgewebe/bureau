@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2266-OPEN-PR-ADOPTION-20260906",
   "title": "Single-use Bureau runtime refresh after PR #2266 open-PR adoption fix",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Publish exactly one initially non-executable planned Bureau runtime-refresh authority through a protected one-file PR, adopt it missing-only into authoritative StateStore, and only then activate it by a proof-bearing planned-to-ready CAS. Its sole purpose is to converge the installed Bureau runtime and canonical Registry from 2bbde8f2904dbe752cf1a4648abae71ced2f0271 to a freshly observed protected-main successor containing merged PR #2266 and this authority publication, so normal HEIM-PC-NIXOS-MIGRATION-V1-T009 claim admission can consume the verified-terminal open-PR adoption path fixed by PR #2266. This authority performs no T009 claim or dispatch, Heim-PC PR #125 merge, unrelated task reconciliation, unrelated repository mutation, or NixOS migration work.",
   "priority": {
     "lane": "now",

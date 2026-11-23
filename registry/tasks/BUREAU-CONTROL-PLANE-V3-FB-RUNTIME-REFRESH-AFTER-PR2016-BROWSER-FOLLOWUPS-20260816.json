@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2016-BROWSER-FOLLOWUPS-20260816",
   "title": "Single-Use-Runtime-Refresh nach Browser-Navigate-Registrierung #2016",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Zweck ist ausschließlich, die nach PR #2016 entstandene Release-/Registry-Identitätsdifferenz zu schließen, damit der normale typisierte Operator-Intake für die bereits promotionsreifen Candidate-Events 7731 und 7748 wieder funktioniert. Diese Authority publiziert oder implementiert die beiden Grabowski-Folgetasks nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

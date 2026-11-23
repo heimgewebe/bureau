@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2063-T012-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2063 für T012-Cutover",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 3ea976fbb6af242fda42ba726e24e37cf6cec7e8 liegt hinter dem nach PR #2063 beobachteten main 4be7f02924ff16d8002e869b3806f71142f7395a. Zweck ist ausschließlich, den Runtime-/Registry-Drift zu beseitigen, damit BUREAU-CONTROL-PLANE-V3-T012 über den normalen reviewed CAS-Revisions-, Readiness- und Claim-Pfad fortgesetzt werden kann. Diese Authority verändert weder T012 noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

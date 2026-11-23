@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2096-AUDIO-T043-T044-READINESS-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2096 für Audio T043/T044 Readiness",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand a0ee424846d25ac4872363d74693591ac48161ff auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 4bab593f5ddd129717b0cd22acd7eb30419b6b60 und enthält T043 PR #2095 sowie T044 PR #2096. Zweck ausschließlich: die bereits revisionsgebunden gemergten Publication-Receipts für AUDIO-CONTROL-PLANE-V1-T043 und T044 über operator-task-ready von planned auf ready zu promoten. Diese Authority publiziert oder implementiert keine Audio-Taskdatei, verändert keine Audio-Runtime oder Defaults, keine Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

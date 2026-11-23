@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach PR #1943",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der PR #1943 / Merge-Commit 5862e8fb8cb53dfb050ae3e9f99db60648e4fb4c enthält. Zweck ist ausschließlich, release-registry-identity wiederherzustellen, damit der bereits stale und ungebundene Run BUR-RUN-20260813T042440Z-678dd081ac anschließend über den bestehenden CAS-gebundenen bureau-pickup-orphan-reconcile terminalisiert und seine Repo-Reservation freigegeben werden kann. Der Run-Workspace und fremde Arbeit bleiben unverändert.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

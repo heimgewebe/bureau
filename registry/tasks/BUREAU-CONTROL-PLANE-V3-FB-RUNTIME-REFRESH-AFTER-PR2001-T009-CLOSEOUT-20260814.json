@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2001 für T009-Closeout",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand c05948576338c8095a493b7e216c8521c1cfd0cb auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ausschließlich: den gemergten T009-Stand aus PR #2001 in die immutable Bureau-Runtime zu überführen, anschließend die Snapshot-Service-/Timer-Units aus exakt diesem Release zu installieren und live zu prüfen sowie BUREAU-CONTROL-PLANE-V3-T009 typed zu schließen. Der aktive T009-Run BUR-RUN-20260814T194607Z-f1399a59d5 behält seine terminal gebundenen Claim-/Lease-Ressourcen; die drei intentgeforderten Runtime-Ressourcen werden für diesen separaten Effekt nur temporär unter demselben Run-Owner ergänzt und nach Readback wieder entfernt. Der fremde dirty Worktree BUR-RUN-20260814T165148Z-2e8edefd66 bleibt unverändert. Keine T011-, Queue-, fremde Worktree- oder Grabowski-Runtime-Mutation; keine Wiederverwendung nach Closeout.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

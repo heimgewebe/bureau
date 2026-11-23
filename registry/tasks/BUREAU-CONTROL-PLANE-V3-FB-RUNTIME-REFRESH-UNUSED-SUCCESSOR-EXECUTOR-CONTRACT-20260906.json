@@ -297,6 +297,6 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime at 2bbde8f2904dbe752cf1a4648abae71ced2f0271 remains authoritative until a new immutable result is fully read back. If protected publication, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability or the runtime effect becomes unclear, preserve all evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh successor with reserved executor contract for 2026-09-06"
 }

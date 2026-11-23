@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-RECOVERY-AFTER-PR2116-LAUNCHER-LEASE-20260819",
   "title": "Single-Use-Recovery-Runtime-Refresh mit zielabgeleiteten Launcher-Leases",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Vorgänger-Intent 37421b80711762454927f7b210e37f6fdeedf2d8787a58de22d382a464bc2076 wird niemals wiederholt: sein Installer brach vor jeder Runtime-/Launcher-/Manifest-Mutation fail-closed ab, weil der deployte alte Controller die durch die Zielrevision veränderten drei stabilen Launcher nicht in required_resource_keys aufgenommen hatte. Diese Successor-Authority darf nur mit einem Controller aus dem exakten frisch beobachteten Ziel-main ausgeführt werden, damit die Zielrevision selbst ihre Launcher-Mutationsmenge bestimmt und exakt daran die Grabowski-Leases und Installer-Allowlist bindet.",
   "priority": {
     "lane": "now",

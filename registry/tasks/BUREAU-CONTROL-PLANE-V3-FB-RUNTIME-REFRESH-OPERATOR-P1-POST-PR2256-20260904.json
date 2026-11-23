@@ -294,6 +294,6 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime at a1a459f6161f81f7ea05d4ee2c510eba1fc89033 remains authoritative until the new immutable result is fully read back. If publication, activation, target freshness, CI, source identity, StateStore binding, executor writability or the runtime effect becomes unclear, preserve evidence and do not retry blindly."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh bootstrap after operator P1 PR #2256"
 }

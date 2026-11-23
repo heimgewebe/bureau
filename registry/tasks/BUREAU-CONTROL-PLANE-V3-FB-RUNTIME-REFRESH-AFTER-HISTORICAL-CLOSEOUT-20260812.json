@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach Historical-Authority-Closeout-Registrierung",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Zweck ist ausschließlich, die durch PR #1936 entstandene Runtime-/Registry-Divergenz zu schließen, damit BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-RUNTIME-AUTHORITY-CLOSEOUT-20260812 regulär geclaimt werden kann und der stale T010-Orphan-Reconcile wieder über die normale revisionsgebundene Bureau-Runtime terminalisieren darf. Keine historische Runtime-Authority wird wiederverwendet oder reaktiviert.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

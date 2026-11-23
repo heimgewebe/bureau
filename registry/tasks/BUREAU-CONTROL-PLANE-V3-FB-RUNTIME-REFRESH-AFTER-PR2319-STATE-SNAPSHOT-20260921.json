@@ -361,7 +361,7 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime at 85ddb3ec42698f80740866447c2572e929ec5746 remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any later runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-use Bureau runtime refresh after PR #2319 state-snapshot merge"
 }
 

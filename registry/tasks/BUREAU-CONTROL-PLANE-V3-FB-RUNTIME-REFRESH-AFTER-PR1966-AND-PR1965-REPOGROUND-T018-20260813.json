@@ -169,6 +169,6 @@
     "strategy": "Bei unklarem oder fehlgeschlagenem Apply keinen Blind-Retry ausführen. Den letzten integritätsgültigen immutable Bureau-Release beibehalten und receipt-, target- und StateStore-gebunden reconciliieren. PR #1965 und T018 bleiben separat nachweisbar."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Single-Use-Runtime-Refresh nach PR #1966 und PR #1965 / RepoGround T018"
 }

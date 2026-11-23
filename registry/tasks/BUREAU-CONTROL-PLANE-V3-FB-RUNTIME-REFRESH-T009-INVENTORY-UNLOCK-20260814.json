@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh für T009-Inventar-Unlock",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 3f13aa6c12bb00df0cc7f7949386f514948e4f8c auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ausschließlich: den nach PR #1985/#1986 entstandenen release-registry-identity-mismatch beseitigen, während der aktive T009-Run BUR-RUN-20260814T120316Z-0dad2e3b9f seine bestehenden Parent-State-/Core-/Docs-Leases und den revisionsgesicherten WIP unverändert behält. Die drei Runtime-Child-Leases werden unter demselben Run-Owner gehalten, aber an diese neue Authority-Task-ID gebunden. Nach erfolgreichem Closeout darf nur der T009-Run regulär terminalisiert und freigegeben, der bereits registrierte Ein-Datei-Entry-Point-Inventar-Follow-up candidate-15a14e90140cb1db2280b353 publiziert und T009 anschließend aus seinem gesicherten Branch fortgesetzt werden. Zweckfremde, historische oder verbrauchte Runtime-Authorities werden nicht substituiert.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

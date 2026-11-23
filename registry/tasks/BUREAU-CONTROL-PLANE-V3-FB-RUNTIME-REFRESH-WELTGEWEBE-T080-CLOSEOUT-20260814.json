@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh für WELTGEWEBE T080 Closeout",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 16309826fe0b62368d345efd1dd0f5bdd2b01f9e auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, release-registry-identity für den bereits vollständig typisiert und unabhängig authentifizierten Run BUR-RUN-20260813T215640Z-5afb528bac von WELTGEWEBE-OS-V1-T080 wiederherzustellen, damit dessen Closure Observer regulär terminalisieren kann. Die Autorität ist single-use, targetgebunden und begründet selbst keine Weltgewebe-Code-, Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder Fremdarbeitswirkung.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

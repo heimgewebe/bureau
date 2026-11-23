@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh für RuntimeCloseout-Bootstrap",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 56d2451cee336802bda2628f10dbac85e7232bd9 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, die aktuelle release-registry-identity-mismatch-Sperre zu schließen, damit die bereits registrierte OPERATOR-INTEGRATION-LOOP-V1-FU-RUNTIMECLOSEOUT-8D0C6E24 TaskSpec auf den aktuellen typed Acceptance-Vertrag revidiert, auf ready gesetzt und anschließend regulär umgesetzt werden kann. Fremde Runtime-Refresh-Autoritäten werden nicht substituiert; diese Autorität begründet keine Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder fremde Implementierungswirkung.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {"lane": "now", "rank": 1},
   "depends_on": [],
   "required_capabilities": ["bureau", "github", "grabowski", "repository", "testing", "deployment", "resource-leases", "audit", "rollback"],

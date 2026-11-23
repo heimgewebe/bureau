@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2074-WELTGEWEBE-T007-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2074 für Weltgewebe T007",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand ee98fe853da45ea1b4db6842acec8074b6440efb auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 47145c2c8e32b57a2e645a8d3cb8b229fef2e557 und enthält PR #2074, der den typed Acceptance-Vertrag von WELTGEWEBE-OS-V1-T007 repariert. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, den normalen revisionsgebundenen Bureau-Claim von WELTGEWEBE-OS-V1-T007 wieder freizuschalten. Diese Authority implementiert oder schließt T007 nicht, verändert weder Chronik noch Weltgewebe, Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

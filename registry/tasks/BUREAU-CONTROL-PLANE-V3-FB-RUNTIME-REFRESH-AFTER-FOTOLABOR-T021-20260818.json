@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-FOTOLABOR-T021-20260818",
   "title": "Single-Use-Runtime-Refresh nach Fotolabor T021",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 7e64f8caa7a72b8ddfcce934e3923e49ef175577 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 6e05d2d4a3ad7f4839f6d4c918d369e3779950f4 und enthält den geschützten Merge von OPERATOR-PC-HYGIENE-V1-T021 über PR #2079. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Zweck ist ausschließlich, den normalen operator-native Proposal-, Review- und Registry-Publikationspfad für OPERATOR-PC-HYGIENE-V1-T022 bis T025 wieder freizuschalten. Diese Authority publiziert oder implementiert die Fotolabor-Tasks nicht, verändert weder Fotolabor noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

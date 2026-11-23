@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach PR #1951 für AUDIO T032",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der Bureau-PR #1951 / Merge-Commit 4ea80298cdf3f954eefa8fd66b61a3d8c309aa86 sowie den Merge dieser eigenen Authority-TaskSpec enthält. Zweck ist ausschließlich, release-registry-identity wiederherzustellen, damit die bereits kandidatengebundene Revision von AUDIO-CONTROL-PLANE-V1-T032 über den normalen typed Operator-Intake publiziert und T032 danach regulär geclaimt werden kann. Diese Authority publiziert oder implementiert T032 nicht selbst.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

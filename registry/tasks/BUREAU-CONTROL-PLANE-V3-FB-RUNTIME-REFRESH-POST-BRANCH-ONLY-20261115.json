@@ -281,6 +281,6 @@
     "strategy": "Preserve installed source 8065ea1b9e780326b6459f18e023ba61bb0a3289 and manifest 39a8fba74da675f952c096f084e79829b9a983edfb1b3363d99e41c9bcfd58a1 as rollback material. If the effect outcome is unclear, reconcile immutable receipts before any retry; no NixOS or unrelated repository mutation."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time Bureau runtime convergence for branch-only public snapshot publisher"
 }

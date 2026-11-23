@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach PR #1963 für Weltgewebe-T080",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der Bureau-PR #1963 / Merge-Commit c680785c0470b3bf1864633e8a892ca6e81be85c sowie den Merge dieser eigenen Authority-TaskSpec enthält. Zweck ist ausschließlich, die derzeitige release-registry-identity-mismatch-Sperre zwischen installierter Bureau-Runtime 34c7e45d5825aebcb5a00ceba7c2e5c9975f674d und kanonischer Registry aufzulösen, damit der bereits aufgenommene Weltgewebe-Svelte-5-Buchhaltungs-Audit-Kandidat anschließend über den normalen typisierten Proposal-, Review- und Publication-Pfad als neuer Task veröffentlicht werden kann. Diese Authority veröffentlicht oder implementiert den Weltgewebe-Folgetask nicht selbst.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

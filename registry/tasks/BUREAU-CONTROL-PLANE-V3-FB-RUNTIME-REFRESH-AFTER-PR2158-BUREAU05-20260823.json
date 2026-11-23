@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2158-BUREAU05-20260823",
   "title": "Single-Use Bureau-Runtime-Refresh after PR #2158 for Bureau-05 unblock",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Execute exactly one new target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to converge the immutable Bureau runtime from deployed source 4f88a8faf995a25c2d58336bc59328750654e5f2 with current canonical main after PR #2158 so canonical pickup and unblocker work can resume. This authority grants no queue, claim, dispatch, product-code, foreign-work or general repository authority.",
   "priority": {
     "lane": "now",

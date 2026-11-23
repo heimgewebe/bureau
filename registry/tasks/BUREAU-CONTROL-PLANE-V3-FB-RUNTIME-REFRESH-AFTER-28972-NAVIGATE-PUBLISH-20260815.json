@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-28972-NAVIGATE-PUBLISH-20260815",
   "title": "Einmaligen Bureau-Runtime-Refresh für Navigate-Publikation autorisieren",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Schließe genau einmal den aktuellen immutable Bureau-Runtime- und Registry-Snapshot-Drift, der die typisierte Publikation des bereits deduplizierten Semantic-Navigate-Candidates 7612 blockiert. Unmittelbar vor dem einzigen Runtime-Effekt müssen aktueller GitHub-main, dessen grüne Pflichtchecks, eine frische Runtime-Refresh-Observation und der daraus abgeleitete target_sha256 neu gebunden werden. Diese Authority darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -292,6 +292,6 @@
     "strategy": "The integrity-valid deployed Bureau runtime at 867e4084c46d8981e821ebe1887e91ee3ac8bcb5 remains authoritative until a new immutable result is fully read back. If protected publication, target freshness, CI, source ancestry, deployment/Registry identity, StateStore binding, reserved execution-context writability or the runtime effect becomes unclear, preserve evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh after Labor registry convergence PR #2273"
 }

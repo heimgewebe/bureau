@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh für T009-Inventar-Follow-up-Ausführung",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand ac371b1450e1f98e62411edcc46c901ae585cce0 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ausschließlich: den durch Merge von PR #1990 entstandenen release-registry-identity-mismatch beseitigen, damit der bereits autoritativ im StateStore registrierte Task BUREAU-CONTROL-PLANE-V3-FU-T009-ENTRYPOINT-INVENTORY-ADOPTION-20260814 regulär geclaimt und ausschließlich seine deklarierte Datei tests/test_entrypoint_inventory.py bearbeitet werden kann. Keine T009-WIP-, Test-, Queue- oder fremde Mutation innerhalb dieses Runtime-Effekts; keine Wiederverwendung nach Closeout.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

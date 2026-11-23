@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2263-STATUS-PROJECTION-20260905",
   "title": "Single-use Bureau runtime refresh after PR #2263 status projection",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Publish exactly one initially non-executable planned Bureau runtime-refresh authority through a protected one-file PR, adopt it missing-only into authoritative StateStore, and only then activate it by a proof-bearing planned-to-ready CAS. Its sole purpose is to converge the installed Bureau runtime and canonical Registry from dfb6e96953bdae0ca7927a7f8e5a05b0e77557b7 to a freshly observed protected-main successor containing merged PR #2263 and this authority publication, so the status projection resolves the canonical GitHub repository identity from Registry metadata instead of treating the immutable Registry snapshot as a Git checkout. This authority performs no task reconciliation, claim, dispatch, unrelated repository mutation, or NixOS migration work.",
   "priority": {
     "lane": "now",

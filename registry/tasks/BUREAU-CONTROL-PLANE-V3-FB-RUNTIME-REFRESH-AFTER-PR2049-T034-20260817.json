@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2049-T034-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2048/#2049 für T034",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 029ef382803ff80a6550407d649324829dc945c2 liegt hinter dem nach PR #2048/#2049 beobachteten main 6e51db885ab1f1193262d97fa0b8d6e4a3e82a46. Zweck ist ausschließlich, den Runtime-Drift zu beseitigen, damit BUREAU-CONTROL-PLANE-V3-T034 gegen aktuelle Registry-/StateStore-Wahrheit claimen und implementiert werden kann. Diese Authority verändert weder T034 noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

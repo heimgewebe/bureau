@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2127-WELTGEWEBE-T048-ORPHAN-RESUME-20260820",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2127 für Weltgewebe T048 Orphan-Resume",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der tatsächliche Ziel-main muss PR #2127 mit dem streng gebundenen orphan-resume-Vertrag sowie diese Authority-TaskSpec enthalten; legitime zwischenzeitliche Main-Merges dürfen enthalten sein. Zweck ist ausschließlich, den bereits existierenden und identitätsgebundenen Lauf BUR-RUN-20260819T091805Z-f3350c4ca3 über den kanonischen Same-Run-Recovery-Pfad wieder aufnehmbar zu machen. Diese Authority implementiert oder schließt WELTGEWEBE-OS-V1-T048 nicht, erzeugt keinen neuen T048-Lauf, verändert Weltgewebe nicht, verändert keine Queue, Claims, Dispatch-Entscheidungen oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

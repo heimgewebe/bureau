@@ -281,6 +281,6 @@
     "strategy": "Retain the manifest-bound ff694981aa3273d9cc673a79e1419d9f1da89c20 immutable release until a genuinely successful new target readback. Preserve the earlier unclear target, intent d2a170161ee27a09e77a8b7d66b6c81f0bba7db589c454563b2bf8a2a2752f4d and result a4ac5e4128e14c82d2c7a7c9e6aaf908f8675e71cbd6fe63dcb85edc1d39539b unchanged. Never blindly retry an effect-started ambiguity. No NixOS switch, reboot, foreign writer or unrelated runtime mutation."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-use Bureau runtime convergence after launcher lease version-skew fix PR2374"
 }

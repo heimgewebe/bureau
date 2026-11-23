@@ -328,6 +328,6 @@
     "strategy": "Solange die Authority nur planned/adoptiert ist, ist sie nicht ausführbar. Wird Runtime/main vor Aktivierung anderweitig identity-valid konvergiert, keine Aktivierung und keinen Intent erzeugen; die Authority später normal superseden/closeouten. Bei unklarem post-activation Effekt keine Wiederholung: Intent, Attempt/Result, Manifest, Registry, Scheduler und Consumption zuerst autoritativ lesen und für einen neuen Zielstand nur eine neue explizite Successor-Authority verwenden."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh für Erprobungsraum T088"
 }

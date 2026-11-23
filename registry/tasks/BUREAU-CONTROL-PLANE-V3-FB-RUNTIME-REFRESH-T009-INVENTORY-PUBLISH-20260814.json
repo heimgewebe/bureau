@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh für T009-Inventar-Follow-up-Publikation",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand c4df8df5d11418c8e85c5d110b638b6642dd1d25 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ausschließlich: den durch PR #1988 entstandenen release-registry-identity-mismatch beseitigen, damit der bereits erzeugte Proposal 63d6e788405ed75c7606db7fe35aa574ae993084000766ffd34c041936d313e0 für den engen Ein-Datei-T009-Entry-Point-Inventar-Follow-up über den normalen Review-/Publication-Pfad fortgesetzt werden kann. Keine T009-WIP-, Inventory-Implementierungs-, Queue- oder fremde Mutation innerhalb dieses Runtime-Effekts; keine Wiederverwendung nach Closeout.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

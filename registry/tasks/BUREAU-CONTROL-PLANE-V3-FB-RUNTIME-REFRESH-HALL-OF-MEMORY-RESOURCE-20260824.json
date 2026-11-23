@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HALL-OF-MEMORY-RESOURCE-20260824",
   "title": "Single-Use Bureau-Runtime-Refresh für Hall-of-Memory-Resource-Onboarding",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Execute exactly one target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to converge the immutable Bureau runtime from source 4b0606f38f7d92441973625cd7846b1021478cdc with current canonical main so the merged repo.hall-of-memory resource is present in the canonical runtime Registry snapshot and the existing Hall of Memory Visual-CI candidate can continue through typed operator intake. This authority grants no queue, claim, dispatch, product-code, foreign-work, Hall-of-Memory repository mutation or general repository authority.",
   "priority": {
     "lane": "now",

@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2007 für T009",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand 0e80135c1755eec44026cfe78cc2ad62e0ef0cda auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Auslöser ist der Merge von PR #2007 auf 08d67e98b1d2569addc9357584fd9c43e0ddf792. Zweck ausschließlich: die dadurch erneut entstandene release-registry-identity-mismatch-Barriere beseitigen, damit der bereits koordinierte T009-Run BUR-RUN-20260814T235554Z-2f16466f99 regulär bis Runtime-Readback, Acceptance und Closeout fortgeführt werden kann. Keine T009-Code-, Queue-, Claim-, Dispatch-, Grabowski-Runtime- oder fremde Mutation innerhalb dieses Runtime-Effekts; keine Wiederverwendung nach Closeout.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

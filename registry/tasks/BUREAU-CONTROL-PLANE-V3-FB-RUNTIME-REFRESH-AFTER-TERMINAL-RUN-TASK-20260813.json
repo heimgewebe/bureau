@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach Terminal-Run-Closeout-Task",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen current main autorisieren, der PR #1941 / Merge-Commit 2d4f9f6ec8fb9d414c2a5655fa6d990f33e2ef82 enthält. Zweck ist ausschließlich, BUREAU-CONTROL-PLANE-V3-FU-HISTORICAL-CLOSEOUT-TERMINAL-RUN-20260813 über den normalen koordinierten Pickup claimbar zu machen.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

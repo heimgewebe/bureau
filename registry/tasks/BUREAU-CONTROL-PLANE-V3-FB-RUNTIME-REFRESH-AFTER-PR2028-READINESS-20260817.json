@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2028-READINESS-20260817",
   "title": "Single-Use-Runtime-Refresh nach Readiness-Seam PR #2028",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime e016692d956465f965306e3528795c94fa620bca liegt hinter dem durch PR #2028 gemergten Readiness-Seam auf e721d103f69b5de73b116e2c7527b41e07b85921. Zweck ist ausschließlich, die neue operator-task-ready-Oberfläche in die installierte Runtime zu bringen, bevor BUREAU-CONTROL-PLANE-V3-T033 und BUREAU-CONTROL-PLANE-V3-T034 revisionsgebunden promoviert werden. Diese Authority verändert weder T033/T034 noch Queue, Claims, Dispatch oder Registry außerhalb dieser eigenen TaskSpec und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

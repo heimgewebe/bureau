@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2024-T048-TYPING-20260816",
   "title": "Single-Use-Runtime-Refresh nach Bureau-main #2022–#2024 für T048-Typisierung",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen, nachdem die Registry-/Queue-Merges #2022, #2023 und #2024 den installierten Release 5a2b4f8726b48be735949a81f081f442bd3be124 überholt haben. Zweck ist ausschließlich, den normalen reviewten TaskSpec-Revisionspfad für WELTGEWEBE-OS-V1-T048 wieder freizuschalten. Diese Authority publiziert, ready-setzt, claimt, verifiziert oder implementiert T048 nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2043-QUEUE-IDENTITY-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2043 für Queue-Identity-Follow-up",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand d713165571ad44640f3d9695f79fb8b91cf0dc55 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Seit dem letzten erfolgreichen Refresh wurden mindestens PR #2042 und PR #2043 gemergt. Zweck ist ausschließlich, den normalen revisionsgebundenen Claim- und Implementierungspfad für BUREAU-CONTROL-PLANE-V3-FU-QUEUE-RUNTIME-IDENTITY-LIVELOCK-20260817 wieder freizuschalten. Diese Authority implementiert oder promoviert den Follow-up-Task nicht, verändert weder Queue, Claims noch fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

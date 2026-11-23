@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach Terminal-Run-Closeout-Fix #1944",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der PR #1944 / Merge-Commit bab96cab3139433ed123de0a87ccd2f0201f5f72 enthält. Zweck ist ausschließlich, den terminal-succeeded-run Historical-Closeout-Fix produktiv zu aktivieren und danach den echten historischen T040-Closeout zu beweisen.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

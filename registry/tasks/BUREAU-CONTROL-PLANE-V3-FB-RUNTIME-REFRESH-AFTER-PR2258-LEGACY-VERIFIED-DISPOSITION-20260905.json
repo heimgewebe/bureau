@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2258-LEGACY-VERIFIED-DISPOSITION-20260905",
   "title": "Single-use Bureau runtime refresh after PR #2258 legacy verification disposition",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Publish exactly one initially non-executable planned Bureau runtime-refresh authority through a protected one-file PR, adopt it missing-only into authoritative StateStore, and only then activate it by a proof-bearing planned-to-ready CAS. Its sole purpose is to converge the installed Bureau runtime and canonical Registry from f5fc1e9402ac618a80d4252d27179d7a2d009171 to a freshly observed protected-main successor containing merged PR #2258 and this authority publication, so the legacy verified-disposition mechanism is live. This authority performs no legacy TaskSpec disposition itself.",
   "priority": {
     "lane": "now",

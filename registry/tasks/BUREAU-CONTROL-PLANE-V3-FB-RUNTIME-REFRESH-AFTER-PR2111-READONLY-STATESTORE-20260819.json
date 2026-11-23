@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2111-READONLY-STATESTORE-20260819",
   "title": "Single-Use-Runtime-Refresh nach PR #2111 für read-only StateStore",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand dd19f01663a648512394d550730c9662af98c02a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Das tatsächliche Target wird erst nach geschütztem Merge von PR #2111 sowie nach Merge dieser Authority-TaskSpec bestimmt und muss beide enthalten. Zweck ist ausschließlich, die in PR #2111 reparierte ReadOnlyStateStore-Auswahl für read_only CLI-Befehle auch bei explizitem, revisionsgebundenem Registry-Root in die immutable Bureau-Runtime zu bringen, damit Grabowskis claim-coordination-status- und Pickup-Readbacks den kanonischen StateRoot ohne chmod- oder sonstige Initialisierungswirkung lesen können und der orphaned Run BUR-RUN-20260818T214207Z-fcbf9c8ffb anschließend über den normalen revisionsgebundenen Reconcile-/Closeout-Pfad fortgeführt werden kann. Diese Authority verändert keine Queue, Claims, Dispatch-Zustände oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

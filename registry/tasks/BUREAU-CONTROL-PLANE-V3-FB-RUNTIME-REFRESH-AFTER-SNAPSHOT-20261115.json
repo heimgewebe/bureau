@@ -281,6 +281,6 @@
     "strategy": "Preserve immutable deployed source 4954dcfaa5126fbf43f5457e6aec558ec413a091 and manifest a36e92f2740bdbbee94fcc7fa320ab6ff02203aecd57fd893639c5f38512a4b2 for rollback. On unclear effect stop; reconcile receipts, never blind retry. No foreign/NixOS effect."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Restore immutable Bureau runtime after merged public snapshot PRs"
 }

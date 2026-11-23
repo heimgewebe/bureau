@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2088-ADOPTION-CORRECTION-20260818",
   "title": "Korrigierter Single-Use-Runtime-Refresh nach PR #2088",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand fe41fe6e12569eb433542c47b8f2bdd84902789a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 4f10888c0631d41845d1467f85f89c63ab5d97a1. Diese Task ersetzt ausschließlich den nicht adoptierbaren Bootstrap-Versuch aus PR #2088; sie autorisiert keine gewöhnliche Task-Publikation und keine Fotolabor-PC-Wirkung. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und darf legitime zwischenzeitliche Main-Merges enthalten. Nach erfolgreichem Refresh und resultgebundenem Closeout darf diese Authority niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

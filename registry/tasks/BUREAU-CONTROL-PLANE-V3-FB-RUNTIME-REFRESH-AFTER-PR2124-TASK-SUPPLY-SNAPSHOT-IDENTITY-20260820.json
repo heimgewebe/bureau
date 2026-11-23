@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2124-TASK-SUPPLY-SNAPSHOT-IDENTITY-20260820",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2124",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, damit die installierte immutable Bureau-Runtime den in PR #2124 gemergten Task-Supply-Fix für canonical Registry-Snapshots enthält. Die Authority erteilt ausschließlich diesen einen target-bound Runtime-Effekt und keine Queue-, Claim-, Dispatch-, Supply-Publikations- oder Fremdarbeitsautorität.",
   "priority": {
     "lane": "now",

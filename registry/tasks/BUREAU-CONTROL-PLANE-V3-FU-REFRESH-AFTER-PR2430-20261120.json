@@ -281,6 +281,6 @@
     "strategy": "Retain current immutable Bureau release f4dac816c2cafbce7c16f6c94bb2659ebdec9fc8 and manifest b7ae6d1647a094e23dddb447a074ad48b36700f6fc8d85dde925a97eb2534c8a for rollback; preserve all StateStore entries, verified backups, foreign worktrees and current NixOS boot/recovery state."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time Bureau immutable runtime refresh after PR #2430 (ChatGPT Task Publisher)"
 }

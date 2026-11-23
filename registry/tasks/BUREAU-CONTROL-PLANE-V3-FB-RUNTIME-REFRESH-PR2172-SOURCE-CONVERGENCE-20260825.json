@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-PR2172-SOURCE-CONVERGENCE-20260825",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2172 mit Source-Precondition",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Execute exactly one new source- and target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The selected target must contain PR #2172 merge f879af9cd9fd7a6f26cc28dec273399e27a8e582. The sole purpose is to converge the immutable Bureau runtime from the live registered source deeaf24cc4178f088cc19d211a93a69fb7b09d13 to that fresh protected main while enforcing the source-precondition contract introduced by PR #2172. This authority grants no queue, claim, dispatch, product-code, foreign-work or general repository authority.",
   "priority": {
     "lane": "now",

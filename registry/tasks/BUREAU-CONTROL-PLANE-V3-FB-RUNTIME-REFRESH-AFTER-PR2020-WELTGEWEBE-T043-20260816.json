@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2020-WELTGEWEBE-T043-20260816",
   "title": "Single-Use-Runtime-Refresh nach Weltgewebe-T043-Publikation #2020",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Zweck ist ausschließlich, die nach PR #2020 entstandene Release-/Registry-Identitätsdifferenz zu schließen, damit der bereits geclaimte und vollständig authentifizierte Run BUR-RUN-20260816T171516Z-b41050c16c für WELTGEWEBE-OS-V1-T043 durch den normalen typisierten Closure-Observer bewertet werden kann. Diese Authority verändert keine T043-Evidenz, verifiziert oder terminalisiert T043 nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-SUCCESSOR-20260823",
   "title": "Single-Use Bureau-Runtime-Refresh successor for current main",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Execute exactly one new target-bound Bureau runtime refresh to the freshly observed protected heimgewebe/bureau main after this authority itself is merged as one create-only TaskSpec and adopted missing-only into the authoritative StateStore. The sole purpose is to converge the immutable Bureau runtime from deployed source a6e04a53460b1b80cdf2e9a72c4df70a842ee8b3 with current canonical main so normal reviewed task publication can resume. This authority grants no queue, claim, dispatch, product-code, foreign-work or general repository authority.",
   "priority": {
     "lane": "now",

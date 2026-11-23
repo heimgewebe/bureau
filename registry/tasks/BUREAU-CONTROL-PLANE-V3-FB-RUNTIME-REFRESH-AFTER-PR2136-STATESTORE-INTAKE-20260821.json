@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2136-STATESTORE-INTAKE-20260821",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2136 für StateStore-only Intake",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst geschützt gemergt und missing-only in den StateStore adoptiert wurde. Zweck ist ausschließlich, den in PR #2136 gemergten Fix für StateStore-only bestehende TaskSpecs und Refinement-Supersessions in die immutable Bureau-Runtime zu übernehmen, damit anschließend der Live-Operator-Intake-Readback und der revisionsgebundene Retirement des obsoleten T035-Closeout-Wrappers erfolgen können. Diese Authority erteilt genau einen Runtime-Effekt und keine T036-, Queue-, Claim-, Dispatch-, Supply-, Codeimplementierungs-, Fremdarbeits- oder allgemeine Repository-Autorität.",
   "priority": {
     "lane": "now",

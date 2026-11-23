@@ -281,6 +281,6 @@
     "strategy": "Keep immutable previous release 0e98081848c7fede031c546533f99ee5ff1d5c7d and manifest 776b251febf3d69224dd565397bf81b383ba5efd8cedff057436c14534f86063 for rollback; preserve all StateStore data, backups and other repositories."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time immutable Bureau runtime refresh after PR #2425"
 }

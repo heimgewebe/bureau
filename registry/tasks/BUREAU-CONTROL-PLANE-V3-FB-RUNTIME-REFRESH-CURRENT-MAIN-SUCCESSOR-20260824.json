@@ -204,6 +204,6 @@
     "strategy": "The currently integrity-valid deployed Bureau runtime remains authoritative until a new immutable result is fully read back. If the source-ancestry precondition fails or the new effect becomes unclear, preserve all precondition, attempt, intent, workspace, backup, manifest, Registry, authority and lease evidence and do not retry. Reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh successor for current main after PR #2164"
 }

@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach PR #1956 für T010",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der Bureau-PR #1956 / Merge-Commit 58a2ef59ab46531194a0d9d7f0f5bd02ce1a6147 sowie den Merge dieser eigenen Authority-TaskSpec enthält. Zweck ist ausschließlich, release-registry-identity wiederherzustellen und die mit T010 und PR #1956 gemergte StateStore-Backup-/Restore-Implementierung samt manifestgebundenem Launcher-Pfad in die immutable Bureau-Runtime zu bringen. Erst danach dürfen die T010-Systemd-Units separat revisionsgebunden aktiviert und der bereits laufende T010-Bureau-Run anhand seiner eigenen Acceptance-Evidenz abgeschlossen werden. Diese Authority aktiviert keine Timer und verifiziert T010 nicht selbst.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

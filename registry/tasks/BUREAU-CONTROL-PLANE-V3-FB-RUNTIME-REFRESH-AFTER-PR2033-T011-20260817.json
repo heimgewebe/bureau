@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2033-T011-20260817",
   "title": "Single-Use-Runtime-Refresh nach Queue-only PR #2033 für T011",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Zweck ist ausschließlich, den bereits gemergten und live read-only abgenommenen BUREAU-CONTROL-PLANE-V3-T011-Run nach dem Queue-only Main-Drift durch PR #2033 wieder mutationsfähig zu machen und anschließend über den normalen revisionsgebundenen Acceptance-/Closeout-Pfad zu terminalisieren. Diese Authority ready-setzt, claimt, verifiziert oder implementiert T011 nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-WELTGEWEBE-T008-20260818",
   "title": "Single-Use-Runtime-Refresh für Weltgewebe T008 TaskSpec-Revision",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand fe41fe6e12569eb433542c47b8f2bdd84902789a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 4f10888c0631d41845d1467f85f89c63ab5d97a1. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und muss diese gemergte Authority-TaskSpec enthalten; legitime zwischenzeitliche Main-Merges dürfen enthalten sein. Zweck ist ausschließlich, den normalen revisionsgebundenen Operator-Intake-/TaskSpec-CAS-Pfad für WELTGEWEBE-OS-V1-T008 wieder freizuschalten, damit dessen veralteter blocked/free-text-Vertrag kontrolliert auf ready/typed Acceptance revidiert werden kann. Diese Authority implementiert oder schließt T008 nicht, verändert Leitstand oder Weltgewebe nicht, verändert keine Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

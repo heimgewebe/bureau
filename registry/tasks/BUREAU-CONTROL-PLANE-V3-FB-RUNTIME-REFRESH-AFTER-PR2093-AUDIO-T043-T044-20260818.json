@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2093-AUDIO-T043-T044-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2093 für Audio T043/T044",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 2128294a32a99c99472856ac7f4b85570f0a192c auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 987cb1f11505eab4f09470cc240bb7a63fe6da1a nach PR #2093; das tatsächliche Target wird erst unmittelbar vor prepare-intent frisch bestimmt und muss diese gemergte Authority-TaskSpec enthalten. Zweck ausschließlich: den normalen revisionsgebundenen Operator-Intake-/TaskSpec-CAS-Pfad für die T043-StateStore-Projektionsrecovery und die T044-Erstpublikation wieder freizuschalten. Beide Audio-Task-PRs sollen vor dem ersten Task-Merge geöffnet werden. Diese Authority publiziert oder implementiert T043/T044 nicht, verändert keine Audio-Runtime oder Defaults, keine Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout nie wiederverwendet werden.",
   "priority": {
     "lane": "now",

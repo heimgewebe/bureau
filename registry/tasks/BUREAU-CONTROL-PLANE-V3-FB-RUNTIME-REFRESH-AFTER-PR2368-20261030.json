@@ -281,6 +281,6 @@
     "strategy": "Retain existing manifest-bound 84534f9f9c0eb23180dd16ca06ef6bf8eb9afb5c Bureau runtime as recovery source until the one authorized new target is tested. Incomplete, failed or unclear effect must be reconciled by exact original immutable attempt receipts and fresh installed-state proof; never blindly retry. No NixOS/system/foreign source mutation."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time Bureau production runtime refresh after protected DrKonqi verifier PR #2368"
 }

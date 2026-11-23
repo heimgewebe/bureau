@@ -281,6 +281,6 @@
     "strategy": "Preserve installed Bureau source 12b2405e98a9e0b666d3b8be76ada3d9b779fba1 and manifest a8ca8ced6880d08c3cbfffc0458845d90ecfca5e35069a5d03b05582d4801be0 as rollback; recover via immutable prior release and native restore verification, reconcile ambiguous effects before retry. Never alter StateStore or foreign work."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time Bureau runtime convergence after terminal queue cleanup PR2414"
 }

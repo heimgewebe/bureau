@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh für Weltgewebe-T084-Closeout",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, damit der bereits belegte no-code Closeout von OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T084 über den normalen typed Intake publiziert werden kann und anschließend OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T085 regulär abhängigkeitsgebunden fortgesetzt werden kann.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

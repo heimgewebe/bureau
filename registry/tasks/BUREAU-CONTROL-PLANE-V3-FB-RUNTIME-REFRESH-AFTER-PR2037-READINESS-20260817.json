@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2037-READINESS-20260817",
   "title": "Single-Use-Runtime-Refresh nach Readiness-Korrektur PR #2037",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 93050dfb7e8e128b45081e123eb9f47694653971 liegt hinter der durch PR #2037 gemergten Korrektur des canonical-runtime Repository-Bindings auf b1ef835ba19fa3843b06a154f00290655a5cc56f. Zweck ist ausschließlich, den korrigierten operator-task-ready-Pfad in die installierte Runtime zu bringen, bevor BUREAU-CONTROL-PLANE-V3-T033 und BUREAU-CONTROL-PLANE-V3-T034 revisionsgebunden promoviert werden. Diese Authority verändert weder T033/T034 noch Queue, Claims, Dispatch oder Registry außerhalb dieser eigenen TaskSpec und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

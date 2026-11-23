@@ -297,6 +297,6 @@
     "strategy": "The currently deployed Bureau runtime at 03311af7b966fc75854b6d4e229716e22081756f remains authoritative until a new immutable result is fully read back. If protected publication, source ancestry, target freshness, CI, deployment/Registry identity, TaskSpec binding, executor preflight or the runtime effect becomes unclear, preserve all publication, adoption, intent, attempt/result, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh für RepoGround T002K nach PR #2214"
 }

@@ -281,6 +281,6 @@
     "strategy": "Keep immutable 56480f8ac539ea414e64304daea26ff8ae24c816 release, its Registry and manifest, existing rollback copies and original PR2360 authority/intent/result/ledger untouched. Require a single newly authorized effect under this TaskSpec, verify exact target, then close out on native live evidence. If after-effect UNCLEAR reappears, no installer retry or false success."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-use protected Bureau runtime convergence after merged PR2383 and PR2384"
 }

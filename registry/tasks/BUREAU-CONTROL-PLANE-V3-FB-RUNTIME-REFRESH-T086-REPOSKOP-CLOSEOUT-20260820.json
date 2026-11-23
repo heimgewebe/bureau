@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T086-REPOSKOP-CLOSEOUT-20260820",
   "title": "Single-Use Bureau-Runtime-Refresh für T086 Reposkop-Closeout",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen, revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, damit die installierte Bureau-Runtime die bereits kanonische Resource component.grabowski.reposkop-effectiveness und alle legitimen nachfolgenden Main-Merges kennt, bevor OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086 revisionsgebunden verengt und abgeschlossen wird. Diese Authority erteilt ausschließlich den Runtime-Effekt und keine T086-Implementierungs-, Queue-, Claim-, Dispatch- oder Fremdarbeitsautorität.",
   "priority": {
     "lane": "now",

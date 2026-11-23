@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #2012 für Frontier-Intake",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten Stand 0ad76828ab403027cdc721a7a616cdb233dfa081 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Auslöser ist der Merge von PR #2012 auf 51a2f3b19d1d0f16216bd030f6e4073dc983a0d0 und die danach belegte release-registry-identity-mismatch-Barriere im Operator-Intake. Zweck ausschließlich: die installierte Bureau-Runtime auf den nach Merge dieser eigenen Authority-TaskSpec aktuellen main zu konvergieren, damit die bereits erfassten Frontier-Folgebefunde über den kanonischen Proposal-/Review-/Publish-Pfad publiziert werden können. Keine Queue-, Supply-, Claim-, Dispatch-, Grabowski-Runtime- oder fremde Mutation innerhalb dieses Runtime-Effekts; keine Wiederverwendung nach Closeout.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

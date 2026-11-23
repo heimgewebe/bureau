@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2067-503-CLOSEOUT-20260818",
   "title": "Single-Use-Runtime-Refresh nach PR #2067 für 503-Closeout",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime b5d87191ca309f954f1ce1253560b49cc7e3c2d6 liegt hinter dem nach PR #2067 beobachteten main 72b9e08f0b3a68557d316dca9e7985dfee4f777d. Zweck ist ausschließlich, den Runtime-/Registry-Drift zu beseitigen, damit der aktive Run BUR-RUN-20260818T054945Z-d9a3d9bfd3 des bereits implementierten BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-GITHUB-503-BOUNDED-RETRY-20260817 seine vorhandene revisionsgebundene Acceptance-Evidenz authentifizieren und terminal schließen kann. Das tatsächliche Target wird erst unmittelbar vor prepare-intent frisch aus GitHub-main abgeleitet und darf legitime zwischenzeitliche Main-Merges enthalten. Keine 503-Code-, Queue-, Claim-, Dispatch- oder Fremdarbeitsmutation.",
   "priority": {
     "lane": "now",

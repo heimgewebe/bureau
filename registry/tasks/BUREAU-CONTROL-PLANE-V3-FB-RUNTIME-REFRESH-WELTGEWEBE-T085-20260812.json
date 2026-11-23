@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh für Weltgewebe-T085-Publikation",
   "goal": "Nach Merge dieser eigenen Autoritäts-TaskSpec genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den dann frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen, damit der durch release-registry-identity-mismatch blockierte normale typed Operator-Intake für OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T085 wieder revisionsgebunden funktioniert. T085 selbst wird danach neu gegen den frischen Registry-Stand vorgeschlagen, reviewt und über den normalen Publisher veröffentlicht; diese Autorität publiziert oder implementiert T085 nicht direkt.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2052-GITHUB-503-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2052 für GitHub-503-Follow-up",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 37b6a7f1cfa2fdba810f8750da0f5c88c3ca1e5e liegt hinter dem nach PR #2054 und PR #2052 beobachteten main bdd505cd9578fe19c5f2424ffab286cf19742fd2. Zweck ist ausschließlich, den Runtime-Drift zu beseitigen, damit BUREAU-CONTROL-PLANE-V3-FU-RUNTIME-REFRESH-GITHUB-503-BOUNDED-RETRY-20260817 gegen aktuelle Registry-/StateStore-Wahrheit promoted, live verifiziert und terminalisiert werden kann. Diese Authority verändert weder den 503-Follow-up noch Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2045-AUDIO-FOLLOWUPS-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2045 für Audio-Follow-up-Publikation",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 838088084f0c61ba50a72a97aa053c76cada1bf5 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Zielstand muss PR #2045 sowie diese neue Authority-TaskSpec enthalten. Zweck ist ausschließlich, den normalen operator-native Registry-Publikationspfad für die bereits promovierten Audio-Folgekandidaten AUDIO-CONTROL-PLANE-V1-T043 und AUDIO-CONTROL-PLANE-V1-T044 wieder freizuschalten. Diese Authority publiziert oder implementiert die Audio-Tasks nicht, verändert weder Audio-Runtime noch Defaults, Queue, Claims oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

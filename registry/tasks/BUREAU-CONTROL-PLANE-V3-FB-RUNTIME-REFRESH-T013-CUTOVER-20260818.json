@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-T013-CUTOVER-20260818",
   "title": "Single-Use-Runtime-Refresh für T013 Hard Cutover",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 48e5e7a0f79b0332197692c32c825cf7758ae05c auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Bei Registrierung steht main auf 77c292adb865735fc0984ce1cf42f0ba21e01652. Das tatsächliche Target wird erst vor prepare-intent frisch bestimmt und muss diese gemergte Authority-TaskSpec enthalten; legitime zwischenzeitliche Main-Merges dürfen enthalten sein. Zweck ist ausschließlich, den normalen revisionsgebundenen Claim- und StateStore-Pfad für BUREAU-CONTROL-PLANE-V3-T013 freizuschalten. Diese Authority implementiert oder schließt T013 nicht, verändert keine Queue, Claims, Dispatch oder fremde Arbeit und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

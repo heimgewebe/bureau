@@ -193,6 +193,6 @@
     "strategy": "Bei fehlgeschlagenem oder unklarem Refresh keine neue Deployment-Wahrheit behaupten und Apply nicht blind wiederholen. Den letzten integritätsgültigen immutable Bureau-Release als Rückfallkante beibehalten und ausschließlich den kanonischen receipt-/target-/StateStore-gebundenen Reconciliation- beziehungsweise Rollbackpfad verwenden; keine Registry-, StateStore-, Consumption- oder Single-Use-Historie zurückschreiben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Single-Use-Bureau-Runtime-Refresh für T009/T011-Unlock"
 }

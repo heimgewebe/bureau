@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2035-BROWSER-STRUCTURED-PROVIDER-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2035 für StructuredToolProvider",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime 472fd60f29000854c224c15459595a3f6c728163 liegt hinter dem durch PR #2035 erweiterten Registry/main. Zweck ist ausschließlich, den normalen revisionsgebundenen Claim-/Acceptance-/Closeout-Pfad für GRABOWSKI-OPERATOR-SURFACE-V1-FU-BROWSER-STRUCTURED-TOOL-PROVIDER-CONTRACT-20260817 wieder zu öffnen. Der kanonische GitHub-Compare-Read liefert für die nachweislich vorhandenen Commitobjekte aktuell reproduzierbar HTTP 404 und der kanonische commits/<main>/pulls-Read liefert für den eindeutig gemergten Main-Commit leer zurück; deshalb dürfen ausschließlich für Commit-Lag und Merge-PR-Discovery zwei eng begrenzte GitHub-Fallbacks verwendet werden. Diese Authority implementiert, claimt, verifiziert oder akzeptiert den StructuredToolProvider-Task nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

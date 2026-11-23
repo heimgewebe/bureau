@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh für Projection-Repair-Checkpoint",
   "goal": "Nach geschütztem Merge des append-only Projection-Repair-Checkpoint-Mechanismus genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, CI-grünen aktuellen main autorisieren. Zweck ist ausschließlich, den neuen state-projection-repair-v1-Eventvertrag und die projection-repair CLI in die kanonische Runtime zu bringen, damit der seit Event 4459 bestehende historische Replay-Drift anschließend kandidatengebunden repariert und die bereits erfolgreichen Runtime-Refresh-Authorities sauber geschlossen werden können. Die Authority ist single-use und targetgebunden; sie autorisiert selbst keinen Projection-Repair-Event und keine Queue-, Claim-, Dispatch- oder Grabowski-Runtime-Wirkung.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

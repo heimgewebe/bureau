@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #1979 für Orphan-Reconcile und T009/T011",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 1441e3d7e2cacdbacfc9999e29a7e2c0c4759ad5 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, den erneut entstandenen release-registry-identity-mismatch zu beseitigen, damit der stale und ungebundene Run BUR-RUN-20260814T065430Z-dedd7803c5 über den bestehenden CAS-gebundenen bureau-pickup-orphan-reconcile terminalisiert und seine logischen Bureau-Reservations freigegeben werden können, ohne den fremden Dirty-Worktree zu verändern. Danach soll der reguläre Typed-Acceptance-Migrationspfad BUREAU-CONTROL-PLANE-V3-T009 claimbar machen und anschließend T009 → T011 fortgesetzt werden. Die Autorität ist single-use und targetgebunden; zweckgebundene Browser-Control-, Deploy-Diagnostic-, historische oder bereits verbrauchte Runtime-Authorities werden nicht substituiert.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

@@ -281,6 +281,6 @@
     "strategy": "Preserve immutable deployed source 1275c9dbd0c8944c98a13ab981bffefdb5d54300 and manifest 26349c45d24d003efac7de8984823c498bbeeb033a2ac8e4d8abab209c553be9 for exact rollback and recovery. Stop after any effect ambiguity; reconcile receipts rather than rerun. No foreign task or NixOS effect."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-time Bureau runtime convergence after protected PR2391"
 }

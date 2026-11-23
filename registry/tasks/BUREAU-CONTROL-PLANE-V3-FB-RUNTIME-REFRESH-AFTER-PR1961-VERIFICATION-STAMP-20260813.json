@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh nach PR #1961 / verification-stamp",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren, der Bureau-PR #1961 / Merge-Commit 99092ff14e49149af83fb5fdae83e93b78ac1ea6 sowie den Merge dieser eigenen Authority-TaskSpec enthält. Zweck ist ausschließlich, den gemergten verification-stamp-TaskSpec-Authority-Fix in die immutable Bureau-Runtime zu bringen, damit der bereits laufende Follow-up-Run den öffentlichen CLI-Livebeweis durchführen und anschließend über seine eigene revisionsgebundene Acceptance terminal schließen kann. Diese Authority verifiziert oder schließt den Follow-up-Run nicht selbst.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

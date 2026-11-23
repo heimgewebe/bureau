@@ -281,6 +281,6 @@
     "strategy": "Preserve installed Bureau source a00971337e27e2d01c7d69320780b2989f33b18e and manifest 69be4b133072df2d55cc740d34b1048a887bafec145647d192dd9b44ff76cca4 as rollback; recover via immutable prior release and native restore verification, reconcile ambiguous effects before retry. Never alter StateStore or foreign work."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Activate immutable Bureau runtime after verified daily retention PR #2413"
 }

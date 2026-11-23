@@ -281,6 +281,6 @@
     "strategy": "Retain immutable 6ffb80214e71ee838309b6d9e540472aad3e9a4c installed release, the corresponding manifest/Registry and all existing rollbacks. Historical PR2377 attempt 259c286cd997c5f6dfde4d8abff951b19894e142b6aabc5731e1305d30331d3e and its immutable unclear receipt remain for distinct incident reconciliation; never re-execute that intent or reuse its authority. Stop on any unknown new effect."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "One-use Bureau runtime convergence after merged timer and capsule fixes PR2379/PR2380"
 }

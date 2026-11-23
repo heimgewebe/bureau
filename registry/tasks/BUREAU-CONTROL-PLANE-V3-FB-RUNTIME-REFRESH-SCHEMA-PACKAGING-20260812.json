@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Runtime-Refresh für immutable Schema-Paketfix",
   "goal": "Nach Merge des fokussierten Schema-Paketfixes genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main autorisieren. Der Zielstand muss Bureau-PR #1922 enthalten und damit schemas/*.json in den hashgebundenen immutable Paketbaum aufnehmen. Wegen des aktuell unvollständigen f527-Release-Baums wird diese Authority als geschützte Ein-Datei-TaskSpec registriert und ausschließlich über seed_missing_registry in den StateStore aufgenommen. Apply läuft danach aus einem sauberen expliziten main-Checkout unter dem normalen StateStore-/Target-/Lease-CAS; der Installer bleibt kein Standalone-Shortcut.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 1

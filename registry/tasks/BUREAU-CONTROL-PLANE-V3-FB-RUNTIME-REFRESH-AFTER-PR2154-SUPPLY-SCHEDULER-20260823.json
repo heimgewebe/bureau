@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2154-SUPPLY-SCHEDULER-20260823",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2154 für Supply-Konvergenz",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom aktuell installierten und frisch integrity-valid beobachteten Stand 047181c585779d82ee3b33e6086696060db9116a auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Der Ziel-main muss mindestens den bei Registrierung autoritativen Stand e77716ed493f1017b662c04c22c8545422cc93b5, diese neue Authority-TaskSpec und alle legitimen Zwischenmerges enthalten. Zweck ist ausschließlich, die in PR #2153 korrigierte Task-Supply/Systemd-Semantik (blocked = Exit 3, SuccessExitStatus=3), die bereits in PR #2146 eingeführte Controller-Capability operator-approval sowie die in PR #2154 stabilisierte historische Runtime-/Scheduler-Readback-Kompatibilität revisionsgenau in die aktive Bureau-Runtime zu bringen und anschließend Supply live neu zu messen. Diese Authority verändert weder Queue, Claims noch Dispatch oder fremde Arbeit und wiederholt keinen früheren target_sha256 oder Intent.",
   "priority": {
     "lane": "now",

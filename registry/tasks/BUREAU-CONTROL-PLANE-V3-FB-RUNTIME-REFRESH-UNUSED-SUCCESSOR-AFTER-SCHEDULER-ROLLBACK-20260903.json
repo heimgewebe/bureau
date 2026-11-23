@@ -341,6 +341,6 @@
     "strategy": "The integrity-valid deployed Bureau runtime at fd9570bbc99719f601879482def202b23bddbf01 remains authoritative until a successor result is fully read back. The predecessor authority is never retried. If publication, adoption, activation, source ancestry, target freshness, CI, service-status reconciliation, execution context, runtime mutation, or transport becomes unclear, preserve evidence and stop; any further runtime effect requires a separately reviewed successor."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-use Bureau runtime refresh after exact scheduler rollback for 2026-09-03"
 }

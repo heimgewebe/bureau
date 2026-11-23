@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2010-PR2026-T011-20260817",
   "title": "Single-Use-Runtime-Refresh nach PR #2026 und #2010 für T011",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen main ausführen. Die installierte Runtime ae275fc895e6ab460172f479fa7ba30c62dfff91 liegt hinter dem aktuellen main; zuletzt wurden PR #2026 und anschließend PR #2010 beobachtet. Zweck ist ausschließlich, die wegen Runtime/main-Mismatch fail-closed pausierte Arbeit an BUREAU-CONTROL-PLANE-V3-T011 wieder fortsetzbar zu machen. Diese Authority ready-setzt, claimt, verifiziert oder implementiert T011 nicht selbst und darf nach erfolgreichem Refresh und Closeout niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

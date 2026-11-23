@@ -388,6 +388,6 @@
     "strategy": "The currently integrity-valid Bureau runtime at 1c26075a4188c750bf37eafbfeb157983906347a remains authoritative until one source-precondition- and execution-context-bound immutable result is fully read back. If protected publication, adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any runtime result becomes unclear, preserve all evidence and do not blindly retry; reconcile through another separately bound successor path. The existing C17019 authority, historical intents and historical targets are never rebound. The two Nixer follow-ups remain separate Bureau candidates until the runtime convergence and their own publication gates complete."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-use Bureau runtime refresh successor for C17019 execution context"
 }

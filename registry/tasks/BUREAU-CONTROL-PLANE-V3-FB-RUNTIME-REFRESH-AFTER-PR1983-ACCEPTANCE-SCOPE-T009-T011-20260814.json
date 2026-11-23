@@ -4,7 +4,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "title": "Single-Use-Bureau-Runtime-Refresh nach PR #1983 für Acceptance-Scope und T009/T011",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten source-/Registry-Stand 4f1a3fefffd994c8ebbe9844f48ad8379b05c90e auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main autorisieren. Zweck ist ausschließlich, den nach PR #1983 entstandenen release-registry-identity-mismatch zu beseitigen, damit der bereits strict-katalogvalidierte und als Revision desselben Tasks bewertete Kandidat candidate-4275bc72dd82bdecb71de34f den exakten execution.grabowski_resources-Scope von BUREAU-CONTROL-PLANE-V3-FU-LEGACY-ACCEPTANCE-MIGRATION-20260812 über den normalen typed Proposal-, Review- und Publication-Pfad ergänzen kann. Danach folgt ausschließlich der reguläre Pfad Typed Acceptance für T009/T011, T009 und T011. Die Autorität ist single-use und targetgebunden; zweckgebundene Browser-Control-, Deploy-Diagnostic-, historische oder bereits verbrauchte Runtime-Authorities werden nicht substituiert.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "now",
     "rank": 0

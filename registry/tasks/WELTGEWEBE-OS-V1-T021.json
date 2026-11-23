@@ -4,25 +4,37 @@
       "assertion": "Alle auf dem dann aktuellen main verwendeten JavaScript-GitHub-Actions, die Node-20-Deklarationen oder entsprechende Runner-Warnungen erzeugen, werden vollständig inventarisiert; mindestens der aus Review-Evidence-Lauf 29855770929 belegte actions/upload-artifact-Pfad wird geprüft, während actions/cache und markdownlint-cli2-action nur bei frischem Beleg als betroffen gelten.",
       "evidence_type": "object",
       "id": "runtime-audit",
-      "verifier": "GitHub-Workflow-Inventar, Runner-Logs und upstream action.yml/readme"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t021:runtime-audit"
+      }
     },
     {
       "assertion": "Für jede tatsächlich geänderte Action wird der neue vollständige Commit-SHA gegen das offizielle Upstream-Release verifiziert und im Diff nachvollziehbar dokumentiert; Floating Tags werden nicht eingeführt.",
       "evidence_type": "object",
       "id": "upstream-pin-verification",
-      "verifier": "Offizielle Upstream-Repository-Tags und exakte SHA-Readbacks"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t021:upstream-pin-verification"
+      }
     },
     {
       "assertion": "Die Härtung verändert keine GitHub-Workflow-Berechtigungen, Events, Environment-Bindungen, Secret-Flüsse oder ausführbaren Projektskripte außer soweit für die belegte Action-Kompatibilität zwingend erforderlich; jede Ausnahme wird separat als Sicherheitsänderung behandelt.",
       "evidence_type": "object",
       "id": "privilege-invariance",
-      "verifier": "Exakter Workflow-Diff und Security-Review"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t021:privilege-invariance"
+      }
     },
     {
       "assertion": "Alle direkt betroffenen Workflows laufen auf dem finalen Head erfolgreich; Required Merge Gate und risikoadäquate Review-Evidenz sind grün, bevor ein Merge erfolgt.",
       "evidence_type": "object",
       "id": "workflow-proofs",
-      "verifier": "GitHub Actions Checks, Review Evidence Gate und finaler Head-/Diff-Readback"
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t021:workflow-proofs"
+      }
     }
   ],
   "claims": [
@@ -55,30 +67,305 @@
       "claim_or_dispatch_authority",
       "merge_or_deployment_authority"
     ],
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-9082050d57eb596dd967921c",
+      "candidate_id": "candidate-41e7487f0d9849cc49c31c14",
+      "content_fingerprint": "41e7487f0d9849cc49c31c140dbcc5059e204b7796bfa39963f3655f55562a9b",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-24T19:12:44.813790Z",
+      "event_id": 11167,
+      "request_sha256": "45be0bcd5c500ff1d6a038842d61a56972b471fc721d5ef9e489a1c55d0c2bb1",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "663e0b2964ab808d2f3e6230eb7d3d95611c44c2d43578459058e1bf4ad7b3ba",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "grabowski:operator-live-diagnostic:WELTGEWEBE-OS-V1-T021:acceptance-revision:task_revision=1;task_spec=c21a6bdfacb9f9e63cd7f711fd0cbe7397a85c959c0c8a3297a9e616ce2c5a11;prior_candidate_closeout=8a0d08fb513ac3980b6692220a25bb6065c34b706f67e6cde7ce8048bd0ba11c;weltgewebe_main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+        "observed_at": "2026-08-24T19:12:44.641995Z",
+        "sha256": null
+      },
+      "source_fingerprint": "663e0b2964ab808d2f3e6230eb7d3d95611c44c2d43578459058e1bf4ad7b3ba",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "663e0b2964ab808d2f3e6230eb7d3d95611c44c2d43578459058e1bf4ad7b3ba",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "grabowski:operator-live-diagnostic:WELTGEWEBE-OS-V1-T021:acceptance-revision:task_revision=1;task_spec=c21a6bdfacb9f9e63cd7f711fd0cbe7397a85c959c0c8a3297a9e616ce2c5a11;prior_candidate_closeout=8a0d08fb513ac3980b6692220a25bb6065c34b706f67e6cde7ce8048bd0ba11c;weltgewebe_main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+          "observed_at": "2026-08-24T19:12:44.641995Z",
+          "sha256": null
+        }
+      ]
+    },
     "registered_at": "2026-07-21T21:12:00+02:00",
     "source_diff_sha256": "5d9591e0a87d94084ac45d0df9cd765d8ebf05dde6994f8b6ea1b4d84bec2efa",
     "source_pr": 1504,
     "source_repository": "heimgewebe/weltgewebe",
     "source_review_evidence_run": 29855770929,
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-174890f82546093e6bf8a390",
-      "event_id": 893,
-      "event_created_at": "2026-07-21T19:12:28.134063Z",
-      "request_sha256": "efdca5df7c1296d2aadb932fb8fecd3d3a62a347b0ebda50a04197ef4ee2a1c3",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "github-pull-request-review",
-        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1504",
-        "observed_at": "2026-07-21T19:12:28.129113Z",
-        "sha256": "5d9591e0a87d94084ac45d0df9cd765d8ebf05dde6994f8b6ea1b4d84bec2efa"
-      },
+    "verification": {
+      "closed_at": "2026-08-25T04:16:51.459679Z",
       "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "73ff2be3445cfbdbeedad21d1e6abb9fa55a4c05599c13a499d559d1d8e9dfa9",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "preview_sha256": "8a725cd47a41b7c198818672918105939e4313b1c3b204d56c7f489d10f890f0",
+      "receipt": {
+        "authentications": {
+          "privilege-invariance": {
+            "authority": "manual",
+            "criterion_id": "privilege-invariance",
+            "evidence_sha256": "57da6c6b46a42ffe596a900c6d52a5823b3592f854c90ad0929e2f12330c636d",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t021:privilege-invariance",
+            "observer": "controller:chatgpt:operator-observation:t021-node24-20260825",
+            "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "runtime-audit": {
+            "authority": "manual",
+            "criterion_id": "runtime-audit",
+            "evidence_sha256": "fab8d6deb1dac520a6b7d905f5fbb53af05d4ed5f7f3d31898f94f3358198d2e",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t021:runtime-audit",
+            "observer": "controller:chatgpt:operator-observation:t021-node24-20260825",
+            "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "upstream-pin-verification": {
+            "authority": "manual",
+            "criterion_id": "upstream-pin-verification",
+            "evidence_sha256": "11a02d07d82f0c868f93a30d6cb94bef9d64e74832f8b7e4ead731a3effeb114",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t021:upstream-pin-verification",
+            "observer": "controller:chatgpt:operator-observation:t021-node24-20260825",
+            "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "workflow-proofs": {
+            "authority": "manual",
+            "criterion_id": "workflow-proofs",
+            "evidence_sha256": "81397da4e0063d5f1d66678a026cc27f1e4a0ed7abcef835550bdb77475ea3cf",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t021:workflow-proofs",
+            "observer": "controller:chatgpt:operator-observation:t021-node24-20260825",
+            "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-25T04:16:51.459679Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 37.469258,
+              "authority": "manual",
+              "criterion_id": "runtime-audit",
+              "domain": "observation",
+              "observed_at": "2026-08-25T04:16:13.990421Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:runtime-audit:main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 37.469258,
+              "authority": "manual",
+              "criterion_id": "upstream-pin-verification",
+              "domain": "observation",
+              "observed_at": "2026-08-25T04:16:13.990421Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:upstream-pin-verification:main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 37.469258,
+              "authority": "manual",
+              "criterion_id": "privilege-invariance",
+              "domain": "observation",
+              "observed_at": "2026-08-25T04:16:13.990421Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:privilege-invariance:main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 37.469258,
+              "authority": "manual",
+              "criterion_id": "workflow-proofs",
+              "domain": "observation",
+              "observed_at": "2026-08-25T04:16:13.990421Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:workflow-proofs:main=e34a27a160a37b86e06ba906e320ff24e871db0d",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-25T04:16:51.459679Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "WELTGEWEBE-OS-V1-T021",
+          "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
+        },
+        "evidence": {
+          "privilege-invariance": {
+            "criterion_id": "privilege-invariance",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Accepted. T021 performs no Weltgewebe repository mutation because the alleged Node-20 runtime path is absent on exact main e34a27a160a37b86e06ba906e320ff24e871db0d. Therefore this closeout changes no workflow permissions, events, environment bindings, secret flows, executable project scripts or Action pins. The current workflow bytes are the already-deployed exact-main bytes.",
+              "observation_scope": "weltgewebe:t021:privilege-invariance",
+              "observer": "controller:chatgpt:operator-observation:t021-node24-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T04:16:13.990421Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t021:privilege-invariance",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:privilege-invariance:main=e34a27a160a37b86e06ba906e320ff24e871db0d"
+            }
+          },
+          "runtime-audit": {
+            "criterion_id": "runtime-audit",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Accepted. Fresh GitHub readback on 2026-08-25 still resolves heimgewebe/weltgewebe main to exact commit e34a27a160a37b86e06ba906e320ff24e871db0d. Exact-tree workflow inventory was re-read from that commit. Fresh upstream action.yml/action.yaml readback for every direct external Action SHA found 14 JavaScript actions declaring runs.using=node24 and four direct external actions declaring runs.using=composite; no direct action declares node20. All check-run annotations on this exact head with annotations_count>0 were read: they contain only app-id -> client-id deprecation warnings and review-evaluator cancellation/exit-code messages, with no Node-20 or Node.js runtime deprecation warning.",
+              "observation_scope": "weltgewebe:t021:runtime-audit",
+              "observer": "controller:chatgpt:operator-observation:t021-node24-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T04:16:13.990421Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t021:runtime-audit",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:runtime-audit:main=e34a27a160a37b86e06ba906e320ff24e871db0d"
+            }
+          },
+          "upstream-pin-verification": {
+            "criterion_id": "upstream-pin-verification",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Accepted. T021 requires upstream release/SHA verification for every actually changed Action. The fresh audit of exact main e34a27a160a37b86e06ba906e320ff24e871db0d found no Node-20 Action requiring a change, so T021 changes zero Action pins and creates no new upstream-pin obligation. Existing external Action references are immutable full commit SHAs; fresh upstream action metadata at those exact SHAs confirms node24 for every JavaScript Action and composite for the four non-JavaScript Actions.",
+              "observation_scope": "weltgewebe:t021:upstream-pin-verification",
+              "observer": "controller:chatgpt:operator-observation:t021-node24-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T04:16:13.990421Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t021:upstream-pin-verification",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:upstream-pin-verification:main=e34a27a160a37b86e06ba906e320ff24e871db0d"
+            }
+          },
+          "workflow-proofs": {
+            "criterion_id": "workflow-proofs",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Accepted. There are no directly affected workflows because T021 makes no Action change. Fresh GitHub Check Run readback for exact main e34a27a160a37b86e06ba906e320ff24e871db0d shows recent successful Exact main commit is live, Production reconciler contract tests, metrics and cargo-audit runs; recent relevant runs have zero annotations. Older annotation-bearing runs were exhaustively inspected and contain no Node-20/Node.js runtime deprecation. No synthetic T021 merge or workflow rerun is required because there is no T021 code diff to validate.",
+              "observation_scope": "weltgewebe:t021:workflow-proofs",
+              "observer": "controller:chatgpt:operator-observation:t021-node24-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T04:16:13.990421Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t021:workflow-proofs",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:WELTGEWEBE-OS-V1-T021:20260825:workflow-proofs:main=e34a27a160a37b86e06ba906e320ff24e871db0d"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "73ff2be3445cfbdbeedad21d1e6abb9fa55a4c05599c13a499d559d1d8e9dfa9",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+        "preview_sha256": "8a725cd47a41b7c198818672918105939e4313b1c3b204d56c7f489d10f890f0",
+        "receipt_sha256": "494693868bc47b7656f62e41d0fefcd4c4495923d25b4fd82fcee57005b37cf6",
+        "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "WELTGEWEBE-OS-V1-T021",
+        "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "b8139ebd4232a70f1c35598fc1308fc00e0d6ae097309f87ffb7540f39422d24"
+      },
+      "receipt_sha256": "494693868bc47b7656f62e41d0fefcd4c4495923d25b4fd82fcee57005b37cf6",
+      "reviewer": "controller:chatgpt:t021-closeout-review-20260825",
+      "schema_version": 1,
+      "task_sha256": "e354a212855d7ad166d2ba96ce83ab1a06694e6892db2c204061d988e2703248"
     }
   },
   "priority": {
@@ -94,6 +381,6 @@
     "strategy": "Die Action-Pin-Änderungen auf die zuvor verifizierten vollständigen Commit-SHAs zurücksetzen; keine Workflow-Berechtigungs- oder Triggeränderungen in denselben Rollback mischen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Verbleibende GitHub-Actions-Runtimepfade auf Node 24 härten"
 }

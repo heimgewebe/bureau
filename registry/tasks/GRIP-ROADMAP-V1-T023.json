@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Terminal failures are classified into stable bounded reason classes with explicit retryability and owner-decision semantics.",
-      "id": "failure-taxonomy"
+      "evidence_type": "object",
+      "id": "failure-taxonomy",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t023:failure-taxonomy"
+      }
     },
     {
       "assertion": "Only retry-safe cases with authoritative terminal and lease evidence may be resumed automatically; ambiguous outcomes remain fail-closed.",
-      "id": "safe-recovery"
+      "evidence_type": "object",
+      "id": "safe-recovery",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t023:safe-recovery"
+      }
     },
     {
       "assertion": "Duplicate, superseded and already-satisfied attention records converge idempotently without deleting historical evidence.",
-      "id": "attention-convergence"
+      "evidence_type": "object",
+      "id": "attention-convergence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t023:attention-convergence"
+      }
     },
     {
       "assertion": "Obligations close only when exact task, outcome receipt and current lifecycle truth agree.",
-      "id": "closeout-binding"
+      "evidence_type": "object",
+      "id": "closeout-binding",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t023:closeout-binding"
+      }
     },
     {
       "assertion": "Adversarial tests cover stale processes, unknown outcomes, retry exhaustion, duplicate obligations, evidence drift and idempotent replay.",
-      "id": "tests"
+      "evidence_type": "object",
+      "id": "tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t023:tests"
+      }
     }
   ],
   "claims": [
@@ -49,30 +74,379 @@
   "id": "GRIP-ROADMAP-V1-T023",
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
-    "reason": "Capability growth is currently limited by incomplete recovery and attention convergence rather than missing read surfaces.",
-    "source_candidate": "candidate-768825407c8cc6d2c0a82817",
-    "source_event_id": 1168,
     "operator_intake": {
+      "candidate_event_id": "candidate-event-f0076da3da91ddf687d5f66d",
+      "candidate_id": "candidate-0644e3f26da4dc89c44a9490",
+      "content_fingerprint": "0644e3f26da4dc89c44a9490a27878cb243fcbfa983f81e809c8c10a4c1e0629",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-09-05T16:57:53.753300Z",
+      "event_id": 14641,
+      "request_sha256": "79b7113b237f6ffe0d05e7498d0c9978ae41d6f0bae352820641743d7f5fe6e5",
       "schema_version": 1,
-      "candidate_id": "candidate-768825407c8cc6d2c0a82817",
-      "event_id": 1168,
-      "event_created_at": "2026-07-25T11:09:32.262590Z",
-      "request_sha256": "4cc6853d3a07db135e5c11572527c8481f74bda397b024e94d2f1081e8022687",
       "source": {
         "does_not_establish": [
           "source_content_identity"
         ],
-        "freshness": "unknown",
-        "kind": "operator-analysis",
-        "locator": "chatgpt-project-thread:grabowski:2026-07-25-action-execution-analysis",
-        "observed_at": "2026-07-25T12:45:00+02:00",
+        "fingerprint": "80e8c2edf565152a0c7966bc58bb0c3f5c8f8e382db0d3f5010e0e3058f01075",
+        "freshness": "fingerprint-bound",
+        "kind": "github",
+        "locator": "heimgewebe/grabowski#473@d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+        "observed_at": "2026-09-05T16:56:00Z",
         "sha256": null
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
+      "source_fingerprint": "80e8c2edf565152a0c7966bc58bb0c3f5c8f8e382db0d3f5010e0e3058f01075",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "80e8c2edf565152a0c7966bc58bb0c3f5c8f8e382db0d3f5010e0e3058f01075",
+          "freshness": "fingerprint-bound",
+          "kind": "github",
+          "locator": "heimgewebe/grabowski#473@d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+          "observed_at": "2026-09-05T16:56:00Z",
+          "sha256": null
+        }
       ]
+    },
+    "reason": "Capability growth is currently limited by incomplete recovery and attention convergence rather than missing read surfaces.",
+    "source_candidate": "candidate-768825407c8cc6d2c0a82817",
+    "source_event_id": 1168,
+    "truth_reconcile_note": "2026-09-05: legacy untyped acceptance migrated to executable manual_observation solely for current-head revalidation of the already-merged PR #473 implementation and PR #506 hardening; no implementation or authority claim is established by this revision.",
+    "verification": {
+      "closed_at": "2026-09-05T17:03:30.871639Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "5e6fe0b26eaafe18fc4896271da91d31d33db3a9170de1825c4d155bcb55998d",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "preview_sha256": "cb0993998b662219475df72dcf403c5a757596d778d3b6499e6ce722a24e3113",
+      "receipt": {
+        "authentications": {
+          "attention-convergence": {
+            "authority": "manual",
+            "criterion_id": "attention-convergence",
+            "evidence_sha256": "ad84c64f8343de94779f49946695e02049cfc7bae54e642a07352f2e713a383d",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t023:attention-convergence",
+            "observer": "chatgpt-grip-t023-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "closeout-binding": {
+            "authority": "manual",
+            "criterion_id": "closeout-binding",
+            "evidence_sha256": "d1a411077bd102cad0789c62ae3958c5cdd7a1b64fe2f0905982edcc49a7a034",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t023:closeout-binding",
+            "observer": "chatgpt-grip-t023-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "failure-taxonomy": {
+            "authority": "manual",
+            "criterion_id": "failure-taxonomy",
+            "evidence_sha256": "c045b72e22cd8ab1bc3ad4c781b3441c955f49f5ed479b0cf64ebac92d092b2c",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t023:failure-taxonomy",
+            "observer": "chatgpt-grip-t023-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "safe-recovery": {
+            "authority": "manual",
+            "criterion_id": "safe-recovery",
+            "evidence_sha256": "eed0b78ae53aecfa862f41ab2ab00b4ef52b541f825c39e4fc60dd787dede91a",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t023:safe-recovery",
+            "observer": "chatgpt-grip-t023-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "tests": {
+            "authority": "manual",
+            "criterion_id": "tests",
+            "evidence_sha256": "79e3d8c490a9bf9bebaab1cdcbb3619d4586d2a6ff5271310b8dd3391fd4d028",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t023:tests",
+            "observer": "chatgpt-grip-t023-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-09-05T17:03:30.871639Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 210.871639,
+              "authority": "manual",
+              "criterion_id": "failure-taxonomy",
+              "domain": "observation",
+              "observed_at": "2026-09-05T17:00:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T023:failure-taxonomy",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 210.871639,
+              "authority": "manual",
+              "criterion_id": "safe-recovery",
+              "domain": "observation",
+              "observed_at": "2026-09-05T17:00:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T023:safe-recovery",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 210.871639,
+              "authority": "manual",
+              "criterion_id": "attention-convergence",
+              "domain": "observation",
+              "observed_at": "2026-09-05T17:00:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T023:attention-convergence",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 210.871639,
+              "authority": "manual",
+              "criterion_id": "closeout-binding",
+              "domain": "observation",
+              "observed_at": "2026-09-05T17:00:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T023:closeout-binding",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 210.871639,
+              "authority": "manual",
+              "criterion_id": "tests",
+              "domain": "observation",
+              "observed_at": "2026-09-05T17:00:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T023:tests",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-09-05T17:03:30.871639Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "GRIP-ROADMAP-V1-T023",
+          "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+        },
+        "evidence": {
+          "attention-convergence": {
+            "criterion_id": "attention-convergence",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 11,
+              "hardening_merge_commit": "73cee70603340d6182c3597801afa2ce4ef89eba",
+              "hardening_pr": 506,
+              "implementation_merge_commit": "d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+              "implementation_pr": 473,
+              "observation": "Current convergence tests prove idempotent and history-preserving attention convergence, preserve independent identical failures, supersede a source only through a persisted verified retry edge, accept non-attention successor support and reject tampered retry bindings.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:attention-convergence",
+              "observer": "chatgpt-grip-t023-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T17:00:00Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:attention-convergence",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T023:attention-convergence"
+            }
+          },
+          "closeout-binding": {
+            "criterion_id": "closeout-binding",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 11,
+              "hardening_merge_commit": "73cee70603340d6182c3597801afa2ce4ef89eba",
+              "hardening_pr": 506,
+              "implementation_merge_commit": "d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+              "implementation_pr": 473,
+              "observation": "Current completed-task obligation validation requires the exact current task binding and lifecycle/outcome receipt; the current test passes for the exact receipt and rejects a drifted receipt.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:closeout-binding",
+              "observer": "chatgpt-grip-t023-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T17:00:00Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:closeout-binding",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T023:closeout-binding"
+            }
+          },
+          "failure-taxonomy": {
+            "criterion_id": "failure-taxonomy",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 11,
+              "hardening_merge_commit": "73cee70603340d6182c3597801afa2ce4ef89eba",
+              "hardening_pr": 506,
+              "implementation_merge_commit": "d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+              "implementation_pr": 473,
+              "observation": "Exact current Grabowski main 50cee73c6372e7bb3fe538a8e33312d14e5dd866 retains grabowski_terminal_convergence.classify_terminal_failure with stable bounded classes outcome_unknown, stale_process, evidence_drift, non_retryable_failure, retry_exhausted and retry_safe_failure, plus explicit automatic_resume_allowed and owner_decision_required semantics.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:failure-taxonomy",
+              "observer": "chatgpt-grip-t023-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T17:00:00Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:failure-taxonomy",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T023:failure-taxonomy"
+            }
+          },
+          "safe-recovery": {
+            "criterion_id": "safe-recovery",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 11,
+              "hardening_merge_commit": "73cee70603340d6182c3597801afa2ce4ef89eba",
+              "hardening_pr": 506,
+              "implementation_merge_commit": "d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+              "implementation_pr": 473,
+              "observation": "Current convergence only permits automatic resume for retry_safe_failure when authoritative terminal evidence and lease evidence are valid and retry budget remains; outcome-unknown, stale/evidence-drift, manual/nonretryable and exhausted cases remain fail-closed. PR #506 further binds interrupted/retry recovery to persisted verified retry_binding and prevents duplicate successors.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:safe-recovery",
+              "observer": "chatgpt-grip-t023-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T17:00:00Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:safe-recovery",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T023:safe-recovery"
+            }
+          },
+          "tests": {
+            "criterion_id": "tests",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 11,
+              "hardening_merge_commit": "73cee70603340d6182c3597801afa2ce4ef89eba",
+              "hardening_pr": 506,
+              "implementation_merge_commit": "d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+              "implementation_pr": 473,
+              "observation": "On exact current main, tests/test_terminal_convergence.py runs 11/11 PASS using the repository virtualenv. The suite explicitly covers outcome_unknown, stale/evidence drift, retry exhaustion, verified retry edges, tamper rejection, duplicate/idempotent attention convergence, distinct execution contexts and exact lifecycle-receipt obligation closeout. PR #473 merge d2097c909bd60be7f947b5c50cc9fa6d56ba907c is 535 commits behind current main with no divergence; PR #506 merge 73cee70603340d6182c3597801afa2ce4ef89eba is 504 commits behind with no divergence.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:tests",
+              "observer": "chatgpt-grip-t023-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T17:00:00Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t023:tests",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T023:tests"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "5e6fe0b26eaafe18fc4896271da91d31d33db3a9170de1825c4d155bcb55998d",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+        "preview_sha256": "cb0993998b662219475df72dcf403c5a757596d778d3b6499e6ce722a24e3113",
+        "receipt_sha256": "714dd8bd2e2a5d43e7632a43a8601ab5c71959024bf53803e83a73cb6a31272a",
+        "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "GRIP-ROADMAP-V1-T023",
+        "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "f9894cfecb7fa7de30f7a2fb617107cf10ce565f881f1ea8335b6879cf343129"
+      },
+      "receipt_sha256": "714dd8bd2e2a5d43e7632a43a8601ab5c71959024bf53803e83a73cb6a31272a",
+      "reviewer": "chatgpt-grip-t023-independent-reviewer-20260905",
+      "schema_version": 1,
+      "task_sha256": "58060a76c41be2cacdf5d699741b891462dc04c6c3c6d7e9b35ac2ffec8b1209"
     }
   },
   "priority": {
@@ -85,6 +459,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Converge terminal tasks and operator attention"
 }

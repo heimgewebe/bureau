@@ -2,23 +2,48 @@
   "acceptance": [
     {
       "assertion": "Die Versiegelung rekonstruiert die kanonische direct-task identity aus dem autoritativen Taskdatensatz und vergleicht sie exakt mit der create-only Binding-Datei.",
-      "id": "exact-task-readback"
+      "evidence_type": "object",
+      "id": "exact-task-readback",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator-ml-readiness-v1-t007:exact-task-readback"
+      }
     },
     {
       "assertion": "Abweichungen bei Host, argv_sha256, cwd, Ressourcenmenge oder runtime_seconds blockieren vor Eligibility- und Record-Publikation.",
-      "id": "drift-fails-closed"
+      "evidence_type": "object",
+      "id": "drift-fails-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator-ml-readiness-v1-t007:drift-fails-closed"
+      }
     },
     {
       "assertion": "Terminalstatus und execution_provenance bleiben kompatibel gebunden; vom Aufrufer gelieferte Evidenz ersetzt keinen Task-Readback.",
-      "id": "terminal-provenance"
+      "evidence_type": "object",
+      "id": "terminal-provenance",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator-ml-readiness-v1-t007:terminal-provenance"
+      }
     },
     {
       "assertion": "Tests decken manipulierte Binding-Dateien, abweichende Taskrecords, fehlende Bindings und den unveränderten Erfolgsfall ab.",
-      "id": "adversarial-tests"
+      "evidence_type": "object",
+      "id": "adversarial-tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator-ml-readiness-v1-t007:adversarial-tests"
+      }
     },
     {
       "assertion": "Der Fix verändert weder Routing noch Taskstart, Queue, Merge, Deploy oder Runtime-Autorität.",
-      "id": "no-operational-effect"
+      "evidence_type": "object",
+      "id": "no-operational-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "operator-ml-readiness-v1-t007:no-operational-effect"
+      }
     }
   ],
   "claims": [
@@ -43,36 +68,372 @@
   "id": "OPERATOR-ML-READINESS-V1-T007",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "metadata": {
-    "deployment_boundary": "PR #448 soll bis zur Umsetzung dieses Tasks nicht produktiv ausgerollt werden.",
+    "closeout_reconciliation": {
+      "baseline_revision": 2,
+      "baseline_spec_sha256": "5287b3b64f2ec2acca6c09679428cf293ba23c60f13eb8cb4153cd8dfeb95461",
+      "prior_publish_effect": "none-authoritatively-read-back",
+      "reason": "Reconstructed after a pre-effect lease conflict and durable replay-filter rejection; this proposal is newly CAS-bound to the unchanged authoritative revision."
+    },
+    "completion_evidence": {
+      "closeout_mode": "typed-no-run-evidence",
+      "implementation_head": "82478e5719ef8eb2d9f713a476919e3d58798ade",
+      "implementation_pr": 459,
+      "merge_commit": "4f94a7bf3512ded4798644f2347b9e27e52e16e0",
+      "observed_merged_at": "2026-07-25T13:11:07Z"
+    },
+    "deployment_boundary": "Historische Sperre: PR #448 sollte bis zur Umsetzung dieses Tasks nicht produktiv ausgerollt werden. Die aktuelle Revision dient ausschließlich dem evidenzgebundenen Closeout der später bereits gemergten Korrektur PR #459.",
     "does_not_establish": [
       "Fehler in Routing- oder Ausführungsautorität",
       "Manipulation bestehender Records",
-      "Berechtigung zur Übernahme fremder Leases oder Worktrees"
+      "Berechtigung zur Übernahme fremder Leases oder Worktrees",
+      "T004 readiness PASS",
+      "ML training authority",
+      "live routing authority"
     ],
-    "finding": "grabowski_task_routing_shadow_seal prüft Terminalstatus und gespeicherte Binding-Integrität, vergleicht task_identity jedoch nicht erneut mit dem autoritativen Grabowski-Taskrecord.",
+    "finding": "grabowski_task_routing_shadow_seal prüfte Terminalstatus und gespeicherte Binding-Integrität, verglich task_identity jedoch nicht erneut mit dem autoritativen Grabowski-Taskrecord.",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-1eb8d633863d45922a59a734",
+      "candidate_id": "candidate-7b26e931a2319d3bdf27049f",
+      "content_fingerprint": "7b26e931a2319d3bdf27049feaebd3a38193ade3c48dfd072bae901036642fec",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-30T05:16:43.410048Z",
+      "event_id": 12672,
+      "request_sha256": "2a46bc7d1a07791b5e4b3d93b102ac61b9084d537d0b20cfdbd184030eebec19",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "df24f5d922a035055a3e7bda9574ccbccb1eeeedc4e15c50cdee67ef2ed5cdb1",
+        "freshness": "fingerprint-bound",
+        "kind": "github_pr_review",
+        "locator": "github-pr:heimgewebe/grabowski#459@82478e5719ef8eb2d9f713a476919e3d58798ade",
+        "observed_at": "2026-07-25T13:11:07Z",
+        "sha256": null
+      },
+      "source_fingerprint": "df24f5d922a035055a3e7bda9574ccbccb1eeeedc4e15c50cdee67ef2ed5cdb1",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "df24f5d922a035055a3e7bda9574ccbccb1eeeedc4e15c50cdee67ef2ed5cdb1",
+          "freshness": "fingerprint-bound",
+          "kind": "github_pr_review",
+          "locator": "github-pr:heimgewebe/grabowski#459@82478e5719ef8eb2d9f713a476919e3d58798ade",
+          "observed_at": "2026-07-25T13:11:07Z",
+          "sha256": null
+        }
+      ]
+    },
     "parent_task": "OPERATOR-ML-READINESS-V1-T006",
     "registered_at": "2026-07-24T20:45:00+02:00",
     "risk": "Evidenzintegrität der proposal-only Schattenkohorte; keine unmittelbare operative Wirkung.",
     "source_review": "heimgewebe/grabowski#448",
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-b9a444aa99b2476075f9ad50",
-      "event_id": 1133,
-      "event_created_at": "2026-07-24T18:48:58.170188Z",
-      "request_sha256": "d87ce3a8eeabd6b892ea169b461f4f0e5db0520dc500f13ecbf85931a213f29e",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "github_pr_review",
-        "locator": "github-pr:heimgewebe/grabowski#448@40b1319fc8f1c5e5adbb6e6da623d628516f7f69",
-        "observed_at": "2026-07-24T18:45:00Z",
-        "sha256": "9e60a7128fd8d027c671948e4c21a7b969bb1f477ca97410429f2b6d2c3eb282"
-      },
+    "verification": {
+      "closed_at": "2026-08-30T15:48:43.881009Z",
       "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "458a084b5b54f9fb9cb627e0dcf19d311ed8b83ab0ff3eb385bc46ddb3311941",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+      "preview_sha256": "c1d98043718e0f84db58da74d1e835d3937136bfb0804b7898de8061d15419bb",
+      "receipt": {
+        "authentications": {
+          "adversarial-tests": {
+            "authority": "manual",
+            "criterion_id": "adversarial-tests",
+            "evidence_sha256": "a82cb6ccdc91353e236a80b5b0564be21e8ea3bbe3a8f19b2946c1926ecbd715",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "operator-ml-readiness-v1-t007:adversarial-tests",
+            "observer": "operator-evidence:learning-t007-20260830",
+            "reviewer": "controller-review:learning-t007-closeout",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "drift-fails-closed": {
+            "authority": "manual",
+            "criterion_id": "drift-fails-closed",
+            "evidence_sha256": "d0a221a2bdbc6222501ace07a8504332adf907c41cb759a11b6343a9f0e10a86",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "operator-ml-readiness-v1-t007:drift-fails-closed",
+            "observer": "operator-evidence:learning-t007-20260830",
+            "reviewer": "controller-review:learning-t007-closeout",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "exact-task-readback": {
+            "authority": "manual",
+            "criterion_id": "exact-task-readback",
+            "evidence_sha256": "7e6aa48119b28d4716f9af7ea6b7f43e331a1b2d9d7201442a96587f662bc48c",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "operator-ml-readiness-v1-t007:exact-task-readback",
+            "observer": "operator-evidence:learning-t007-20260830",
+            "reviewer": "controller-review:learning-t007-closeout",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "no-operational-effect": {
+            "authority": "manual",
+            "criterion_id": "no-operational-effect",
+            "evidence_sha256": "c4f15d338ef22e9d879a8c5abb068dffbb4726b45aba37f54edcc432bb585677",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "operator-ml-readiness-v1-t007:no-operational-effect",
+            "observer": "operator-evidence:learning-t007-20260830",
+            "reviewer": "controller-review:learning-t007-closeout",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "terminal-provenance": {
+            "authority": "manual",
+            "criterion_id": "terminal-provenance",
+            "evidence_sha256": "a4331f5b44fc94e23f82969d5c1f31309f770746561923cf288f3b71beaae900",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "operator-ml-readiness-v1-t007:terminal-provenance",
+            "observer": "operator-evidence:learning-t007-20260830",
+            "reviewer": "controller-review:learning-t007-closeout",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-30T15:48:43.881009Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 127.881009,
+              "authority": "manual",
+              "criterion_id": "exact-task-readback",
+              "domain": "observation",
+              "observed_at": "2026-08-30T15:46:36Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "git+runtime:heimgewebe/grabowski@4f94a7bf3512+b85c59bdfa69",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 127.881009,
+              "authority": "manual",
+              "criterion_id": "drift-fails-closed",
+              "domain": "observation",
+              "observed_at": "2026-08-30T15:46:36Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "git:heimgewebe/grabowski@4f94a7bf3512:identity-drift",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 127.881009,
+              "authority": "manual",
+              "criterion_id": "terminal-provenance",
+              "domain": "observation",
+              "observed_at": "2026-08-30T15:46:36Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "git:heimgewebe/grabowski@4f94a7bf3512:terminal-provenance",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 127.881009,
+              "authority": "manual",
+              "criterion_id": "adversarial-tests",
+              "domain": "observation",
+              "observed_at": "2026-08-30T15:46:36Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github-pr:heimgewebe/grabowski#459@82478e5719ef8eb2d9f713a476919e3d58798ade",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 127.881009,
+              "authority": "manual",
+              "criterion_id": "no-operational-effect",
+              "domain": "observation",
+              "observed_at": "2026-08-30T15:46:36Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "git:heimgewebe/grabowski@4f94a7bf3512:no-effect-boundary",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-30T15:48:43.881009Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "OPERATOR-ML-READINESS-V1-T007",
+          "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+        },
+        "evidence": {
+          "adversarial-tests": {
+            "criterion_id": "adversarial-tests",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "PR #459 is merged. Fresh GitHub readback reports CodeQL, validate (3.10), validate (3.12), Analyze (actions) and Analyze (python) all SUCCESS on the PR. The immutable patch adds coverage for authoritative identity reconstruction, drift in every required identity field, missing direct binding, incompatible execution provenance and the unchanged successful sealing path.",
+              "observation_scope": "operator-ml-readiness-v1-t007:adversarial-tests",
+              "observer": "operator-evidence:learning-t007-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T15:46:36Z",
+            "revision": {
+              "observation_scope": "operator-ml-readiness-v1-t007:adversarial-tests",
+              "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+              "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github-pr:heimgewebe/grabowski#459@82478e5719ef8eb2d9f713a476919e3d58798ade"
+            }
+          },
+          "drift-fails-closed": {
+            "criterion_id": "drift-fails-closed",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Commit 4f94a7bf3512 adds validate_direct_task_binding_task_identity with an exact five-field comparison for host_sha256, argv_sha256, cwd_sha256, resource_keys_sha256 and runtime_seconds. seal_direct_task_case invokes this check before reading prospective eligibility for sealing and before eligibility/record publication. Its regression test mutates each of the five fields and asserts both eligibility and records remain empty after rejection.",
+              "observation_scope": "operator-ml-readiness-v1-t007:drift-fails-closed",
+              "observer": "operator-evidence:learning-t007-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T15:46:36Z",
+            "revision": {
+              "observation_scope": "operator-ml-readiness-v1-t007:drift-fails-closed",
+              "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+              "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "git:heimgewebe/grabowski@4f94a7bf3512:identity-drift"
+            }
+          },
+          "exact-task-readback": {
+            "criterion_id": "exact-task-readback",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh immutable diff readback of merge commit 4f94a7bf3512 shows grabowski_task_routing_shadow_seal reconstructing authoritative_task_identity directly from the persisted task record fields host, argv_sha256, cwd, normalized resource_keys and runtime_seconds, then passing that server-built identity into seal_direct_task_case. The currently serving Grabowski release b85c59bdfa69 has valid source/runtime integrity and GitHub ancestry proves it contains 4f94a7bf3512.",
+              "observation_scope": "operator-ml-readiness-v1-t007:exact-task-readback",
+              "observer": "operator-evidence:learning-t007-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T15:46:36Z",
+            "revision": {
+              "observation_scope": "operator-ml-readiness-v1-t007:exact-task-readback",
+              "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+              "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "git+runtime:heimgewebe/grabowski@4f94a7bf3512+b85c59bdfa69"
+            }
+          },
+          "no-operational-effect": {
+            "criterion_id": "no-operational-effect",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The immutable 4f94a7bf3512 diff is confined to routing-shadow documentation/generated context, the shadow-capture sealing implementation, the task seal wrapper and regression tests. It adds a validation gate to the existing proposal-only shadow sealing path and does not alter route selection, queue semantics, merge authority, deployment authority or automatic policy promotion. Current runtime ancestry proves the fix is deployed, which does not itself grant live-routing or ML authority.",
+              "observation_scope": "operator-ml-readiness-v1-t007:no-operational-effect",
+              "observer": "operator-evidence:learning-t007-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T15:46:36Z",
+            "revision": {
+              "observation_scope": "operator-ml-readiness-v1-t007:no-operational-effect",
+              "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+              "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "git:heimgewebe/grabowski@4f94a7bf3512:no-effect-boundary"
+            }
+          },
+          "terminal-provenance": {
+            "criterion_id": "terminal-provenance",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The seal wrapper still requires an observed terminal task. A completed task requires execution_provenance.status=completed; other terminal states require execution_aborted or infrastructure_failure. Only after those checks does the server reconstruct identity from the authoritative stored task row. Caller-supplied evidence therefore cannot substitute for the task-record readback, and the tests cover incompatible provenance plus a missing direct binding.",
+              "observation_scope": "operator-ml-readiness-v1-t007:terminal-provenance",
+              "observer": "operator-evidence:learning-t007-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T15:46:36Z",
+            "revision": {
+              "observation_scope": "operator-ml-readiness-v1-t007:terminal-provenance",
+              "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+              "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "git:heimgewebe/grabowski@4f94a7bf3512:terminal-provenance"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "458a084b5b54f9fb9cb627e0dcf19d311ed8b83ab0ff3eb385bc46ddb3311941",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+        "preview_sha256": "c1d98043718e0f84db58da74d1e835d3937136bfb0804b7898de8061d15419bb",
+        "receipt_sha256": "b8223eb3546d99d4af2f656929f6be5260ba7c3b4895c7e6ddea6201405d3e9d",
+        "reviewer": "controller-review:learning-t007-closeout",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "OPERATOR-ML-READINESS-V1-T007",
+        "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "ce18fe4beeac030c6bbc115d261d27a1032e1eb3058f85436840329e77ce0b9b"
+      },
+      "receipt_sha256": "b8223eb3546d99d4af2f656929f6be5260ba7c3b4895c7e6ddea6201405d3e9d",
+      "reviewer": "controller-review:learning-t007-closeout",
+      "schema_version": 1,
+      "task_sha256": "c9c6b31438bbadee4406ce2e8e48311b869247e22ab20bf71e860ae767976d1c"
     }
   },
   "priority": {
@@ -86,6 +447,6 @@
     "security-review"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Direct-task routing shadow an tatsächliche Taskidentität rückbinden"
 }

@@ -95,10 +95,88 @@
       "scope": "exactly registry/tasks/BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829.json",
       "state_store_transition": "seed-missing-preserve-state-store"
     },
+    "registration_observation": {
+      "canonical_registry_source_commit": "0dbbe601eb347914748d0fc9abfa4481d9096d36",
+      "deployed_source_commit": "0dbbe601eb347914748d0fc9abfa4481d9096d36",
+      "deployment_manifest_sha256": "b67699f76f6df3ddf97d6adc6c515fa3775926c953dd05b0e6c3841478411ffb",
+      "github_main": "cb54f7c7e1ee08be31445a78a7dbeb51d5e64807",
+      "observed_at": "2026-08-29T16:16:33.429974Z",
+      "preceding_authority_result_sha256": "c8527513e2619b155e5eddc24df2031396d70cd73276dbad6d5316bee45965a8",
+      "preceding_authority_status": "verified",
+      "preceding_authority_target_sha256": "583ac0899ddb6b4deb2a60b7e6148383fa7b26d81fc6476c76a3331ccc0e623b",
+      "preceding_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-POST-T044-READY-20260829",
+      "ratchet_merge_commit": "cb54f7c7e1ee08be31445a78a7dbeb51d5e64807",
+      "repository": "heimgewebe/bureau",
+      "required_checks": {
+        "registry-registration-preflight/freshness": "success",
+        "validate (3.10)": "success",
+        "validate (3.12)": "success"
+      },
+      "schema_version": 1,
+      "source_ancestry_to_main": true
+    },
     "runtime_refresh_authority": {
+      "consumption": {
+        "authority_revision": 1,
+        "authority_spec_sha256": "032eea40509acb0f82bf8a2508632bf3920c622fcf4cfed0c55d9078b886516b",
+        "consumed_at": "2026-08-29T17:26:38.406540Z",
+        "intent_sha256": "8ddc94c74d57a17bf9a1a4baf409118aade5a77836bcb0802fb19a9f6bea1fc3",
+        "kind": "bureau_runtime_refresh_authority_consumption",
+        "result_sha256": "91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c",
+        "schema_version": 1,
+        "status": "consumed",
+        "target_sha256": "3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342",
+        "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829"
+      },
       "forbid_foreign_task_substitution": true,
       "forbid_historical_target_reuse": true,
       "mode": "single-use-target-bound-source-precondition-v1",
+      "no_run_closeout_acceptance": {
+        "criteria": {
+          "fresh-current-main": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "immutable-runtime-readback": {
+            "required_evidence": [
+              "runtime-result",
+              "immutable-readback",
+              "state-store-integrity"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "runtime-only-scope": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "lease-release",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "single-runtime-effect": {
+            "required_evidence": [
+              "runtime-result",
+              "single-use-history",
+              "run-lifecycle"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          },
+          "source-ancestry-precondition": {
+            "required_evidence": [
+              "approval-intent",
+              "runtime-result",
+              "source-precondition"
+            ],
+            "verifier": "runtime-refresh-no-run-evidence-v1"
+          }
+        },
+        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
+        "schema_version": 1
+      },
       "required_action_class": "runtime_mutation",
       "required_approval_level": "break_glass",
       "required_claim_resource": "component.bureau.runtime",
@@ -134,73 +212,315 @@
       },
       "successor_task_required_after_terminal": true,
       "target_binding": "candidate.target_sha256",
-      "no_run_closeout_acceptance": {
+      "target_binding_receipt": {
+        "authority_revision": 1,
+        "authority_spec_sha256": "032eea40509acb0f82bf8a2508632bf3920c622fcf4cfed0c55d9078b886516b",
+        "bound_at": "2026-08-29T17:26:38.406540Z",
+        "intent_sha256": "8ddc94c74d57a17bf9a1a4baf409118aade5a77836bcb0802fb19a9f6bea1fc3",
+        "kind": "bureau_runtime_refresh_authority_target_binding",
         "schema_version": 1,
-        "kind": "bureau_runtime_refresh_no_run_acceptance_contract",
-        "criteria": {
-          "fresh-current-main": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "approval-intent",
-              "runtime-result"
-            ]
-          },
-          "source-ancestry-precondition": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "approval-intent",
-              "runtime-result",
-              "source-precondition"
-            ]
-          },
-          "single-runtime-effect": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "runtime-result",
-              "single-use-history",
-              "run-lifecycle"
-            ]
-          },
-          "immutable-runtime-readback": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "runtime-result",
-              "immutable-readback",
-              "state-store-integrity"
-            ]
-          },
-          "runtime-only-scope": {
-            "verifier": "runtime-refresh-no-run-evidence-v1",
-            "required_evidence": [
-              "runtime-result",
-              "single-use-history",
-              "lease-release",
-              "run-lifecycle"
-            ]
-          }
-        }
+        "target_sha256": "3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342",
+        "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829"
       }
     },
     "source": "The terminally consumed StateStore authority BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-POST-T044-READY-20260829 requires successor_task_required_after_terminal=true. Its immutable result c8527513e2619b155e5eddc24df2031396d70cd73276dbad6d5316bee45965a8 deployed protected source 0dbbe601eb347914748d0fc9abfa4481d9096d36 successfully. Fresh observation after PR #2199 proves that deployed source and canonical Registry identity still match and that 0dbbe601eb347914748d0fc9abfa4481d9096d36 is a verified Git ancestor of current protected main cb54f7c7e1ee08be31445a78a7dbeb51d5e64807. A new single-use authority is therefore required; no historical authority is reusable.",
-    "registration_observation": {
-      "schema_version": 1,
-      "observed_at": "2026-08-29T16:16:33.429974Z",
-      "repository": "heimgewebe/bureau",
-      "github_main": "cb54f7c7e1ee08be31445a78a7dbeb51d5e64807",
-      "ratchet_merge_commit": "cb54f7c7e1ee08be31445a78a7dbeb51d5e64807",
-      "deployed_source_commit": "0dbbe601eb347914748d0fc9abfa4481d9096d36",
-      "canonical_registry_source_commit": "0dbbe601eb347914748d0fc9abfa4481d9096d36",
-      "deployment_manifest_sha256": "b67699f76f6df3ddf97d6adc6c515fa3775926c953dd05b0e6c3841478411ffb",
-      "source_ancestry_to_main": true,
-      "required_checks": {
-        "validate (3.10)": "success",
-        "validate (3.12)": "success",
-        "registry-registration-preflight/freshness": "success"
+    "verification": {
+      "closed_at": "2026-08-29T17:33:19.573722Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "6ff1f60c3f5944de5361cf21bc82b70381b85b6a66615f963bbbfc0b026e6887",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+      "preview_sha256": "0ab00365b3c95409f8672df4468712c70f48db15cc465c27a38397c5082c3761",
+      "receipt": {
+        "authentications": {
+          "fresh-current-main": {
+            "authority": "manual",
+            "criterion_id": "fresh-current-main",
+            "evidence_sha256": "37864b73662bddf4b82cc50b55e2c025a9483f29b6057082575bdc2b23441ccb",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:fresh-main",
+            "observer": "controller:chatgpt:runtime-observation-20260829",
+            "reviewer": "controller:chatgpt:self-review-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "immutable-runtime-readback": {
+            "authority": "manual",
+            "criterion_id": "immutable-runtime-readback",
+            "evidence_sha256": "bf1ddd6325fe72fc86b9914abdf570a47952168cc12f8b9f4d3db1b61a4ed06b",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:immutable-readback",
+            "observer": "controller:chatgpt:runtime-observation-20260829",
+            "reviewer": "controller:chatgpt:self-review-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "runtime-only-scope": {
+            "authority": "manual",
+            "criterion_id": "runtime-only-scope",
+            "evidence_sha256": "9a91d2410647efa95a0157d12e0a7d99fd21a8b02a0ea9974a04d8dea5b1a9ae",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:scope-only",
+            "observer": "controller:chatgpt:runtime-observation-20260829",
+            "reviewer": "controller:chatgpt:self-review-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "single-runtime-effect": {
+            "authority": "manual",
+            "criterion_id": "single-runtime-effect",
+            "evidence_sha256": "2db105bd12884070cb3123bed7a65b2a698bb43fc056245180e0068969871a99",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:single-effect",
+            "observer": "controller:chatgpt:runtime-observation-20260829",
+            "reviewer": "controller:chatgpt:self-review-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "source-ancestry-precondition": {
+            "authority": "manual",
+            "criterion_id": "source-ancestry-precondition",
+            "evidence_sha256": "be731fc6ddbf6e609dd9075ebb2c494d2462611cfac9f941eb03f3775f65711a",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:source-ancestry-precondition",
+            "observer": "controller:chatgpt:runtime-observation-20260829",
+            "reviewer": "controller:chatgpt:self-review-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-29T17:33:19.573722Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 82.573722,
+              "authority": "manual",
+              "criterion_id": "fresh-current-main",
+              "domain": "observation",
+              "observed_at": "2026-08-29T17:31:57Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github-main:38dd8067d1f27c955ba1fca2d42f4eabe1593c0e:checks",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 82.573722,
+              "authority": "manual",
+              "criterion_id": "source-ancestry-precondition",
+              "domain": "observation",
+              "observed_at": "2026-08-29T17:31:57Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "runtime-result:91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c:source-precondition",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 82.573722,
+              "authority": "manual",
+              "criterion_id": "single-runtime-effect",
+              "domain": "observation",
+              "observed_at": "2026-08-29T17:31:57Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "runtime-attempt:3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 82.573722,
+              "authority": "manual",
+              "criterion_id": "immutable-runtime-readback",
+              "domain": "observation",
+              "observed_at": "2026-08-29T17:31:57Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "bureau-check:38dd8067d1f27c955ba1fca2d42f4eabe1593c0e",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 82.573722,
+              "authority": "manual",
+              "criterion_id": "runtime-only-scope",
+              "domain": "observation",
+              "observed_at": "2026-08-29T17:31:57Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "runtime-closeout-scope:91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-29T17:33:19.573722Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829",
+          "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+        },
+        "evidence": {
+          "fresh-current-main": {
+            "criterion_id": "fresh-current-main",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh GitHub main is exactly 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e. Exact-main check-runs show validate (3.10)=success, validate (3.12)=success, registry-registration-preflight/freshness=success and main-push-revalidation=success. The runtime result is bound to the same main commit.",
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:fresh-main",
+              "observer": "controller:chatgpt:runtime-observation-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T17:31:57Z",
+            "revision": {
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:fresh-main",
+              "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+              "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github-main:38dd8067d1f27c955ba1fca2d42f4eabe1593c0e:checks"
+            }
+          },
+          "immutable-runtime-readback": {
+            "criterion_id": "immutable-runtime-readback",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Installed Bureau check is valid with StateStore integrity=ok/schema_version=5. Manifest, immutable release, package tree and canonical Registry snapshot are valid and all bind source commit 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e. Runtime result readback also reports check_valid=true and runtime_identity_valid=true.",
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:immutable-readback",
+              "observer": "controller:chatgpt:runtime-observation-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T17:31:57Z",
+            "revision": {
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:immutable-readback",
+              "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+              "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "bureau-check:38dd8067d1f27c955ba1fca2d42f4eabe1593c0e"
+            }
+          },
+          "runtime-only-scope": {
+            "criterion_id": "runtime-only-scope",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The runtime authority has exactly one consumption bound to result 91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c. StateStore has zero Bureau runs for this no-run authority. Resource readback for owner bureau-runtime-refresh:chatgpt-20260829-1904 returns zero leases, so no runtime-refresh coordination resources remain held.",
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:scope-only",
+              "observer": "controller:chatgpt:runtime-observation-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T17:31:57Z",
+            "revision": {
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:scope-only",
+              "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+              "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "runtime-closeout-scope:91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c"
+            }
+          },
+          "single-runtime-effect": {
+            "criterion_id": "single-runtime-effect",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The exact target attempt directory contains exactly started.json and result.json. No runtime-refresh process is running. The sole result has effect_started=true, status=deployed and target_sha256=3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342; the TaskSpec consumption binds that same intent, target and result.",
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:single-effect",
+              "observer": "controller:chatgpt:runtime-observation-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T17:31:57Z",
+            "revision": {
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:single-effect",
+              "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+              "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "runtime-attempt:3360be330b3a9310169fc567f3aafccd783d7642d30f73e740812ebf92d94342"
+            }
+          },
+          "source-ancestry-precondition": {
+            "criterion_id": "source-ancestry-precondition",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Runtime result 91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c contains source-precondition evidence with deployment and canonical Registry both at 0dbbe601eb347914748d0fc9abfa4481d9096d36 and GitHub ancestry proven to target main 38dd8067d1f27c955ba1fca2d42f4eabe1593c0e (ahead_by=6, behind_by=0, merge base equals deployed source).",
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:source-ancestry-precondition",
+              "observer": "controller:chatgpt:runtime-observation-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T17:31:57Z",
+            "revision": {
+              "observation_scope": "bureau:runtime-refresh-successor-post-pr2199-20260829:source-ancestry-precondition",
+              "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+              "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "runtime-result:91589651d9d87057c7b63e3a8d1b3c1a8eee916fd1ae18ecedb21e9948dfad2c:source-precondition"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "6ff1f60c3f5944de5361cf21bc82b70381b85b6a66615f963bbbfc0b026e6887",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "b448337c50d8336b1d2825d66c2f12e2b6f44b22453debb5c5b70f0679563529",
+        "preview_sha256": "0ab00365b3c95409f8672df4468712c70f48db15cc465c27a38397c5082c3761",
+        "receipt_sha256": "5b62933bb4ad06a3b8d4d1f91162f0706197a3b0c647399b9ccc7085bc4a33b1",
+        "reviewer": "controller:chatgpt:self-review-20260829",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-SUCCESSOR-POST-PR2199-20260829",
+        "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "477169f95baeb20f3c9004dcfdf63963baa77f219c5f52469623f342510cd932"
       },
-      "preceding_authority_task_id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-UNUSED-SUCCESSOR-POST-T044-READY-20260829",
-      "preceding_authority_result_sha256": "c8527513e2619b155e5eddc24df2031396d70cd73276dbad6d5316bee45965a8",
-      "preceding_authority_target_sha256": "583ac0899ddb6b4deb2a60b7e6148383fa7b26d81fc6476c76a3331ccc0e623b",
-      "preceding_authority_status": "verified"
+      "receipt_sha256": "5b62933bb4ad06a3b8d4d1f91162f0706197a3b0c647399b9ccc7085bc4a33b1",
+      "reviewer": "controller:chatgpt:self-review-20260829",
+      "schema_version": 1,
+      "task_sha256": "9b7933f05396540dc33bddd27213c554a98de6a4005a58bfb123ad1ffdcdc28f"
     }
   },
   "priority": {
@@ -220,6 +540,6 @@
     "strategy": "The currently deployed Bureau runtime at 0dbbe601eb347914748d0fc9abfa4481d9096d36 remains authoritative until a new immutable result is fully read back. If source ancestry, target freshness, CI, deployment/Registry identity or the new effect becomes unclear, preserve all precondition, attempt, intent, workspace, backup, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Single-Use Bureau-Runtime-Refresh successor after PR #2199"
 }

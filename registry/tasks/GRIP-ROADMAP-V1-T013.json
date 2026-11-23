@@ -1,50 +1,328 @@
 {
-  "schema_version": 1,
-  "initiative": "GRIP-ROADMAP-V1",
-  "state": "planned",
+  "acceptance": [
+    {
+      "assertion": "Captain action envelope validation is represented by typed internal objects rather than ad-hoc mutated dictionaries.",
+      "evidence_type": "object",
+      "id": "typed-envelope",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t013:typed-envelope"
+      }
+    },
+    {
+      "assertion": "The public captain-preflight JSON input and output contract remains compatible or has an explicit schema-version migration.",
+      "evidence_type": "object",
+      "id": "no-public-break",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t013:no-public-break"
+      }
+    },
+    {
+      "assertion": "The typed model refactor does not add merge, deploy, restart, fleet mutation, cleanup or secret authority.",
+      "evidence_type": "object",
+      "id": "no-authority-change",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t013:no-authority-change"
+      }
+    }
+  ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "repo.grabowski"
     }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T007"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
+  },
+  "goal": "Replace ad-hoc Captain action dictionaries with a typed internal model or dataclass-style validation layer while preserving the public JSON envelope and without changing execution authority.",
+  "id": "GRIP-ROADMAP-V1-T013",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-d1c37be9ad2f373cc1c9a33b",
+      "candidate_id": "candidate-c0e0b9a19cff393787b7ebf9",
+      "content_fingerprint": "c0e0b9a19cff393787b7ebf90bdc9afec64390ac5c300caa6247763b0e4633dd",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-09-05T16:38:39.315532Z",
+      "event_id": 14612,
+      "request_sha256": "cf56396e1f918f5af1d1cdf84e9bf061f61a063bda17368d55f3115da09e32b5",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "6f7ad7e86d9ba9ccb593b537c8146778dbb8001d4947181ce5d57f43cfd65e36",
+        "freshness": "fingerprint-bound",
+        "kind": "github",
+        "locator": "heimgewebe/grabowski#467@33d6d6738c49bee306440c00ec59d245bb5526a8",
+        "observed_at": "2026-09-05T16:38:00Z",
+        "sha256": null
+      },
+      "source_fingerprint": "6f7ad7e86d9ba9ccb593b537c8146778dbb8001d4947181ce5d57f43cfd65e36",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "6f7ad7e86d9ba9ccb593b537c8146778dbb8001d4947181ce5d57f43cfd65e36",
+          "freshness": "fingerprint-bound",
+          "kind": "github",
+          "locator": "heimgewebe/grabowski#467@33d6d6738c49bee306440c00ec59d245bb5526a8",
+          "observed_at": "2026-09-05T16:38:00Z",
+          "sha256": null
+        }
+      ]
+    },
+    "reason": "PR #97 intentionally avoids large refactor; review identified growing dictionary mutation complexity in _captain_actions.",
+    "truth_reconcile_note": "2026-09-05: legacy untyped acceptance migrated to executable manual_observation solely for current-head revalidation of the already-merged PR #467 implementation; no implementation or authority claim is established by this revision.",
+    "verification": {
+      "closed_at": "2026-09-05T16:44:19.019701Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "be7990f30d16c54d3e8ec9c5296db2b9255caedc25b2b55e878c86c445e9da56",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "preview_sha256": "a66aa16088bccaf7567ee58e39147c00b08d550a07785ef7dcc3fb9a78466df6",
+      "receipt": {
+        "authentications": {
+          "no-authority-change": {
+            "authority": "manual",
+            "criterion_id": "no-authority-change",
+            "evidence_sha256": "98d453684a28ff0177547662a3371bbf5c1c28fb071288ccf79350d487bb3a38",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t013:no-authority-change",
+            "observer": "chatgpt-grip-t013-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t013-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "no-public-break": {
+            "authority": "manual",
+            "criterion_id": "no-public-break",
+            "evidence_sha256": "4f5a65e8c37afe7dcbf3ed6b7960fc0ce349da2aa73a12141f9df3732e828faa",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t013:no-public-break",
+            "observer": "chatgpt-grip-t013-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t013-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "typed-envelope": {
+            "authority": "manual",
+            "criterion_id": "typed-envelope",
+            "evidence_sha256": "26f51c95cf3bc625e424d4cc17dee690f97267220a741907638a6b19436cad99",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t013:typed-envelope",
+            "observer": "chatgpt-grip-t013-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t013-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-09-05T16:44:19.019701Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 49.019701,
+              "authority": "manual",
+              "criterion_id": "typed-envelope",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:43:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T013:typed-envelope",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 49.019701,
+              "authority": "manual",
+              "criterion_id": "no-public-break",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:43:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T013:no-public-break",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 49.019701,
+              "authority": "manual",
+              "criterion_id": "no-authority-change",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:43:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T013:no-authority-change",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-09-05T16:44:19.019701Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "GRIP-ROADMAP-V1-T013",
+          "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163"
+        },
+        "evidence": {
+          "no-authority-change": {
+            "criterion_id": "no-authority-change",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 467,
+              "merge_commit": "33d6d6738c49bee306440c00ec59d245bb5526a8",
+              "observation": "On exact current main, typed envelope tests plus Captain authority tests for preflight contract, allow_execution alone and incomplete execution authority all pass. The typed model remains representation/validation only and does not add merge, deploy, restart, fleet, cleanup or secret authority.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:no-authority-change",
+              "observer": "chatgpt-grip-t013-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:43:30Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:no-authority-change",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T013:no-authority-change"
+            }
+          },
+          "no-public-break": {
+            "criterion_id": "no-public-break",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 467,
+              "merge_commit": "33d6d6738c49bee306440c00ec59d245bb5526a8",
+              "observation": "On exact current main, CaptainTypedEnvelopeTests prove the builder still returns the existing public dict/envelope schema_version=1 shape and binds target/action/actions digests consistently. No public envelope migration was introduced.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:no-public-break",
+              "observer": "chatgpt-grip-t013-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:43:30Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:no-public-break",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T013:no-public-break"
+            }
+          },
+          "typed-envelope": {
+            "criterion_id": "typed-envelope",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 467,
+              "merge_commit": "33d6d6738c49bee306440c00ec59d245bb5526a8",
+              "observation": "Current Grabowski main 50cee73c6372e7bb3fe538a8e33312d14e5dd866 retains @dataclass(frozen=True) CaptainActionEnvelope, typed digest material and typed serialization. CaptainTypedEnvelopeTests pass on this exact head. PR #467 merge 33d6d6738c49bee306440c00ec59d245bb5526a8 is 539 commits behind and ancestor-equivalent by GitHub compare status ahead/behind=539/0.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:typed-envelope",
+              "observer": "chatgpt-grip-t013-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:43:30Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t013:typed-envelope",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T013:typed-envelope"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "be7990f30d16c54d3e8ec9c5296db2b9255caedc25b2b55e878c86c445e9da56",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+        "preview_sha256": "a66aa16088bccaf7567ee58e39147c00b08d550a07785ef7dcc3fb9a78466df6",
+        "receipt_sha256": "cdd2bbd3fe02825fe1897ae139114bd4508e0cd7d27c70bc8509fc939d89056b",
+        "reviewer": "chatgpt-grip-t013-independent-reviewer-20260905",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "GRIP-ROADMAP-V1-T013",
+        "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "ec86209c86f3cd6ce76c772eaf0f24c99b4e2995d68e798373888a2683391228"
+      },
+      "receipt_sha256": "cdd2bbd3fe02825fe1897ae139114bd4508e0cd7d27c70bc8509fc939d89056b",
+      "reviewer": "chatgpt-grip-t013-independent-reviewer-20260905",
+      "schema_version": 1,
+      "task_sha256": "ec3603cdbb795ecc56c3ddaf8bc9a67a7de3245af522139c8d065cb877c18163"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 130
   },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "id": "GRIP-ROADMAP-V1-T013",
-  "title": "Introduce typed Captain envelope model",
-  "goal": "Replace ad-hoc Captain action dictionaries with a typed internal model or dataclass-style validation layer while preserving the public JSON envelope and without changing execution authority.",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T005",
-    "GRIP-ROADMAP-V1-T007"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 130
-  },
-  "acceptance": [
-    {
-      "id": "typed-envelope",
-      "assertion": "Captain action envelope validation is represented by typed internal objects rather than ad-hoc mutated dictionaries."
-    },
-    {
-      "id": "no-public-break",
-      "assertion": "The public captain-preflight JSON input and output contract remains compatible or has an explicit schema-version migration."
-    },
-    {
-      "id": "no-authority-change",
-      "assertion": "The typed model refactor does not add merge, deploy, restart, fleet mutation, cleanup or secret authority."
-    }
-  ],
-  "metadata": {
-    "deferred_from": "PR #97 review",
-    "reason": "PR #97 intentionally avoids large refactor; review identified growing dictionary mutation complexity in _captain_actions."
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Introduce typed Captain envelope model"
 }

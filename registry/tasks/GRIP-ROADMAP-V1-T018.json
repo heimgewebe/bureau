@@ -1,66 +1,398 @@
 {
-  "schema_version": 1,
-  "id": "GRIP-ROADMAP-V1-T018",
-  "initiative": "GRIP-ROADMAP-V1",
-  "title": "Add structured Captain error codes",
-  "state": "planned",
-  "goal": "Replace Captain string-only blocked_reasons and failed_reasons with structured error records while preserving deterministic compatibility summaries.",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T013"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 180
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Captain errors include code, message, phase, severity and optional context.",
+      "evidence_type": "object",
+      "id": "error-shape",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t018:error-shape"
+      }
+    },
+    {
+      "assertion": "Existing string reason fields remain available or are deterministically derived during a compatibility period.",
+      "evidence_type": "object",
+      "id": "compatibility",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t018:compatibility"
+      }
+    },
+    {
+      "assertion": "Gate, preflight, execution and post-verification errors use one error-code source of truth.",
+      "evidence_type": "object",
+      "id": "source-of-truth",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t018:source-of-truth"
+      }
+    },
+    {
+      "assertion": "Tests cover deterministic ordering, JSON stability and backward-compatible summaries.",
+      "evidence_type": "object",
+      "id": "tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t018:tests"
+      }
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T013"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "error-shape",
-      "assertion": "Captain errors include code, message, phase, severity and optional context."
-    },
-    {
-      "id": "compatibility",
-      "assertion": "Existing string reason fields remain available or are deterministically derived during a compatibility period."
-    },
-    {
-      "id": "source-of-truth",
-      "assertion": "Gate, preflight, execution and post-verification errors use one error-code source of truth."
-    },
-    {
-      "id": "tests",
-      "assertion": "Tests cover deterministic ordering, JSON stability and backward-compatible summaries."
-    }
-  ],
+  "goal": "Replace Captain string-only blocked_reasons and failed_reasons with structured error records while preserving deterministic compatibility summaries.",
+  "id": "GRIP-ROADMAP-V1-T018",
+  "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
-    "phase": "captain-run-followup",
-    "effect": "repository_hardening",
-    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
-    "related_issue": "heimgewebe/bureau#209",
-    "related_prs": [
-      "heimgewebe/grabowski#104",
-      "heimgewebe/grabowski#106"
-    ],
-    "reason": "PR #106 improved error propagation but still uses string lists as the primary contract.",
     "does_not_establish": [
       "implementation_complete",
       "merge_authority_change",
       "runtime_deployed",
       "safety_proof"
-    ]
-  }
+    ],
+    "effect": "repository_hardening",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-68705a97cc18ba5fbc6720f7",
+      "candidate_id": "candidate-a39caf20ddc8b3617f8e6b14",
+      "content_fingerprint": "a39caf20ddc8b3617f8e6b1462b23faf33f63f9064175bd88defaab935f15913",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-09-05T16:35:21.825832Z",
+      "event_id": 14605,
+      "request_sha256": "2ae75951263c261559aad2c24f5d87b53980662e719e905b52ea57c41b577415",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "95e142fe2368aa44d789993cd8472fdcc07e1b3931f91061586f0bf604d9f3ee",
+        "freshness": "fingerprint-bound",
+        "kind": "github",
+        "locator": "heimgewebe/grabowski#468@4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+        "observed_at": "2026-09-05T16:34:00Z",
+        "sha256": null
+      },
+      "source_fingerprint": "95e142fe2368aa44d789993cd8472fdcc07e1b3931f91061586f0bf604d9f3ee",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "95e142fe2368aa44d789993cd8472fdcc07e1b3931f91061586f0bf604d9f3ee",
+          "freshness": "fingerprint-bound",
+          "kind": "github",
+          "locator": "heimgewebe/grabowski#468@4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+          "observed_at": "2026-09-05T16:34:00Z",
+          "sha256": null
+        }
+      ]
+    },
+    "phase": "captain-run-followup",
+    "reason": "PR #106 improved error propagation but still uses string lists as the primary contract.",
+    "related_issue": "heimgewebe/bureau#209",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "truth_reconcile_note": "2026-09-05: legacy untyped acceptance migrated to the executable manual_observation contract solely to revalidate the already-merged implementation; no implementation or authority claim is established by this revision.",
+    "verification": {
+      "closed_at": "2026-09-05T16:49:21.166714Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "8f9d9fb7821c6d33e934a687109c120315f5272066d4aacfaf247bfca012fdc5",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "preview_sha256": "25117444780e9775e2654584b3e6de9f250f96b18dd9082da38668d4cf2ce102",
+      "receipt": {
+        "authentications": {
+          "compatibility": {
+            "authority": "manual",
+            "criterion_id": "compatibility",
+            "evidence_sha256": "79472962d1c24a9befd2ba6bc70c0ec5dbab9e76a689c37c9bec7b7546ca7689",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t018:compatibility",
+            "observer": "chatgpt-grip-t018-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "error-shape": {
+            "authority": "manual",
+            "criterion_id": "error-shape",
+            "evidence_sha256": "07d15e379123f10b6cee4eb0a8e67a9dad590c617f51cf06ebb556b7692b395a",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t018:error-shape",
+            "observer": "chatgpt-grip-t018-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "source-of-truth": {
+            "authority": "manual",
+            "criterion_id": "source-of-truth",
+            "evidence_sha256": "eb2ea4e460564143e23573815d013f552de09d04a2c522931ce8872179f372dd",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t018:source-of-truth",
+            "observer": "chatgpt-grip-t018-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "tests": {
+            "authority": "manual",
+            "criterion_id": "tests",
+            "evidence_sha256": "ebe8912f75267683a7aed02ad4b4e05ca9973804d574eba1ee2176e1058bdbe0",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t018:tests",
+            "observer": "chatgpt-grip-t018-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-09-05T16:49:21.166714Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 40.166714,
+              "authority": "manual",
+              "criterion_id": "error-shape",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:48:41Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T018:error-shape",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 40.166714,
+              "authority": "manual",
+              "criterion_id": "compatibility",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:48:41Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T018:compatibility",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 40.166714,
+              "authority": "manual",
+              "criterion_id": "source-of-truth",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:48:41Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T018:source-of-truth",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 40.166714,
+              "authority": "manual",
+              "criterion_id": "tests",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:48:41Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T018:tests",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-09-05T16:49:21.166714Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "GRIP-ROADMAP-V1-T018",
+          "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+        },
+        "evidence": {
+          "compatibility": {
+            "criterion_id": "compatibility",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 468,
+              "merge_commit": "4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+              "observation": "Current Captain output retains blocked_reasons and failed_reasons while errors is generated from the same underlying reason lists; gate compatibility reasons are deterministically derived from structured records.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:compatibility",
+              "observer": "chatgpt-grip-t018-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:48:41Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:compatibility",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T018:compatibility"
+            }
+          },
+          "error-shape": {
+            "criterion_id": "error-shape",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 468,
+              "merge_commit": "4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+              "observation": "Exact current Grabowski main 50cee73c6372e7bb3fe538a8e33312d14e5dd866 defines CaptainErrorRecord with code, message, phase, severity and optional context; output errors are structured records.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:error-shape",
+              "observer": "chatgpt-grip-t018-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:48:41Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:error-shape",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T018:error-shape"
+            }
+          },
+          "source-of-truth": {
+            "criterion_id": "source-of-truth",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 468,
+              "merge_commit": "4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+              "observation": "Current src/grabowski_grip_orchestration.py uses _captain_error_records for preflight, execution-preflight and post-verification, and _captain_blocked_reasons derives messages from _captain_blocked_errors for gates. PR #468 merge 4c4878993db32f56b780a15c5d1ea9b6f8b1e54a is 538 commits behind current main with no divergent commits.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:source-of-truth",
+              "observer": "chatgpt-grip-t018-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:48:41Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:source-of-truth",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T018:source-of-truth"
+            }
+          },
+          "tests": {
+            "criterion_id": "tests",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 5,
+              "github_pr": 468,
+              "merge_commit": "4c4878993db32f56b780a15c5d1ea9b6f8b1e54a",
+              "observation": "On exact current main, CaptainStructuredErrorTests plus Captain authority tests for exact structured blocked output and bounded compatibility summaries pass; five distinct focused tests were observed across the current-head proof.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:tests",
+              "observer": "chatgpt-grip-t018-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:48:41Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t018:tests",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T018:tests"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "8f9d9fb7821c6d33e934a687109c120315f5272066d4aacfaf247bfca012fdc5",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+        "preview_sha256": "25117444780e9775e2654584b3e6de9f250f96b18dd9082da38668d4cf2ce102",
+        "receipt_sha256": "02154517bdb0da82d9884e7707e6a4fcbe69181229c01cfe0cec27bc739cd6bb",
+        "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "GRIP-ROADMAP-V1-T018",
+        "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "1e088ab1d28c1832278f7a5ceb66aa6c475c5eeecb25e7b3a69a6120d18277ac"
+      },
+      "receipt_sha256": "02154517bdb0da82d9884e7707e6a4fcbe69181229c01cfe0cec27bc739cd6bb",
+      "reviewer": "chatgpt-grip-t018-independent-reviewer-20260905",
+      "schema_version": 1,
+      "task_sha256": "597daab7f51a003a256e913177caa22667a397139d4680a513b217e763d95dae"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 180
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add structured Captain error codes"
 }

@@ -150,7 +150,7 @@
     "trigger": "Der globale Befehl startet nicht die kanonische CLI, Doctor meldet den gültigen Wrapper nicht korrekt, ein unerwarteter Hostzustand wird beobachtet oder eine bestehende RepoGround-Nutzung regressiert."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "stop": {
     "conditions": [
       "Der installierte Wrapper weicht vor der Mutation vom digestgebunden beobachteten Zustand ab und seine Herkunft ist nicht geklärt.",

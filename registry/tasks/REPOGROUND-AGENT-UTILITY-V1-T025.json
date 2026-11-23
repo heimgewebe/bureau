@@ -94,7 +94,7 @@
     "trigger": "Ein RepoGround-seitiger Fix verschlechtert CLI-, Doctor- oder Wrapper-Semantik oder macht eine zuvor unterstützte Runtime fälschlich unzulässig."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "stop": {
     "conditions": [
       "Frische Evidenz zeigt, dass eine Lösung nur durch Änderung der OS-verwalteten System-Python-Installation möglich wäre.",

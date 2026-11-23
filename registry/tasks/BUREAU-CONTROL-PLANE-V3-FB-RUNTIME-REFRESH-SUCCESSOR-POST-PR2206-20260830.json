@@ -227,6 +227,6 @@
     "strategy": "The currently deployed Bureau runtime at 90647998ade46187d9042e822d468c71f5f597f8 remains authoritative until a new immutable result is fully read back. If source ancestry, target freshness, CI, deployment/Registry identity or the new effect becomes unclear, preserve all precondition, attempt, intent, workspace, backup, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Single-Use Bureau-Runtime-Refresh successor after PR #2206"
 }

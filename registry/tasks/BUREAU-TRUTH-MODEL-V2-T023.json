@@ -195,6 +195,6 @@
     "strategy": "Revertiere ausschließlich neu eingeführte Discriminator-, Parser-, Dokumentations- und Teständerungen. Bestehende befehlsspezifische JSON-Ausgaben bleiben unverändert; bei unklarer Form müssen Auswerter weiterhin fail-closed abbrechen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Bureau-JSON-Ergebnisformen revisionssicher typisieren"
 }

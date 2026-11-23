@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T029",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Dashboard-Portfolio-Sammler beschleunigen und PR-Quellen klassifizieren",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Stabilisiere die bereits von 42.959 ms auf einstellige Sekunden beschleunigte 71-Repository-Sammlung, trenne erwartbar nicht anwendbare Pull-Request-Quellen von echten Ausfällen und erhalte Deduplizierung, Datenschutz und den read-only Dashboard-Vertrag.",
   "priority": {
     "lane": "later",

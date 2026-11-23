@@ -133,6 +133,6 @@
     "strategy": "Auf den letzten vollständig geprüften Fadenrendervertrag zurückgehen; bei unklarer Produktionsidentität oder visueller Regression keine weitere Geometriewirkung behaupten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Natürliche Fadenprofile revisionsgebunden integrieren"
 }

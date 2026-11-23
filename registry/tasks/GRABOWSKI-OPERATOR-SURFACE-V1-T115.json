@@ -103,6 +103,6 @@
     "strategy": "Den im Preflight protokollierten vorherigen gesunden Runtime-Stand source-identitätsgebunden wiederherstellen, nur taskeigene Canary-Eingaben entfernen und anschließend Services, Watchdogs, Connectorbindung und einen typisierten Live-Read erneut prüfen. Fremde Arbeit bleibt unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Reconcile-Provenienz deployen und live beweisen"
 }

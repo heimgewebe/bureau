@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2138-SCHEDULER-CONVERGENCE-20260822",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2138 für Scheduler-Konvergenz",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst als exakt eine neue TaskSpec-Datei über einen normalen geschützten Pull Request gemergt und missing-only in den StateStore adoptiert wurde. Zweck ist ausschließlich, den in PR #2138 gemergten Same-Source-/Scheduler-Konvergenzfix in die immutable Bureau-Runtime zu übernehmen und den aktuellen release-registry-identity-mismatch zu beseitigen, damit der normale typisierte Bureau-Pickup wieder über seine regulären Verträge arbeiten kann. Diese Authority erteilt genau einen Runtime-Effekt und keine Queue-, Claim-, Dispatch-, Supply-, Produktcode-, Fremdarbeits- oder allgemeine Repository-Autorität.",
   "priority": {
     "lane": "now",

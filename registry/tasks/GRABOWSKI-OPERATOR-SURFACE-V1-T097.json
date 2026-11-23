@@ -105,6 +105,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Python-3.12-Worker-Test-Timeout deterministisch härten"
 }

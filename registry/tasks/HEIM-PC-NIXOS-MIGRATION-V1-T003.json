@@ -3,7 +3,7 @@
   "id": "HEIM-PC-NIXOS-MIGRATION-V1-T003",
   "initiative": "HEIM-PC-NIXOS-MIGRATION-V1",
   "title": "Prove one-disk cutover readiness",
-  "state": "planned",
+  "state": "superseded",
   "goal": "After T001/T002, ancestry-preserving source integration, the T004 activation-mechanism proof, storage-harness implementation, final source integration/publication/seal and the final T011 published-source closure build proof are terminal and reviewed, prove one-disk NixOS cutover readiness on an exclusively reserved disposable non-production target using only the leased immutable T010 published-source artifact and the exact T011 final closure/build receipt: first create and independently read back the canonical GPT+EFI+recovery+LUKS2+Btrfs topology, then boot a distinct receipt-bound prior/recovery runtime derived only from T010 on that topology, then derive and review a target-bound Activation receipt from the exact T011 Build receipt and the proven disposable target/prior-runtime identity, activate exactly the T011 closure through that Activation receipt without source reevaluation, independently read back the live closure and prove rollback to that prior/recovery runtime, restore the user-accepted existing UUID-bound HEIM_BACKUP Restic backup material (or an equivalent stronger source) with same-host attachment explicitly accepted for this data-backup/restore gate, prove the remaining offline recovery path, and finish with a reviewed evidence-complete cutover plan whose actual production device remains deliberately unbound for a later separately authorized destructive order.",
   "priority": {
     "lane": "next",

@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T034",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Offene High-Severity-Dependency-Alerts des Weltgewebes beheben",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Die aktuell von GitHub für den Default-Branch gemeldeten sechs High-Severity-Dependency-Schwachstellen vollständig inventarisieren, nach tatsächlich betroffenem Laufzeit- und Buildpfad priorisieren und mit minimalen, kompatiblen Updates oder gezielten Mitigierungen schließen, ohne bestehende Lieferketten- und CI-Schutzregeln abzuschwächen.",
   "depends_on": [],
   "priority": {

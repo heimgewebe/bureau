@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T010",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Skalierbare autorisierte Kandidatenselektion jenseits der 1000er-Grenze",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Den sicheren, aber hart auf 1000 autorisierte Kandidaten begrenzten T006-Retrievalpfad anhand realistisch gemessener Weltgewebe-Größen skalierbar machen, ohne Autorisierung vor Retrieval aufzugeben oder ungeprüft ANN/HNSW einzuführen.",
   "priority": {
     "lane": "later",

@@ -125,6 +125,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Merge-Guard und Nichtkonfliktprüfung repositorygebunden korrigieren"
 }

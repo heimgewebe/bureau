@@ -149,6 +149,6 @@
     "strategy": "Vor lokaler Google-Drive-Ordnerauswahl keine Grant- oder Dateiwirkung. Bei falschem Provider, falschem Ordner, driftender Evidence-SHA-256, fehlendem Schreibrecht oder unklarem Effekt sofort fail-closed stoppen. Keine fremden Grants ersetzen, keine Bookmark-Bytes offenlegen und keinen iCloud-Grant umetikettieren. Sentinel-Dateien nicht löschen, verschieben oder umbenennen, sofern dafür kein gesonderter revisionsgebundener Cleanup-Vertrag besteht."
   },
   "schema_version": 1,
-  "state": "blocked",
+  "state": "cancelled",
   "title": "Google-Drive-iPad-Providergrant und echten Cross-Device-Roundtrip belegen"
 }

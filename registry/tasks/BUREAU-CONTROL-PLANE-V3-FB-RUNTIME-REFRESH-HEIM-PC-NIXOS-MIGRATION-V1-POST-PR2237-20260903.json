@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-HEIM-PC-NIXOS-MIGRATION-V1-POST-PR2237-20260903",
   "title": "Single-use Bureau runtime refresh successor for Heim-PC NixOS migration visibility",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Publish exactly one initially non-executable planned Bureau runtime-refresh successor through a protected one-file PR, adopt it missing-only into authoritative StateStore, and only then activate it by a proof-bearing planned-to-ready CAS. Its sole purpose is to converge the installed Bureau runtime and canonical Registry from fd9570bbc99719f601879482def202b23bddbf01 to a freshly observed protected-main successor so the already merged and StateStore-adopted HEIM-PC-NIXOS-MIGRATION-V1 becomes visible to the installed control plane. It succeeds the effect-started but exactly rolled-back PR #2249 authority attempt c0ec155d4264b9955951b8cff5c38c246dd83b972c20fd91166f5431b99dd72d and never reuses that authority or intent. This authority performs no NixOS migration work itself.",
   "priority": {
     "lane": "now",

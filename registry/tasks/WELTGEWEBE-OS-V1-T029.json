@@ -81,6 +81,6 @@
     "ci"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Federation-Pre-Auth-Last über verteilte Instanzen begrenzen"
 }

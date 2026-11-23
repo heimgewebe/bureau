@@ -3,7 +3,7 @@
   "id": "RAB-V1-T003",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Decide RepoBrief agent adoption from paired evidence",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Review the fixed benchmark evidence, classify useful and harmful task classes, keep RepoBrief opt-in, prefer it for bounded classes, or reject the path, and only then decide whether incremental rebuild or watcher work is justified.",
   "priority": {
     "lane": "later",

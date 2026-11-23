@@ -281,6 +281,6 @@
     "strategy": "Retain the manifest-bound 211d4f1b6eb0d7e1c5614d2ea914bc49d4fcf468 immutable release and prior rollback snapshots until verified target readback. Never reuse the consumed PR2375 authority; on any uncertain effect or source/lease drift stop and reconcile exact receipts without blindly retrying."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "One-use Bureau runtime refresh after parallel PR-observer performance fix PR2376"
 }

@@ -107,6 +107,6 @@
     "strategy": "Den im Preflight protokollierten vorherigen gesunden Grabowski-Runtime-Stand source-identitätsgebunden wiederherstellen, nur taskeigene Live-Proof-Effekte entfernen und anschließend Runtime-Identität, Connectorbindung, betroffene Services und einen typisierten Readback erneut prüfen. Fremde Arbeit und fremde Leases bleiben unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Runtime-Refresh-Lease-Contract deployen und live beweisen"
 }

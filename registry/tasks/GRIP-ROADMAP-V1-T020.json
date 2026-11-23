@@ -3,7 +3,7 @@
   "id": "GRIP-ROADMAP-V1-T020",
   "initiative": "GRIP-ROADMAP-V1",
   "title": "Redact Captain command-output previews",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Redact token-like or credential-like content from bounded Captain execution stdout/stderr previews while keeping deterministic hashes for full original outputs.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T014"

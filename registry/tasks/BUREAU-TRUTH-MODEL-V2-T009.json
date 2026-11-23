@@ -25,7 +25,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T009",
   "title": "Align status projection health with Doctor and Registry Truth",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Prevent status-projection from reporting healthy when authoritative Bureau diagnostics report a current blocker or lifecycle mismatch.",
   "priority": {
     "lane": "later",

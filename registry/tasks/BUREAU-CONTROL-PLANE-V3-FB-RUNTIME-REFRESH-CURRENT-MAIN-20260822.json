@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-CURRENT-MAIN-20260822",
   "title": "Single-Use Bureau-Runtime-Refresh auf frischen aktuellen main-Stand",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst als exakt eine neue TaskSpec-Datei über einen normalen geschützten Pull Request gemergt und missing-only in den StateStore adoptiert wurde. Zweck ist ausschließlich, die immutable Bureau-Runtime wieder mit der kanonischen Registry/main-Identität zu konvergieren, damit aktuell durch release-registry-identity-mismatch blockierte typisierte Operator-Arbeit wieder über ihre regulären Verträge fortgesetzt werden kann. Diese Authority erteilt genau einen Runtime-Effekt und keine Queue-, Claim-, Dispatch-, Supply-, Produktcode-, Capacity-Marketplace-, Fremdarbeits- oder allgemeine Repository-Autorität.",
   "priority": {
     "lane": "now",

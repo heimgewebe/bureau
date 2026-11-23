@@ -93,6 +93,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "PostgreSQL-Pool konfigurierbar machen und Kapazität belegen"
 }

@@ -37,7 +37,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T004",
   "title": "Run lifecycle ledger transitions in shadow mode",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Record evidence-bound lifecycle transition proposals and compare them with canonical Git outcomes before reducing Registry PRs.",
   "priority": {
     "lane": "later",

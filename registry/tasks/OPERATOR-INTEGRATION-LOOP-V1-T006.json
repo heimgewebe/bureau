@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T006",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Build a nightly observe-and-diagnose cycle",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 420

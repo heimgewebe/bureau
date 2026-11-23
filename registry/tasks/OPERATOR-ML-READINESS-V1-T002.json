@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T002",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Evaluate offline routing ML baselines after readiness gate",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Only after the registered readiness experiment passes, evaluate simple external ML baselines offline against the deterministic routing heuristic using frozen evidence-bound cohorts, with calibrated abstention and no production effect.",
   "depends_on": [
     "OPERATOR-ML-READINESS-V1-T004"

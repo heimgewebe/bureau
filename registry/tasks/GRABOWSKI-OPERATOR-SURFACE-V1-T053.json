@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T053",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Align Bureau worktree leases with the narrow admin contract",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Make Grabowski worktree orchestration acquire Bureau's short-lived worktree-admin gate with the required contract bindings, then retain only the normal target-worktree lease, without requesting the forbidden broad Bureau repository lease.",
   "priority": {
     "lane": "later",

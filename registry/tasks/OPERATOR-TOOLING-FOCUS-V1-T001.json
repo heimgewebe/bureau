@@ -3,7 +3,7 @@
   "id": "OPERATOR-TOOLING-FOCUS-V1-T001",
   "initiative": "OPERATOR-TOOLING-FOCUS-V1",
   "title": "Defer Grafana behind Beszel monitoring pilot",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 260

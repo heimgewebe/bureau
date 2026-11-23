@@ -123,6 +123,6 @@
     "strategy": "Bei Regression den exakten Implementierungsmerge über einen normalen Revert-PR zurücknehmen. Bereits journalisierte StateStore-Historie nicht zurückschreiben; der neue Reconcile-Pfad muss vor jeder Wirkung CAS- und Aktivitätsgates erneut prüfen, sodass unklare Fälle ohne Mutation enden."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Stale StateStore-TaskSpecs sicher auf explizite Supersession reconciliieren"
 }

@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T015",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Make state-root migration crash-recoverable",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Add a durable write-ahead and recovery contract for reviewed state-root migration and rollback so SIGKILL, host reboot or power loss between descriptor-relative effects and final receipt publication cannot leave an unclassified split state.",
   "priority": {
     "lane": "later",

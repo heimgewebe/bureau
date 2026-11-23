@@ -92,6 +92,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Directory-FD-Pinning für Router-Installer und State-Publikation härten"
 }

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T032",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Deduplicate equivalent work and isolate validation state",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 510

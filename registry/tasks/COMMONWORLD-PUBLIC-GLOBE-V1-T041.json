@@ -105,6 +105,6 @@
     "strategy": "If the new fields destabilize catalog compatibility or encourage unsupported classifications, revert schema, migration, UI and generated release changes together while retaining focused fixtures that demonstrate the ambiguity of free-text-only openness notes."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Model data, software and governance openness explicitly"
 }

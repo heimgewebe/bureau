@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T061",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Measure deferred convergence hardening before adding complexity",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Evaluate the remaining review suggestions for connector-snapshot persistence, root-task backend routing and convergence evidence validation under reproducible concurrency, latency and failure tests, then implement only changes with demonstrated safety or operational benefit.",
   "priority": {
     "lane": "later",

@@ -334,6 +334,6 @@
     "strategy": "The currently deployed Bureau runtime at 443d79926db5244857293ca01ffa4514e6fd955e remains authoritative until a new immutable result is fully read back. If protected publication, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, execution-context writability or the runtime effect becomes unclear, preserve all publication, adoption, intent, attempt/result, manifest, Registry, authority and lease evidence and do not retry; reconciliation requires a separately authorized successor path."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-Use Bureau-Runtime-Refresh f\u00fcr T120-Flottenfortsetzung nach c7f5eab"
 }

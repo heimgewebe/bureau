@@ -90,6 +90,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Typed authoritative PR-Closure collectors integrieren"
 }

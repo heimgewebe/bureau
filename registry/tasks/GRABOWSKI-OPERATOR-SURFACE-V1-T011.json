@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T011",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Document bundle authority semantics",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Clarify latest_complete_bundles authority values and does_not_establish semantics so operators do not overread legacy cache, live discovery or merged authority.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"

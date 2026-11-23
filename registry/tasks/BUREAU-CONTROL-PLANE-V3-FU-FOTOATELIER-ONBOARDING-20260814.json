@@ -162,6 +162,6 @@
     "strategy": "Revertiere ausschließlich die neue repo.fotoatelier-Ressource, FOTOATELIER-V1-Initiative und die drei neuen Fotoatelier-Taskdateien, sofern sie noch keine nachgelagerte autoritative Nutzung besitzen."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Fotoatelier als eigene Bureau-Initiative onboarden"
 }

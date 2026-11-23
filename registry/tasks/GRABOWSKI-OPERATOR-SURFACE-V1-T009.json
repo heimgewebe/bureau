@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T009",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Generalize narrow observers",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Generalize the narrow observer pattern used for task systemd unit show into a reusable read-only observer shape for bounded systemd/journal-style diagnostics.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T125",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "GitHub-Branchaktualisierung mit eventual-consistentem Readback absichern",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Den GitHub-Update-Branch-Pfad so ausführen und auswerten, dass ein erfolgreich angestoßener, aber verzögert sichtbarer Head-Wechsel nicht als fehlgeschlagene Wirkung terminalisiert wird. Der Ablauf soll die Wirkung begrenzt nachlesen, Head- und Base-Identitäten binden und zwischen no-effect, effect-confirmed, effect-pending und outcome-unknown unterscheiden, ohne fremde Branches, Leases oder Checks zu umgehen.",
   "priority": {
     "lane": "later",

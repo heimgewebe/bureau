@@ -82,6 +82,6 @@
     "strategy": "Revert only the workflow ordering, receipt-upload split and corresponding validators while retaining the already published disclosure policy and its existing fail-closed readbacks."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Make Commonworld security readbacks diagnostically independent"
 }

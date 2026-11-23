@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T007",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Expose Systemkatalog through a typed read-only operator surface",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Let Grabowski query stable ecosystem semantics, truth ownership, relationships and entry points through typed structured calls instead of requiring shell-oriented CLI discovery or ad hoc file parsing.",
   "priority": {
     "lane": "next",

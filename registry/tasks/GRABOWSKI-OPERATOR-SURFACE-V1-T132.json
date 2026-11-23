@@ -140,6 +140,6 @@
     "strategy": "Die Projektionsänderung revertieren und den bisherigen Adapterpfad wiederherstellen. Bis zur Korrektur gelten eingebettetes Bureau-Release-Receipt und direkter Lease-Readback als maßgebliche Diagnose; eine widersprüchliche top-level Boolesche Angabe darf nicht zur automatischen Bereinigung oder Erfolgsbehauptung verwendet werden."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Lease-Freigabe im Bureau-Publikationsadapter konsistent projizieren"
 }

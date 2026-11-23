@@ -79,6 +79,6 @@
     "deployment"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "VPS-HTTP-Smoke-Routing gegen Caddy-Direktivenreihenfolge härten"
 }

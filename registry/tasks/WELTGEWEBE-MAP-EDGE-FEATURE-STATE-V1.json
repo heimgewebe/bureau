@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-MAP-EDGE-FEATURE-STATE-V1",
   "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
   "title": "Weltgewebe: MapLibre Edge-Updates bei belegter Last auf Feature-State umstellen",
-  "state": "inbox",
+  "state": "cancelled",
   "goal": "Die Kosten der minütlichen GeoJSON-Reprojektion auf Zielgeräten messen und nur bei belegten Rucklern oder aufgehobener 250-Edge-Grenze auf MapLibre Feature-State umstellen.",
   "priority": {
     "lane": "later",

@@ -101,6 +101,6 @@
     "strategy": "Sobald ein Child-Worktree dirty, aktiv, retained, wirksam geleast oder nicht remote gesichert ist, bleibt er bestehen. Git-Worktree-Removal nur für sicher terminale Child-Worktrees; main ausschließlich per ff-only. Keine Reparatur über reset/stash/clean."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Canonical Grabowski main checkout lossless converge"
 }

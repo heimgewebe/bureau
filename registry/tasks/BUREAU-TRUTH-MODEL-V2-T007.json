@@ -30,7 +30,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T007",
   "title": "Index or materialize Live Register current state",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Replace the correctness-first complete event scan with an indexed or materialized projection after parity is proven.",
   "priority": {
     "lane": "later",

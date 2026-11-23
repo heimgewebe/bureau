@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T002",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Make connector snapshot identity and compatibility observable",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Expose which connector snapshot is actually serving ChatGPT, which server and agent contracts it advertises and whether that snapshot is structurally compatible with the deployed Grabowski runtime and canonical operator-entry policy without claiming model comprehension or universal client compliance.",
   "priority": {
     "lane": "next",

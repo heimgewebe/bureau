@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T001",
   "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
   "title": "Validate PMTiles directory and representative tile payloads",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Add a bounded validator that opens every regional Weltgewebe PMTiles archive, verifies its internal directory and metadata, and decodes representative vector tiles so corruption beyond magic bytes, size and SHA-256 is detected before publication.",
   "depends_on": [],
   "priority": {

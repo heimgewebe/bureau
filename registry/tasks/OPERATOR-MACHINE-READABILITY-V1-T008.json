@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T008",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Resolve central contracts reproducibly in isolated worktrees",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Make heim-pc and other consumers validate Metarepo contracts from an explicit, identity-bound source without depending on an accidental sibling checkout path or environment propagation through a particular execution wrapper.",
   "priority": {
     "lane": "next",

@@ -151,7 +151,7 @@
     "strategy": "Bei geschwächter Integrität, nichtdeterministischer Evidenz oder Consumer-Inkompatibilität den Generator-/Vertragsdiff zurücknehmen und den bisherigen strikten Aggregatvertrag wiederherstellen. Fremde Source-Branches, Leases und generierte Evidenz nicht resetten oder überschreiben."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "stop": {
     "conditions": [
       "Eine Lösung würde Source-Hash-/Currentness-Prüfung lediglich entfernen, ignorieren oder auf Warnung herabstufen.",

@@ -281,6 +281,6 @@
     "strategy": "Keep the currently working immutable Bureau source ff694981aa3273d9cc673a79e1419d9f1da89c20 as fallback. If the new one-effect refresh becomes unclear, stop before any retry, retain exact attempt receipts and workspace, and reconcile against observed manifest, Registry, launcher, package and systemd states. No NixOS switch or foreign Writer mutation."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "One-time Bureau runtime convergence after Python isolation, PR observer and native Grabowski task ABI fixes"
 }

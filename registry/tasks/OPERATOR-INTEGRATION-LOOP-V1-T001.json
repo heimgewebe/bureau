@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T001",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Add cost-aware fallback patch executors",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 370

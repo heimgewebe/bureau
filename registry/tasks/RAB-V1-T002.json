@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run real paired baseline and RepoBrief agent trials",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with the separately qualified instrumented runner, provider-reported tokens and immutable transcripts.",
   "priority": {
     "lane": "later",

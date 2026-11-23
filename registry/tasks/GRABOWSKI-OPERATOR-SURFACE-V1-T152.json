@@ -114,6 +114,6 @@
     "strategy": "Bei Schema- oder Clientkompatibilitätsproblemen den PR nicht mergen und die bisherige Runtime-XOR-Prüfung unverändert beibehalten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Task-Propose-Selector-XOR im veröffentlichten Schema abbilden"
 }

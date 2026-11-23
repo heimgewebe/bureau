@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Reduce RepoGround core complexity and prove live module reachability",
-  "state": "ready",
+  "state": "cancelled",
   "priority": {
     "lane": "now",
     "rank": 80

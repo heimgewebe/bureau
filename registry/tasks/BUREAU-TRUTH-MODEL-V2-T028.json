@@ -4,7 +4,7 @@
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "title": "Immutable Bureau-Runtime an aktuellen Registry-Stand binden",
   "goal": "Die installierte immutable Bureau-Runtime und den kanonischen Registry-Snapshot revisionsgebunden von cb9cb572b14cf742754f0a6eb0e290f872521eaa auf den bereits reviewten aktuellen main-Commit 30313a0022afee6acc4fd7d94f696dc386b4edd4 konvergieren. Der bestehende Runtime-Refresh-Vertrag muss exakt an Target 471f57e954e55c0db6ecf6de750ef0afdb6e9c577e460f5fbd63e9d7ed3162be gebunden werden; danach müssen Queue, Frontier und Doctor belegen, dass der nur aus dem alten Snapshot stammende T068-Drift verschwunden ist.",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "next",
     "rank": 1

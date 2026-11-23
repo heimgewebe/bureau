@@ -3,7 +3,7 @@
   "id": "GRIP-ROADMAP-V1-T022",
   "initiative": "GRIP-ROADMAP-V1",
   "title": "Align worktree-ensure with the Bureau exact-lease contract",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Make the Grabowski worktree-ensure grip acquire and validate the exact target-path and short Bureau worktree-admin leases required by Bureau Always-open Lease Contract v2, without requesting the deprecated global Bureau repository lease.",
   "depends_on": [],
   "priority": {

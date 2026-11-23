@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2116-TASK-SUPPLY-20260819",
   "title": "Single-Use-Runtime-Refresh nach PR #2116 für task-supply",
-  "state": "ready",
+  "state": "cancelled",
   "goal": "Genau einen kontrollierten immutable Bureau-Runtime-Refresh vom installierten Stand 0eb32d6c9f7f26f5cc2967040871cbbc93e4afc4 auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen. Das tatsächliche Target wird erst nach geschütztem Merge von PR #2116 sowie nach Merge dieser Authority-TaskSpec bestimmt und muss beide enthalten. Zweck ist ausschließlich, die in PR #2115 eingeführte bounded approval-freie read-only Task-Supply-Funktion und die in PR #2116 beseitigte vierte-Launcher-Bootstrap-Seam revisionsgenau in die immutable Bureau-Runtime zu bringen, damit bureau-task-supply.service/timer danach über den bestehenden stabilen bureau-Launcher live validiert werden können. Diese Authority verändert keine Queue, Claims, Dispatch-Zustände, Supply-TaskSpecs oder fremde Arbeit und darf nach erfolgreichem Refresh niemals wiederverwendet werden.",
   "priority": {
     "lane": "now",

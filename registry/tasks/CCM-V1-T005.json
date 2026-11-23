@@ -3,7 +3,7 @@
   "id": "CCM-V1-T005",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Run and close the natural-case history brief pilot",
-  "state": "blocked",
+  "state": "cancelled",
   "depends_on": [
     "CCM-V1-T001",
     "CCM-V1-T002",

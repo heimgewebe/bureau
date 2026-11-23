@@ -114,6 +114,6 @@
     "strategy": "Revert only the exact readback-identity hardening commit. Preserve mismatch diagnostics and test fixtures; do not restore acceptance of cross-target or identity-free payloads without a separately reviewed contract change."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Bind GitHub readbacks to requested identities"
 }

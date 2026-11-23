@@ -110,6 +110,6 @@
     "browser"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Introduce a hierarchical catalogue manifest and aggregate before 100k scale"
 }

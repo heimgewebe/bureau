@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T015",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Reconciler-Buildimage und Upgradepfad eigenständig härten",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Das derzeit extern bezogene digestgepinnte Node-Buildimage durch ein minimales, repositoryeigenes und provenancegebundenes Buildimage mit kontrollierter Aktualisierung ersetzen und Installation sowie Upgrade des root-eigenen Reconciler-Vertrags atomar und rückfallfähig machen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T014"

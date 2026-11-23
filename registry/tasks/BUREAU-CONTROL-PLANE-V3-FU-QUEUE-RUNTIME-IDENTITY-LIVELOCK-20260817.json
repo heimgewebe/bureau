@@ -139,6 +139,6 @@
     "strategy": "Bei jeder unerwarteten Erweiterung der Mutationszulässigkeit Änderung nicht mergen bzw. revertieren; vollständige fail-closed Registry-Bindung bleibt Fallback."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Queue-only Drift von der Bureau Runtime-Identitätsgrenze entkoppeln"
 }

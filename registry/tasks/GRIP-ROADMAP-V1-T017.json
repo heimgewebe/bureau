@@ -3,7 +3,7 @@
   "id": "GRIP-ROADMAP-V1-T017",
   "initiative": "GRIP-ROADMAP-V1",
   "title": "Add idempotent pr-merge already_satisfied mode",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Add an explicit opt-in already_satisfied mode for captain-run pr-merge retries without claiming that the current run performed the merge.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T014"

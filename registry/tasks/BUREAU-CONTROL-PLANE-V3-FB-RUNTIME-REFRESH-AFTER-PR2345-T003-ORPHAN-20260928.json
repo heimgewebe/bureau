@@ -275,6 +275,6 @@
     "strategy": "The currently integrity-valid Bureau runtime at f894bcf9e1e03e452242953e3f4f5ba0ab65b65b remains authoritative until one operator-authorized, source-precondition-bound immutable result is fully read back. If protected publication, missing-only adoption/activation, source ancestry, target freshness, CI, deployment/Registry identity, StateStore binding, reserved execution-context writability, leases or any runtime result becomes unclear, preserve evidence and do not blindly retry; reconcile through a separately bound successor path. Historical runtime authorities, intents and targets are never reused."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Single-use Bureau runtime refresh after PR #2345 for T003 stale-run reconciliation"
 }

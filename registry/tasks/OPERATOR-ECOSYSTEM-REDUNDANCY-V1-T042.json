@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T042",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Classify and contain stray /tmp Git marker",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Determine the provenance and live ownership of the unexplained /tmp/.git marker, then remove, relocate or contain it only if safe, and make temporary-repository tests robust against unrelated ancestor Git markers without weakening real worktree guards.",
   "priority": {
     "lane": "later",

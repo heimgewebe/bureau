@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T020",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Implement a typed Grabowski operation lifecycle vertical slice",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Expose operation.start, operation.status, operation.continue, operation.review and operation.close as one thin typed Grabowski lifecycle over existing Bureau tasks, leases, durable executions, review evidence, readbacks and cleanup without introducing a second task or repository truth.",
   "priority": {
     "lane": "next",

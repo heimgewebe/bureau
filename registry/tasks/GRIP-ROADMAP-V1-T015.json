@@ -3,7 +3,7 @@
   "id": "GRIP-ROADMAP-V1-T015",
   "initiative": "GRIP-ROADMAP-V1",
   "title": "Define trusted-owner blast-radius policy",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Define and enforce a blast-radius policy for trusted-owner captain-run autonomy so reversibility alone cannot release high-impact execution.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T005",

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T004",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Gate routing-shadow cohort readiness before any training",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Audit the prospectively collected routing-shadow cohort for inclusion integrity, representativeness, sufficient preregistered coverage, semantic-label quality, abstention and missingness before any offline ML baseline training is authorized.",
   "depends_on": [
     "OPERATOR-ML-READINESS-V1-T003"

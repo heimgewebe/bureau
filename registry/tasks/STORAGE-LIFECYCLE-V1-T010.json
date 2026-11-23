@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T010",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Grabowski Task-Ledger-Worktree nach Ende der aktiven Repo-Lease archivieren und entfernen",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Archive and remove the exact clean Grabowski task-ledger convergence checkout after its foreign repository lease no longer protects live work, while preserving recovery refs and proving that no foreign checkout, branch, lease, runtime, deployment or remote ref was changed.",
   "priority": {
     "lane": "now",

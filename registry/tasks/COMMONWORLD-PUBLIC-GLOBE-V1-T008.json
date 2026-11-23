@@ -38,7 +38,7 @@
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T008",
   "title": "Scale static machine access and public findability",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Improve static loading, search indexing and discoverability without introducing a backend before measured need.",
   "priority": {
     "lane": "later",

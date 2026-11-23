@@ -38,7 +38,7 @@
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T015",
   "title": "Operationalise Commonworld editorial review and freshness follow-up",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Turn the proposal and freshness contracts into a reviewable editorial operating loop that detects stale sources, duplicate candidates and overdue catalogue reviews without granting automation publication authority.",
   "priority": {
     "lane": "later",

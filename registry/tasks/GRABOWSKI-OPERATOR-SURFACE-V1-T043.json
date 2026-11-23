@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T043",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Publish machine-readable contracts for complex tools",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Move the normative precondition, state-transition, idempotency, retry and terminal-outcome rules of the most complex Grabowski surfaces into versioned machine-readable contracts and make prose subordinate to those contracts.",
   "priority": {"lane": "next", "rank": 430},
   "execution": {

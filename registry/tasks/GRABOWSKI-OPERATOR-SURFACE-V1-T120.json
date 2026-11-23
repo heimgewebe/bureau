@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T120",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Roll out strict non-bypassable base-update guards",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Inventory every repository and base branch eligible for direct Captain merge and establish an active GitHub ruleset with nonempty strict required status checks that the current merge actor cannot bypass; preserve stronger existing protections and keep Captain fail-closed where the contract cannot be met.",
   "priority": {
     "lane": "later",

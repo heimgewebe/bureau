@@ -104,6 +104,6 @@
     "audit"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "cancelled",
   "title": "Reposkop-Realnutzen im Grabowski-Verbraucher belegen"
 }

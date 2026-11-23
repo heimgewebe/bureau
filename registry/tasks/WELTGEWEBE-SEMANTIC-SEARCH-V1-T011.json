@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Literale Titelpräfix-Suche mit sicher escapten LIKE-Metazeichen",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Die T006-Titelpräfix-Suche so härten, dass Nutzereingaben mit %, _ und dem Escape-Zeichen als literale Suchzeichen behandelt werden und nicht unbeabsichtigt SQL-LIKE-Wildcards aktivieren, ohne Ranking oder Autorisierungsreihenfolge zu verändern.",
   "priority": {
     "lane": "next",

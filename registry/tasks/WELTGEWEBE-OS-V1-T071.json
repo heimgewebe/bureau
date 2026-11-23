@@ -116,6 +116,6 @@
     "strategy": "Eine ausschließlich zur fehlgeschlagenen Abnahme eingeführte Reparatur auf den letzten vollständig geprüften Fadenrendervertrag zurücknehmen; bei unklarer Produktionsidentität keine Geometrieänderung oder erneute Auslieferung behaupten und auf dem letzten kohärent belegten Release bleiben."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "PR #1702 auf realen Fäden und iPad visuell abnehmen"
 }

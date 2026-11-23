@@ -3,7 +3,7 @@
   "initiative": "BUREAU-CONTROL-PLANE-V3",
   "id": "BUREAU-CONTROL-PLANE-V3-FB-RUNTIME-REFRESH-AFTER-PR2132-T120-REPOSKOP-20260821",
   "title": "Single-Use Bureau-Runtime-Refresh nach PR #2132 für T120 und Reposkop #107",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Genau einen neuen revisionsgebundenen Bureau-Runtime-Refresh auf den unmittelbar vor Ausführung frisch beobachteten, reviewten und CI-grünen aktuellen heimgewebe/bureau main ausführen, nachdem diese Authority selbst geschützt gemergt wurde. Zweck ist ausschließlich, die in PR #2132 gemergte Typed-Acceptance-Reparatur von GRABOWSKI-OPERATOR-SURFACE-V1-T120 in die immutable Bureau-Runtime zu übernehmen, damit T120 anschließend über den normalen Claim-Pfad ausgeführt werden kann und der bereits grüne Reposkop-PR #107 seinen strikten Base-Update-Guard erhalten kann. Diese Authority erteilt genau einen Runtime-Effekt und keine T120-Implementierungs-, GitHub-Ruleset-, Queue-, Claim-, Dispatch-, Supply-, Reposkop-Code- oder Fremdarbeitsautorität.",
   "priority": {
     "lane": "now",

@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T013",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Systemkatalog-Drift-Watcher Kandidaten-Supersession idempotent machen",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 13

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "WELTGEWEBE-OS-V1",
-  "state": "planned",
+  "state": "cancelled",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T022"
   ],

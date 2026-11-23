@@ -58,6 +58,7 @@ from .live_register import (
     live_retention_report,
     write_live_promote_plan,
 )
+from .merged_task_intake import intake_merged_task_specs
 from .operator_intake import (
     DEFAULT_GRABOWSKI_RESOURCE_DB,
     OperatorIntakeError,
@@ -2236,9 +2237,23 @@ def main(argv: list[str] | None = None) -> int:
                 args.reason,
             )
         elif args.command == "reconcile":
+            if canonical_snapshot_selected and coordination_binding is not None:
+                # The canonical snapshot is exactly the merged main the runtime
+                # refresh deployed: publish its new TaskSpecs missing-only.
+                merged_task_intake = intake_merged_task_specs(registry, store)
+            else:
+                merged_task_intake = {
+                    "kind": "bureau_merged_task_intake",
+                    "status": "skipped",
+                    "reason": "registry-is-not-the-canonical-runtime-snapshot",
+                }
             acceptance_closeout = reconcile_state_evidence(registry, store)
             runtime_reconcile = dispatcher.reconcile(args.stale_after)
-            value = {**runtime_reconcile, "acceptance_closeout": acceptance_closeout}
+            value = {
+                **runtime_reconcile,
+                "acceptance_closeout": acceptance_closeout,
+                "merged_task_intake": merged_task_intake,
+            }
         elif args.command == "acceptance-authenticate":
             value = record_manual_acceptance_authentication(
                 store,

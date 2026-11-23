@@ -1,116 +1,505 @@
 {
-  "schema_version": 1,
-  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
-  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "title": "Patch-Sandbox-Prozessbudget vom bestehenden Hostbestand entkoppeln",
-  "state": "planned",
-  "goal": "Härte den RepoGround Patch-Evaluation-Sidecar so, dass sein begrenztes Prozessbudget weiterhin fail-closed wirkt, aber nicht als absoluter RLIMIT_NPROC-Wert unterhalb des bereits bestehenden Prozessbestands des realen Operator-Nutzers gesetzt wird. Ein belasteter Host mit mehr als 256 bestehenden Nutzerprozessen darf die isolierte Bubblewrap-Ausführung nicht allein deshalb mit EAGAIN blockieren.",
-  "priority": {
-    "lane": "later",
-    "rank": 95
-  },
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/repoground"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.repoground",
-      "mode": "exclusive",
-      "isolation": "worktree"
-    }
-  ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "python"
-  ],
-  "depends_on": [],
   "acceptance": [
     {
-      "id": "live-failure-reproduced",
       "assertion": "A revisions-bound test or proof reproduces the current failure mode where the real user's existing process count is greater than the absolute `_MAX_COMMAND_PROCESSES` limit and Bubblewrap exits before the payload with `Resource temporarily unavailable`.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "incremental-process-budget",
-      "assertion": "The sandbox retains an explicit bounded incremental process budget for the evaluated payload without setting an absolute real-UID RLIMIT_NPROC below the already existing host process count.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "fail-closed-isolation-preserved",
-      "assertion": "Bubblewrap PID, IPC, UTS and network isolation, filesystem restrictions, command timeout, output bounds and the remaining prlimit controls stay fail-closed; the fix does not broaden payload capabilities or silently disable process limiting.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "host-load-regression",
-      "assertion": "Regression coverage models a host process baseline above the payload budget and proves that a bounded sandbox command can start while a process-fork storm is still rejected within the intended incremental budget.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "fresh-runner-and-loaded-host",
-      "assertion": "Targeted Sidecar tests, the full RepoGround test suite, CodeQL and CI are green, and a real loaded operator-host canary succeeds with before/after process-count and limit evidence.",
-      "evidence_type": "object"
-    },
-    {
-      "id": "proof-and-boundaries",
-      "assertion": "A proof records the selected Linux RLIMIT/user-namespace semantics, residual risks and why the change fixes host coupling without claiming a global per-command kernel quota that Linux does not provide.",
-      "evidence_type": "object"
-    }
-  ],
-  "metadata": {
-    "source_candidate": "candidate-42d6e66788f4de185c119598",
-    "source_event": 1589,
-    "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
-    "source_path": "tools/patch_evaluation_sidecar_hardening.py",
-    "source_sha256": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44",
-    "observed_failure": {
-      "observed_at": "2026-07-28",
-      "host": "heim-pc",
-      "real_user_process_count": 270,
-      "configured_absolute_nproc_limit": 256,
-      "failing_tests": 33,
-      "passing_tests": 5131,
-      "error": "bwrap: Creating new namespace failed: Resource temporarily unavailable",
-      "fresh_runner_counterevidence": "GitHub pytest-full on RepoGround PR #1117 passed after installing the same sandbox runtime, isolating the failure to the loaded host contract rather than T019."
-    },
-    "operator_intake": {
-      "candidate_id": "candidate-42d6e66788f4de185c119598",
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ],
-      "event_created_at": "2026-07-28T20:26:09.613525Z",
-      "event_id": 1589,
-      "request_sha256": "28eeaf55eccb72012edb5e5d0c0cf2680429e73359bf9ca7224740a377e5580a",
-      "schema_version": 1,
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "conversation",
-        "locator": "github:heimgewebe/repoground@5318daaad4eceed60cd752eacd057ec74bbd9e49:tools/patch_evaluation_sidecar_hardening.py#_limited_sandbox_argv",
-        "observed_at": "2026-07-28T20:26:09.597564Z",
-        "sha256": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44"
+      "evidence_type": "object",
+      "id": "live-failure-reproduced",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:live-failure-reproduced"
       }
     },
-    "reviewed_plan": {
-      "reviewer": "chatgpt",
-      "reviewed_at": "2026-07-28",
-      "scope": "task-definition-only",
-      "decision": "approved",
-      "basis": "The failure was reproduced twice on the loaded host, a direct Bubblewrap probe without the absolute nproc limit succeeded, the real-user process count exceeded the configured limit, and the same RepoGround head passed the full sandbox suite on a fresh GitHub runner. The task is separated from T019 and does not prescribe an unverified kernel-level solution."
+    {
+      "assertion": "The sandbox retains an explicit bounded incremental process budget for the evaluated payload without setting an absolute real-UID RLIMIT_NPROC below the already existing host process count.",
+      "evidence_type": "object",
+      "id": "incremental-process-budget",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:incremental-process-budget"
+      }
     },
+    {
+      "assertion": "Bubblewrap PID, IPC, UTS and network isolation, filesystem restrictions, command timeout, output bounds and the remaining prlimit controls stay fail-closed; the fix does not broaden payload capabilities or silently disable process limiting.",
+      "evidence_type": "object",
+      "id": "fail-closed-isolation-preserved",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:fail-closed-isolation-preserved"
+      }
+    },
+    {
+      "assertion": "Regression coverage models a host process baseline above the payload budget and proves that a bounded sandbox command can start while a process-fork storm is still rejected within the intended incremental budget.",
+      "evidence_type": "object",
+      "id": "host-load-regression",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:host-load-regression"
+      }
+    },
+    {
+      "assertion": "Targeted Sidecar tests, the full RepoGround test suite, CodeQL and CI are green, and a real loaded operator-host canary succeeds with before/after process-count and limit evidence.",
+      "evidence_type": "object",
+      "id": "fresh-runner-and-loaded-host",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:fresh-runner-and-loaded-host"
+      }
+    },
+    {
+      "assertion": "A proof records the selected Linux RLIMIT/user-namespace semantics, residual risks and why the change fixes host coupling without claiming a global per-command kernel quota that Linux does not provide.",
+      "evidence_type": "object",
+      "id": "proof-and-boundaries",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "repoground:legacy-t020-process-budget:proof-and-boundaries"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "exclusive",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Härte den RepoGround Patch-Evaluation-Sidecar so, dass sein begrenztes Prozessbudget weiterhin fail-closed wirkt, aber nicht als absoluter RLIMIT_NPROC-Wert unterhalb des bereits bestehenden Prozessbestands des realen Operator-Nutzers gesetzt wird. Ein belasteter Host mit mehr als 256 bestehenden Nutzerprozessen darf die isolierte Bubblewrap-Ausführung nicht allein deshalb mit EAGAIN blockieren.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
     "does_not_establish": [
       "implementation_authorization",
       "chosen_kernel_mechanism",
       "task_completion",
       "merge_readiness",
       "permission_to_modify_foreign_dirty_checkouts"
-    ]
-  }
+    ],
+    "observed_failure": {
+      "configured_absolute_nproc_limit": 256,
+      "error": "bwrap: Creating new namespace failed: Resource temporarily unavailable",
+      "failing_tests": 33,
+      "fresh_runner_counterevidence": "GitHub pytest-full on RepoGround PR #1117 passed after installing the same sandbox runtime, isolating the failure to the loaded host contract rather than T019.",
+      "host": "heim-pc",
+      "observed_at": "2026-07-28",
+      "passing_tests": 5131,
+      "real_user_process_count": 270
+    },
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-7640c36ea011f33821bf70ab",
+      "candidate_id": "candidate-98359aff7cc80118a109439b",
+      "content_fingerprint": "98359aff7cc80118a109439bf392d0a6f14c7962a22a1387a81b522be0995722",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-13T14:43:18.538343Z",
+      "event_id": 6804,
+      "request_sha256": "ab4b5ab93f3b284ed9e8d23fc36e036eed2dedb34efbb493e3b90d118847c8a1",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "3e1621678cb89a8d75a776f9c943e46c91a47fc02edea79999de9160054c9703",
+        "freshness": "fingerprint-bound",
+        "kind": "git-history",
+        "locator": "github:heimgewebe/repoground:commit:b7a807db:pull:1123",
+        "observed_at": "2026-08-13T16:20:00+02:00",
+        "sha256": null
+      },
+      "source_fingerprint": "3e1621678cb89a8d75a776f9c943e46c91a47fc02edea79999de9160054c9703",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "3e1621678cb89a8d75a776f9c943e46c91a47fc02edea79999de9160054c9703",
+          "freshness": "fingerprint-bound",
+          "kind": "git-history",
+          "locator": "github:heimgewebe/repoground:commit:b7a807db:pull:1123",
+          "observed_at": "2026-08-13T16:20:00+02:00",
+          "sha256": null
+        }
+      ]
+    },
+    "reviewed_plan": {
+      "basis": "The failure was reproduced twice on the loaded host, a direct Bubblewrap probe without the absolute nproc limit succeeded, the real-user process count exceeded the configured limit, and the same RepoGround head passed the full sandbox suite on a fresh GitHub runner. The task is separated from T019 and does not prescribe an unverified kernel-level solution.",
+      "decision": "approved",
+      "reviewed_at": "2026-07-28",
+      "reviewer": "chatgpt",
+      "scope": "task-definition-only"
+    },
+    "source_candidate": "candidate-42d6e66788f4de185c119598",
+    "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+    "source_event": 1589,
+    "source_path": "tools/patch_evaluation_sidecar_hardening.py",
+    "source_sha256": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44",
+    "verification": {
+      "closed_at": "2026-08-25T18:49:01.204079Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "108bf97f6f42507d229b425050b8e007c502cbd8af5f86b7072aafd0512c5221",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "preview_sha256": "e6c94f96783c7a16392788d496e1d95c4c3ad797eef9076f141fea913c178453",
+      "receipt": {
+        "authentications": {
+          "fail-closed-isolation-preserved": {
+            "authority": "manual",
+            "criterion_id": "fail-closed-isolation-preserved",
+            "evidence_sha256": "854afbdbbf05f68782c97da493aea1cbc0fabe73baaca1e6894c5f63d223abe9",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:fail-closed-isolation-preserved",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "fresh-runner-and-loaded-host": {
+            "authority": "manual",
+            "criterion_id": "fresh-runner-and-loaded-host",
+            "evidence_sha256": "456b05e0f38eb999f703888b9cdac6d05f8ee33c3497c11808405696c47728dd",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:fresh-runner-and-loaded-host",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "host-load-regression": {
+            "authority": "manual",
+            "criterion_id": "host-load-regression",
+            "evidence_sha256": "7e16f031f00138bf1a326c1d78d29694f2a7d8df2c6a4fe9b55df2995f471db2",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:host-load-regression",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "incremental-process-budget": {
+            "authority": "manual",
+            "criterion_id": "incremental-process-budget",
+            "evidence_sha256": "d6874b44db538b229d96fa60733e7378cd70514ca81ef39ab022479df2f97799",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:incremental-process-budget",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "live-failure-reproduced": {
+            "authority": "manual",
+            "criterion_id": "live-failure-reproduced",
+            "evidence_sha256": "21884affcfc238d1cba62e69afd98570bdfb5dc44520026a49ca5b57c8e2db36",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:live-failure-reproduced",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "proof-and-boundaries": {
+            "authority": "manual",
+            "criterion_id": "proof-and-boundaries",
+            "evidence_sha256": "91992a880e8947b26fbdd0923273f59cddf262ac8745b9750cad808d09e0dcea",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:legacy-t020-process-budget:proof-and-boundaries",
+            "observer": "operator-observer:repoground-t020-live-evidence-20260825",
+            "reviewer": "controller-review:repoground-t025-20260825",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-25T18:49:01.204079Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "live-failure-reproduced",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:repoground-t020:historical-failure-plus-20260825-loaded-host",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "incremental-process-budget",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:repoground-t020:atomic-loaded-host-canary-20260825",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "fail-closed-isolation-preserved",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:repoground-t020:proof-and-sidecar-contract",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "host-load-regression",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "test:python3-m-pytest-tests/test_patch_evaluation_sidecar_process_budget.py:20260825",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "fresh-runner-and-loaded-host",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:github-pr-1123-plus-current-main-plus-loaded-host-20260825",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 181.204079,
+              "authority": "manual",
+              "criterion_id": "proof-and-boundaries",
+              "domain": "observation",
+              "observed_at": "2026-08-25T18:46:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "proof:docs/proofs/repoground-legacy-t020-process-budget-v1-proof.md@73fff90604cc",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-25T18:49:01.204079Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+          "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+        },
+        "evidence": {
+          "fail-closed-isolation-preserved": {
+            "criterion_id": "fail-closed-isolation-preserved",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The merged proof at docs/proofs/repoground-legacy-t020-process-budget-v1-proof.md, SHA256 73fff90604cceeb2760aafbdafc23fa060a10d034487788275990ac14dd391d6, explicitly retains Bubblewrap PID/IPC/UTS/network isolation, read-only system and Git mounts, address-space/output/open-file/CPU limits, timeout, bounded logs, provenance and cleanup. A finite inherited RLIMIT_NPROC is never raised and zero headroom fails closed.",
+              "observation_scope": "repoground:legacy-t020-process-budget:fail-closed-isolation-preserved",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:fail-closed-isolation-preserved",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:repoground-t020:proof-and-sidecar-contract"
+            }
+          },
+          "fresh-runner-and-loaded-host": {
+            "criterion_id": "fresh-runner-and-loaded-host",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "GitHub PR #1123 is merged and fresh readback shows pytest-full, Ruff, CodeQL, RepoGround CodeQL policy, browser-tests, release-candidate and all other reported checks SUCCESS on the exact PR head. Merge commit b7a807db is an ancestor of current RepoGround main b59655f5b99978e9bf8de57fc150c46b8b47de45, and the relevant T020 files are unchanged between the local main and origin/main. The fresh loaded-host atomic canary observed 2266 real-UID tasks, generated --nproc=2522:2522 and successfully started Bubblewrap.",
+              "observation_scope": "repoground:legacy-t020-process-budget:fresh-runner-and-loaded-host",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:fresh-runner-and-loaded-host",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:github-pr-1123-plus-current-main-plus-loaded-host-20260825"
+            }
+          },
+          "host-load-regression": {
+            "criterion_id": "host-load-regression",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh targeted execution on 2026-08-25 returned 6 passed in 0.16s. Coverage includes a synthetic loaded baseline 270 plus budget 256 -> 526, finite-hard-limit reduction, zero-headroom failure, explicit dynamic prlimit argv, procfs race handling and the non-root Linux fork-storm test that requires the bounded command to start while excessive spawning is rejected.",
+              "observation_scope": "repoground:legacy-t020-process-budget:host-load-regression",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:host-load-regression",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "test:python3-m-pytest-tests/test_patch_evaluation_sidecar_process_budget.py:20260825"
+            }
+          },
+          "incremental-process-budget": {
+            "criterion_id": "incremental-process-budget",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "An atomic live canary on heim-pc observed real_uid_tasks=2266, configured_incremental_budget=256, effective_incremental_budget=256, inherited_hard_limit=234504 and absolute_limit=2522. The exact generated argv contained --nproc=2522:2522 and Bubblewrap /usr/bin/true returned 0 with empty stderr.",
+              "observation_scope": "repoground:legacy-t020-process-budget:incremental-process-budget",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:incremental-process-budget",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:repoground-t020:atomic-loaded-host-canary-20260825"
+            }
+          },
+          "live-failure-reproduced": {
+            "criterion_id": "live-failure-reproduced",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The revision-1 TaskSpec records the loaded-host failure at real_user_process_count=270 with configured_absolute_nproc_limit=256, 33 failing tests and bwrap EAGAIN before payload start. The merged proof explains the real-UID RLIMIT_NPROC coupling. A fresh 2026-08-25 loaded-host readback observed 2266 real-UID tasks, again far above the legacy absolute 256 ceiling.",
+              "observation_scope": "repoground:legacy-t020-process-budget:live-failure-reproduced",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:live-failure-reproduced",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:repoground-t020:historical-failure-plus-20260825-loaded-host"
+            }
+          },
+          "proof-and-boundaries": {
+            "criterion_id": "proof-and-boundaries",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The revision-bound proof explicitly documents Linux real-UID/thread RLIMIT_NPROC semantics, launch-time baseline plus incremental budget, inherited-hard-limit clamping, procfs race behavior and residual same-UID concurrency risk. It explicitly refuses the stronger claim of a globally isolated per-command kernel quota and identifies cgroup pids.max as a stronger but intentionally out-of-scope alternative requiring delegated cgroup ownership.",
+              "observation_scope": "repoground:legacy-t020-process-budget:proof-and-boundaries",
+              "observer": "operator-observer:repoground-t020-live-evidence-20260825"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-25T18:46:00Z",
+            "revision": {
+              "observation_scope": "repoground:legacy-t020-process-budget:proof-and-boundaries",
+              "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "proof:docs/proofs/repoground-legacy-t020-process-budget-v1-proof.md@73fff90604cc"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "108bf97f6f42507d229b425050b8e007c502cbd8af5f86b7072aafd0512c5221",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "preview_sha256": "e6c94f96783c7a16392788d496e1d95c4c3ad797eef9076f141fea913c178453",
+        "receipt_sha256": "d2000cb9b4899cee7dc1f2e384d8d14384afce97cec3008065485ddd074c545b",
+        "reviewer": "controller-review:repoground-t025-20260825",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+        "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa",
+        "task_spec_revision": 2,
+        "task_spec_sha256": "1f3f41f97074833c28b8e1d3d9ccf7bd0ac2dc4fc643c9ad64391974612d79a5"
+      },
+      "receipt_sha256": "d2000cb9b4899cee7dc1f2e384d8d14384afce97cec3008065485ddd074c545b",
+      "reviewer": "controller-review:repoground-t025-20260825",
+      "schema_version": 1,
+      "task_sha256": "647c72037a96dc83dfed8283577288d894b56adccce5b9f4dc835d2e943e19aa"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 95
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Patch-Sandbox-Prozessbudget vom bestehenden Hostbestand entkoppeln"
 }

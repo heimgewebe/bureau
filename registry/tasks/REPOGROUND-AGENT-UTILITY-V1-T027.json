@@ -104,41 +104,10 @@
       "pull_request": 1189,
       "pull_request_state": "MERGED"
     },
-    "source_candidate": "candidate-5e89f3982c0ef7bbeaee9a92",
-    "source_event": 7111,
     "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-5e89f3982c0ef7bbeaee9a92",
-      "event_id": 7111,
-      "event_created_at": "2026-08-14T10:01:44.072847Z",
-      "request_sha256": "ed69687a9b95a42338c0861be89b7a40b566e9ccdddafef862ef1adab1ef1ba4",
-      "candidate_event_id": "candidate-event-04ba26e3d7d05c79193eb39e",
-      "source_fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
-      "content_fingerprint": "5e89f3982c0ef7bbeaee9a92e1e4695fa876dec5aa6cd29f136be0385217d8b3",
-      "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
-        "freshness": "fingerprint-bound",
-        "kind": "conversation",
-        "locator": "conversation:2026-08-14:repoground-language-structure-publication-gap",
-        "observed_at": "2026-08-14T11:54:00+02:00",
-        "sha256": null
-      },
-      "source_observations": [
-        {
-          "does_not_establish": [
-            "source_content_identity"
-          ],
-          "fingerprint": "255389e6e762badac2aba490af1d9162e1279e936239f79876938a8297e1930f",
-          "freshness": "fingerprint-bound",
-          "kind": "conversation",
-          "locator": "conversation:2026-08-14:repoground-language-structure-publication-gap",
-          "observed_at": "2026-08-14T11:54:00+02:00",
-          "sha256": null
-        }
-      ],
+      "candidate_event_id": "candidate-event-f322de5ca45ec942f90a7e14",
+      "candidate_id": "candidate-6be36e01325d3b4b7378e701",
+      "content_fingerprint": "6be36e01325d3b4b7378e701245a4538fd7c8cc3f9e2126b78a4c6f0d60bdd3b",
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
@@ -146,7 +115,377 @@
         "dispatch_authority",
         "merge_authority",
         "deployment_authority"
+      ],
+      "event_created_at": "2026-08-26T13:34:34.865958Z",
+      "event_id": 11520,
+      "request_sha256": "6e23c877466597191a7a0b7aa0703e0274f95ee830c8340b1e589dbeaa393cce",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "a1d316280a9be826d159aa2e7c4c0052bd4eac4716020e23905bf3636139344a",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:StateStore.task_spec:REPOGROUND-AGENT-UTILITY-V1-T027:r1:a34053bb031a8fb8253e4d2b30c23119162e92fd9a935a6a859da8675a6d3728",
+        "observed_at": "2026-08-26T13:30:00Z",
+        "sha256": "a34053bb031a8fb8253e4d2b30c23119162e92fd9a935a6a859da8675a6d3728"
+      },
+      "source_fingerprint": "a1d316280a9be826d159aa2e7c4c0052bd4eac4716020e23905bf3636139344a",
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "a1d316280a9be826d159aa2e7c4c0052bd4eac4716020e23905bf3636139344a",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:StateStore.task_spec:REPOGROUND-AGENT-UTILITY-V1-T027:r1:a34053bb031a8fb8253e4d2b30c23119162e92fd9a935a6a859da8675a6d3728",
+          "observed_at": "2026-08-26T13:30:00Z",
+          "sha256": "a34053bb031a8fb8253e4d2b30c23119162e92fd9a935a6a859da8675a6d3728"
+        }
       ]
+    },
+    "source_candidate": "candidate-5e89f3982c0ef7bbeaee9a92",
+    "source_event": 7111,
+    "verification": {
+      "closed_at": "2026-08-26T13:39:58.275814Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "11f09bab2c51026cc92406ceb6b749b574e4cf9c38050b90bb7481701683b093",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "preview_sha256": "3c63949600ae9d84a49b933327878d890b1727739fab00b3062787cbf3302519",
+      "receipt": {
+        "authentications": {
+          "cost-and-health-bounded": {
+            "authority": "manual",
+            "criterion_id": "cost-and-health-bounded",
+            "evidence_sha256": "b328ee7bc18719c12905033e12c661d0b5bf99e870e566005b804e5dcb7409ca",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:cost-and-health-bounded",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "fleet-path-is-real": {
+            "authority": "manual",
+            "criterion_id": "fleet-path-is-real",
+            "evidence_sha256": "742bf6a689c2b0ff3744f2e42db0d88994189c60213c48b301a8bd4f2ab8d486",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:fleet-path-is-real",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "fresh-bundle-readback": {
+            "authority": "manual",
+            "criterion_id": "fresh-bundle-readback",
+            "evidence_sha256": "3f865b85e4cd24e0708bfd7a864c7dcac11fcfb9e6abeacbac225c5f0cd0a9fa",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:fresh-bundle-readback",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "live-gap-reproduced": {
+            "authority": "manual",
+            "criterion_id": "live-gap-reproduced",
+            "evidence_sha256": "923d2f30f5229e150553fcac28540e8e4f4769ab6ed39a584f9a1634e8558fe2",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:live-gap-reproduced",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "no-broad-consumer-promotion": {
+            "authority": "manual",
+            "criterion_id": "no-broad-consumer-promotion",
+            "evidence_sha256": "5692c33f2b09eece302894a35b382d1f9b9a065886d45a6da23f53198de57750",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:no-broad-consumer-promotion",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "profile-aware-activation": {
+            "authority": "manual",
+            "criterion_id": "profile-aware-activation",
+            "evidence_sha256": "0b9a3f91ba65a86a837f979fe10ac64bac9806d9f617526f773b16162154ed18",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground:t027:profile-aware-activation",
+            "observer": "operator-observer:repoground-t027-closeout-20260826",
+            "reviewer": "controller-review:repoground-t027-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-26T13:39:58.275814Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "live-gap-reproduced",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "task-r1-live-evidence-plus-pr1196",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "profile-aware-activation",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "current-main:fleet-config-plus-snapshot-profile-tests",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "fleet-path-is-real",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github:heimgewebe/repoground#1196-plus-current-fleet-path",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "fresh-bundle-readback",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "repoground:fresh_exact:heimgewebe__repoground__main--b59655f5b99978e9bf8de57fc150c46b8b47de45-max-260825-1307",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "no-broad-consumer-promotion",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "canonical-language-structure-artifact:promotion",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.275814,
+              "authority": "manual",
+              "criterion_id": "cost-and-health-bounded",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:37:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "receipt:repoground-t027-cost-health-20260826.json@01a38d3f",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-26T13:39:58.275814Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T027",
+          "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+        },
+        "evidence": {
+          "cost-and-health-bounded": {
+            "criterion_id": "cost-and-health-bounded",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Revision-bound measurement receipt /home/alex/.local/state/bureau/repoground-t027-cost-health-20260826.json SHA256 01a38d3fe1b0aa0f1eb5c64c339b546a3e4718efd6eb973c6a5b2322066f7408 records an adjacent same-commit baseline/treatment pair: 151.82s vs 153.99s (+2.17s, +1.43%), 136981177 vs 137058759 declared bundle bytes (+77582, +0.0566%), language_structure 76971 bytes, peak RSS +868KB. Baseline and treatment output-health, post-emit-health, surface-validation and export-safety all PASS. The receipt also preserves and excludes cold/deployment-contaminated timing runs instead of cherry-picking them. Fresh focused tests are 5/5 green and PR #1196 required checks including pytest-full, Ruff, CodeQL, release-candidate and browser-tests are PASS.",
+              "observation_scope": "repoground:t027:cost-and-health-bounded",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:cost-and-health-bounded",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "receipt:repoground-t027-cost-health-20260826.json@01a38d3f"
+            }
+          },
+          "fleet-path-is-real": {
+            "criterion_id": "fleet-path-is-real",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "PR #1196 exact head 87b963b1debf0147287e1186afc65c74541f65c2 merged as daa8c53744c9963741426c7775d79bc1f0b9c766. Its bounded four-file change wires the real scripts/ops/repoground-publish-fleet external refresh command to --language-structure and adds a regression that fails if the Fleet command stops opting in. Fresh focused tests passed 5/5.",
+              "observation_scope": "repoground:t027:fleet-path-is-real",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:fleet-path-is-real",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github:heimgewebe/repoground#1196-plus-current-fleet-path"
+            }
+          },
+          "fresh-bundle-readback": {
+            "criterion_id": "fresh-bundle-readback",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The canonical current-main Fleet bundle is fresh_exact for source/generator commit b59655f5b99978e9bf8de57fc150c46b8b47de45, manifest SHA256 0bbb7c37a6b25ab90d644f1bcec33e42c48d40b2331b58ebcad082348e2c48d1. It registers language_structure_json with contract language-structure v1, artifact SHA256 e59091d22e176761746e7a43ac963f49c267fadb846a8502738e889bccf53f35 and 80211 bytes; bundle and post-emit health are PASS.",
+              "observation_scope": "repoground:t027:fresh-bundle-readback",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:fresh-bundle-readback",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "repoground:fresh_exact:heimgewebe__repoground__main--b59655f5b99978e9bf8de57fc150c46b8b47de45-max-260825-1307"
+            }
+          },
+          "live-gap-reproduced": {
+            "criterion_id": "live-gap-reproduced",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The revision-1 TaskSpec preserves the pre-change live gap: PR #1189 had implemented language_structure, ExtrasConfig.language_structure remained opt-in, and the Fleet publisher did not set it. PR #1196 is the bounded implementation that closes exactly that Fleet activation gap; it does not rewrite the pre-change observation as current truth.",
+              "observation_scope": "repoground:t027:live-gap-reproduced",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:live-gap-reproduced",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "task-r1-live-evidence-plus-pr1196"
+            }
+          },
+          "no-broad-consumer-promotion": {
+            "criterion_id": "no-broad-consumer-promotion",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The current canonical language_structure artifact explicitly records promotion.default_promoted=false, status=keep_optional and reason=revision_bound_agent_benefit_not_established_by_structure_extraction. The Fleet availability change therefore does not promote natural-language routing or Rust/Bash answering by itself.",
+              "observation_scope": "repoground:t027:no-broad-consumer-promotion",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:no-broad-consumer-promotion",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "canonical-language-structure-artifact:promotion"
+            }
+          },
+          "profile-aware-activation": {
+            "criterion_id": "profile-aware-activation",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Current main b59655f5b99978e9bf8de57fc150c46b8b47de45 keeps PublicationConfig/ExtrasConfig language_structure false by default, enables it only for allowed internal Fleet profiles, transports it explicitly as --language-structure, and rejects it for public-share. Fresh focused regression execution covering explicit opt-in and public-share exclusion passed.",
+              "observation_scope": "repoground:t027:profile-aware-activation",
+              "observer": "operator-observer:repoground-t027-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:37:00Z",
+            "revision": {
+              "observation_scope": "repoground:t027:profile-aware-activation",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "current-main:fleet-config-plus-snapshot-profile-tests"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "11f09bab2c51026cc92406ceb6b749b574e4cf9c38050b90bb7481701683b093",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+        "preview_sha256": "3c63949600ae9d84a49b933327878d890b1727739fab00b3062787cbf3302519",
+        "receipt_sha256": "5788631959ec13db5561a7995bae789dc62d22f835dfacf196cf0bcb3982b044",
+        "reviewer": "controller-review:repoground-t027-closeout-20260826",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "REPOGROUND-AGENT-UTILITY-V1-T027",
+        "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe",
+        "task_spec_revision": 2,
+        "task_spec_sha256": "9f783a809cdd0511f3c678201c7bdd3e31fde65a88b029d2de7008f4b4802205"
+      },
+      "receipt_sha256": "5788631959ec13db5561a7995bae789dc62d22f835dfacf196cf0bcb3982b044",
+      "reviewer": "controller-review:repoground-t027-closeout-20260826",
+      "schema_version": 1,
+      "task_sha256": "8907189bda9422a6f61752106fdc16f9d4b5c23b2e53c2aced3855b8280ddebe"
     }
   },
   "priority": {
@@ -167,7 +506,7 @@
     "trigger": "Die profilbewusste Aktivierung erzeugt unerwartete Consumer-Semantik, public-share-Drift, Health-/Freshness-Regressionen oder nicht akzeptable Publikationskosten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "stop": {
     "conditions": [
       "Eine korrekte Aktivierung würde public-share entgegen dessen REQ_EXCLUDED-Vertrag das language_structure-Artefakt liefern oder sensible/explizit ausgeschlossene Inhalte exportieren.",

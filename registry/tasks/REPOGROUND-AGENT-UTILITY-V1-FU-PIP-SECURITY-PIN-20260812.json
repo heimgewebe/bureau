@@ -88,40 +88,10 @@
       "dass ein Lockfile-Edit ohne Regeneration zulässig ist"
     ],
     "finding": "GitHub Dependabot meldete beim Branch-Cleanup am 2026-08-12 acht offene RepoGround-Warnungen: vier eindeutige pip-GHSAs jeweils in requirements/repoground-lock-tools.in und .lock.txt. Live-API: GHSA-wf93-45jw-7689 medium fixed 26.1.2; GHSA-jp4c-xjxw-mgf9 medium fixed 26.1; GHSA-58qw-9mgm-455v medium fixed 26.1; GHSA-6vgw-5pg2-w6jp low fixed 26.0. Aktueller Pin in beiden Dateien: pip==25.3.",
-    "source_candidate": "candidate-26a2122183d093627a6f0eea",
     "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-26a2122183d093627a6f0eea",
-      "event_id": 6344,
-      "event_created_at": "2026-08-12T18:46:32.001643Z",
-      "request_sha256": "abc2c7e12bb1de7147bde92a8a07935832b34e52f02982cb108c75baa4eeb087",
-      "candidate_event_id": "candidate-event-351d9015849eac0cba4f8183",
-      "source_fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
-      "content_fingerprint": "26a2122183d093627a6f0eea7aa5e8b6c51aad26a73000d0291df8946bb36e3b",
-      "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
-        "freshness": "fingerprint-bound",
-        "kind": "github-security-alerts",
-        "locator": "github:heimgewebe/repoground:dependabot:open@2026-08-12",
-        "observed_at": "2026-08-12T18:46:31.910669Z",
-        "sha256": null
-      },
-      "source_observations": [
-        {
-          "does_not_establish": [
-            "source_content_identity"
-          ],
-          "fingerprint": "08e1fcd6f2bdb48077bfda5ec46660dbfc6a47a845424fa3877c7d92b7a0e935",
-          "freshness": "fingerprint-bound",
-          "kind": "github-security-alerts",
-          "locator": "github:heimgewebe/repoground:dependabot:open@2026-08-12",
-          "observed_at": "2026-08-12T18:46:31.910669Z",
-          "sha256": null
-        }
-      ],
+      "candidate_event_id": "candidate-event-2e426fac7272fe70b1f81218",
+      "candidate_id": "candidate-f991fda7653ff7f272739a52",
+      "content_fingerprint": "f991fda7653ff7f272739a5230dbff6a02f2d43f4e1961ef6d1b5b5ce63a8b19",
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
@@ -129,7 +99,376 @@
         "dispatch_authority",
         "merge_authority",
         "deployment_authority"
+      ],
+      "event_created_at": "2026-08-26T13:46:23.729418Z",
+      "event_id": 11535,
+      "request_sha256": "29837641bf005eacba7b70f3dc5803999d4c9a63cf82237f013a313b82a90f5d",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "fingerprint": "3fcaecc9fe9a44d50a4b88516e994309a38fe12b653e09f06fed3c8e041fac22",
+        "freshness": "digest-bound",
+        "kind": "runtime-diagnostic",
+        "locator": "bureau:StateStore.task_spec:REPOGROUND-AGENT-UTILITY-V1-FU-PIP-SECURITY-PIN-20260812:r1:0ba33142791044a2b777c3bf91e52c461c0473db0a92c012bc1800dcf1cfcf16",
+        "observed_at": "2026-08-26T13:45:00Z",
+        "sha256": "0ba33142791044a2b777c3bf91e52c461c0473db0a92c012bc1800dcf1cfcf16"
+      },
+      "source_fingerprint": "3fcaecc9fe9a44d50a4b88516e994309a38fe12b653e09f06fed3c8e041fac22",
+      "source_observations": [
+        {
+          "does_not_establish": [],
+          "fingerprint": "3fcaecc9fe9a44d50a4b88516e994309a38fe12b653e09f06fed3c8e041fac22",
+          "freshness": "digest-bound",
+          "kind": "runtime-diagnostic",
+          "locator": "bureau:StateStore.task_spec:REPOGROUND-AGENT-UTILITY-V1-FU-PIP-SECURITY-PIN-20260812:r1:0ba33142791044a2b777c3bf91e52c461c0473db0a92c012bc1800dcf1cfcf16",
+          "observed_at": "2026-08-26T13:45:00Z",
+          "sha256": "0ba33142791044a2b777c3bf91e52c461c0473db0a92c012bc1800dcf1cfcf16"
+        }
       ]
+    },
+    "source_candidate": "candidate-26a2122183d093627a6f0eea",
+    "verification": {
+      "closed_at": "2026-08-26T13:51:20.199124Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "d0f7c0f5ef81931b9bbfeb65b478bf5c90ecf0b874a77d8d9a0d38b1bfef39da",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "preview_sha256": "03b0ef18381aec2cd6579d19f1a71bdce997b3ef85ec5011b8c7afa27b3d0554",
+      "receipt": {
+        "authentications": {
+          "alerts-cleared": {
+            "authority": "manual",
+            "criterion_id": "alerts-cleared",
+            "evidence_sha256": "85ee7a80d4961bd7da4947053c8016c3b797b84a537661e7a87a4164181c73f1",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:alerts-cleared",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "bootstrap-and-lock-regression": {
+            "authority": "manual",
+            "criterion_id": "bootstrap-and-lock-regression",
+            "evidence_sha256": "b917989733a0d957d03346fa56ad1f53d73db48178cfcf90890ca75b871a2273",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:bootstrap-and-lock-regression",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "canonical-lock-regenerated": {
+            "authority": "manual",
+            "criterion_id": "canonical-lock-regenerated",
+            "evidence_sha256": "75ba9d48f3be895942241d4bb899917cad44ceefa35a823c27dd8aac91e738f2",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:canonical-lock-regenerated",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "delivery": {
+            "authority": "manual",
+            "criterion_id": "delivery",
+            "evidence_sha256": "e36f5a0727d899deaea893cd95eb54aa7ded2c5666649a7b5b73326e1c3e3287",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:delivery",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "fresh-alert-inventory": {
+            "authority": "manual",
+            "criterion_id": "fresh-alert-inventory",
+            "evidence_sha256": "558f2cff57af3e9d97e9ea8c8dc4637df5c099a0b034464f32736acee26b9f9a",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:fresh-alert-inventory",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "patched-pin": {
+            "authority": "manual",
+            "criterion_id": "patched-pin",
+            "evidence_sha256": "e5e43a6e2ae6c4f7e9806ccea4e9d8d9d36d93a774f091893683f0dd689299f1",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "repoground-pip-security-pin:patched-pin",
+            "observer": "operator-observer:repoground-pip-security-closeout-20260826",
+            "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-26T13:51:20.199124Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "fresh-alert-inventory",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github:dependabot:20260826-plus-task-r1-prechange",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "patched-pin",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "current-main:requirements/repoground-lock-tools.in+dependabot-fixed-versions",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "canonical-lock-regenerated",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "job:grabowski-job-6e62be4cde7a@447643e3",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "bootstrap-and-lock-regression",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "test:test_dependency_lock_toolchain+github:pr1194",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "alerts-cleared",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github:dependabot:state=open=0+fixed-eight",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 170.199124,
+              "authority": "manual",
+              "criterion_id": "delivery",
+              "domain": "observation",
+              "observed_at": "2026-08-26T13:48:30Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "github:heimgewebe/repoground#1194+current-main",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-26T13:51:20.199124Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-FU-PIP-SECURITY-PIN-20260812",
+          "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+        },
+        "evidence": {
+          "alerts-cleared": {
+            "criterion_id": "alerts-cleared",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh Dependabot REST readback reports open alert count 0. The exact eight historical instances for GHSA-wf93-45jw-7689, GHSA-jp4c-xjxw-mgf9, GHSA-58qw-9mgm-455v and GHSA-6vgw-5pg2-w6jp across the input and lock manifests are all state=fixed with fixed_at timestamps immediately after PR #1194 merge. This does not claim future absence of unrelated alerts.",
+              "observation_scope": "repoground-pip-security-pin:alerts-cleared",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:alerts-cleared",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github:dependabot:state=open=0+fixed-eight"
+            }
+          },
+          "bootstrap-and-lock-regression": {
+            "criterion_id": "bootstrap-and-lock-regression",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh focused execution of merger/repoground/tests/test_dependency_lock_toolchain.py returned 14 passed in 0.10s. The canonical full lock check also succeeded. PR #1194 exact head a5079c01716745ec625dc6816d58004baac885ee had successful pytest-full, Ruff, CodeQL, release-candidate, browser and related required checks before merge.",
+              "observation_scope": "repoground-pip-security-pin:bootstrap-and-lock-regression",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:bootstrap-and-lock-regression",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "test:test_dependency_lock_toolchain+github:pr1194"
+            }
+          },
+          "canonical-lock-regenerated": {
+            "criterion_id": "canonical-lock-regenerated",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The current canonical scripts/release/compile_dependency_locks.sh --check completed successfully in the digest-pinned toolchain container with finalization receipt 447643e327ec1330cee16d3a7f02cddd2ef758499670e4bd1940e4a5d299034c and reported 'All RepoGround dependency locks are reproducible.' Current input SHA256 is ad230fae7d37d9747b057938a3aa85cf9d278cd4c89b865ede57c8d5aca1b1ef and lock SHA256 is 1188fb933a4c09d04edcd320bb0440fae67b3716f31984643900a0360ff95c39. T026 proof SHA256 39d7e79cff9fad936029c2117cc36412900865c60d1346333d5f2f886747631b establishes the current fully hash-chained self-bootstrap path; this closeout does not falsely claim PR #1194 historically used the later T026 implementation.",
+              "observation_scope": "repoground-pip-security-pin:canonical-lock-regenerated",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:canonical-lock-regenerated",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "job:grabowski-job-6e62be4cde7a@447643e3"
+            }
+          },
+          "delivery": {
+            "criterion_id": "delivery",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "PR #1194 exact head a5079c01716745ec625dc6816d58004baac885ee merged as 811449e9f7bc209808c32aa41c7efcb260124355. It changed only release policy, the lock-toolchain regression, lock input and generated lock. Reported required checks were successful; the merge commit is an ancestor of current clean main b59655f5b99978e9bf8de57fc150c46b8b47de45, current RepoGround open PR count is zero, and no foreign dirty dependency work was adopted.",
+              "observation_scope": "repoground-pip-security-pin:delivery",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:delivery",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github:heimgewebe/repoground#1194+current-main"
+            }
+          },
+          "fresh-alert-inventory": {
+            "criterion_id": "fresh-alert-inventory",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Revision 1 preserves the pre-change inventory of eight alert instances representing four unique pip GHSAs. Fresh GitHub Dependabot readback on 2026-08-26 reports zero open alerts for heimgewebe/repoground and state=fixed records for all eight historical instances, with first-patched versions 26.1.2, 26.1, 26.1 and 26.0. The current inventory is therefore freshly re-read rather than copied from the historical finding.",
+              "observation_scope": "repoground-pip-security-pin:fresh-alert-inventory",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:fresh-alert-inventory",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "github:dependabot:20260826-plus-task-r1-prechange"
+            }
+          },
+          "patched-pin": {
+            "criterion_id": "patched-pin",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Current clean main b59655f5b99978e9bf8de57fc150c46b8b47de45 pins pip==26.1.2 in requirements/repoground-lock-tools.in and its hashed lock. GitHub identifies 26.1.2 as the highest required first-patched version across the four confirmed advisories. The current canonical lock-toolchain check runs successfully with CPython 3.12.3, pip 26.1.2 and pip-tools 7.6.0.",
+              "observation_scope": "repoground-pip-security-pin:patched-pin",
+              "observer": "operator-observer:repoground-pip-security-closeout-20260826"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-26T13:48:30Z",
+            "revision": {
+              "observation_scope": "repoground-pip-security-pin:patched-pin",
+              "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+              "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "current-main:requirements/repoground-lock-tools.in+dependabot-fixed-versions"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "d0f7c0f5ef81931b9bbfeb65b478bf5c90ecf0b874a77d8d9a0d38b1bfef39da",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+        "preview_sha256": "03b0ef18381aec2cd6579d19f1a71bdce997b3ef85ec5011b8c7afa27b3d0554",
+        "receipt_sha256": "4213d421fb8b1e2d356d453b731c92aabf8ee9efc43d09d69d1e526095d858c5",
+        "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "REPOGROUND-AGENT-UTILITY-V1-FU-PIP-SECURITY-PIN-20260812",
+        "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009",
+        "task_spec_revision": 2,
+        "task_spec_sha256": "a2cd0f699edcdcaff0bc0523d92d88ec55b01a5e2db8a2f65040af18fb436f61"
+      },
+      "receipt_sha256": "4213d421fb8b1e2d356d453b731c92aabf8ee9efc43d09d69d1e526095d858c5",
+      "reviewer": "controller-review:repoground-pip-security-closeout-20260826",
+      "schema_version": 1,
+      "task_sha256": "ed2fbb6be71f9a7452264021b51d110f1cc574f821421fb4047a788bfe4b2009"
     }
   },
   "priority": {
@@ -149,7 +488,7 @@
     "strategy": "Revertiere nur Pin- und kanonisch erzeugte Lockänderungen. Keine Sicherheitswarnungen schließen oder ignorieren, um den Zustand optisch grün zu machen. Bei inkompatiblem gepatchten Stand den letzten reproduzierbaren Lock wiederherstellen und einen engeren Kompatibilitätsbefund registrieren."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "stop": {
     "conditions": [
       "Ein offener fremder PR oder aktiver Claim ändert dieselben Lockdateien; keine parallele Übernahme oder Überschreibung.",

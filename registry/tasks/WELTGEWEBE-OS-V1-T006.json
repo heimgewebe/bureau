@@ -1,65 +1,385 @@
 {
-  "schema_version": 1,
-  "id": "WELTGEWEBE-OS-V1-T006",
-  "initiative": "WELTGEWEBE-OS-V1",
-  "title": "Grabowski auf Weltgewebe-OS-Regelkreis ausrichten",
-  "state": "planned",
-  "goal": "Grabowski für deklarative Plattformänderungen, isolierte Kubernetes-Agentenjobs, SLO-/Recoverybelege und föderationsbezogene Diagnose erweitern, ohne Autorität aus technischer Erreichbarkeit abzuleiten.",
+  "acceptance": [
+    {
+      "assertion": "Cutover-relevante Grabowski-Ausführungen besitzen serverseitige Laufzeit-, CPU-/IO- und RAM-Grenzen sowie exakte Ressourcen-, Lease-, Pfad- und Secret-Grenzen. Spätere Kubernetes-Agenten-Netzwerk-/Namespace-Isolation und monetäre Kostenbudgets sind ausdrücklich nicht Teil dieses T044-Gates.",
+      "evidence_type": "object",
+      "id": "bounded-jobs",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t006:bounded-jobs"
+      }
+    },
+    {
+      "assertion": "Plattformwirkungen werden an Ziel und Revision gebunden, durch Review/Intent autorisiert, mit Artefakt- oder Effektbeleg ausgeführt und anschließend autoritativ zurückgelesen; ungebundene Prozess- oder Erreichbarkeitszustände zählen nicht als Erfolg.",
+      "evidence_type": "object",
+      "id": "gitops-effect",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t006:gitops-effect"
+      }
+    },
+    {
+      "assertion": "Technische Erreichbarkeit erzeugt keine Wirkungsvollmacht: High-Impact-Aktionen bleiben Captain-/Intent-/Lease-gebunden, fremde Leases und unklare Primärinstanzen werden fail-closed behandelt und Sicherheitsgrenzen dürfen nicht durch Fallback oder Retry umgangen werden.",
+      "evidence_type": "object",
+      "id": "authority-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t006:authority-boundary"
+      }
+    },
+    {
+      "assertion": "Fehlgeschlagene, unterbrochene oder outcome-unklare Wirkungen führen zuerst zu autoritativem Readback und anschließend zu typisierter Recovery, Rücknahme oder neu gebundener Fortsetzung; blinde Wiederholung und bloßer Prozessstatus gelten nicht als Abschluss.",
+      "evidence_type": "object",
+      "id": "recovery-loop",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "weltgewebe:t006:recovery-loop"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001"
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 4
-  },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
   "execution": {
+    "approval": {
+      "action_class": "read_only_observation",
+      "note": "T006 wird ausschließlich als revisionsgebundener Nachweis der bereits vorhandenen Cutover-Sicherheitsgrenzen geschlossen. Es ist keine Grabowski-Code-, PR-, Merge-, Deployment- oder Kubernetes-Agentenjob-Mutation autorisiert. Netzwerk-/Namespace-Isolation und echte per-Task Kostenbudgets sind ausdrücklich auf die spätere, bereits registrierte Post-T044-Agentenzellen-Arbeit verschoben.",
+      "required_level": "operator"
+    },
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
+  "goal": "Für den T044-Produktionscutover revisionsgebunden belegen, dass Grabowski Plattformwirkungen nur über begrenzte, autorisierte und überprüfbare Operatorpfade ausführt: serverseitige Laufzeit-/CPU-/RAM-/IO-Grenzen, exakte Ressourcen-/Lease-/Secret-Grenzen, Review-/Intent-/Wirkungsbelege, fail-closed Autoritätsgrenzen sowie readback- und rollbackgebundene Recovery. Kubernetes-Agenten-spezifische Netzwerk-/Namespace- und monetäre Kostenbudgets bleiben als spätere additive Execution-Fabric-Arbeit nach T044 erhalten und sind kein Cutover-Vorläufer.",
+  "id": "WELTGEWEBE-OS-V1-T006",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "cutover_scope_revision": {
+      "deferred_candidate_id": "candidate-8d0d7c3860e05a60bfbdf049",
+      "does_not_establish": [
+        "Kubernetes-Agentenzellen produktionsreif",
+        "per-task network namespace vorhanden",
+        "per-task monetäres Kostenbudget vorhanden",
+        "T044 selbst freigegeben"
+      ],
+      "reason": "Der historische bounded-jobs-Vertrag vermischte Cutover-Sicherheit mit einer späteren Kubernetes-Agentenfabrik. Live Grabowski-Verträge belegen die für T044 nötigen Grenzen bereits; Netzwerk-/Namespace- und echte Kostenbudgets bleiben post-T044."
+    },
+    "ecosystem_role": "controlled-operator",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-eeb4b2122aab6917f9e61bd2",
+      "candidate_id": "candidate-c18fbba44c2a7f54616d79fb",
+      "content_fingerprint": "c18fbba44c2a7f54616d79fb7084d09708e59f0ddea78686ba1bdcc028316754",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-28T13:16:36.874817Z",
+      "event_id": 12057,
+      "request_sha256": "aafc7a85d59f512f61c8bcb93cdce454ae77f864471472b427185f88c3594ee3",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "02a2874313f9b76ddf3776e38fa9535cc69ce06d819ea0e1250227a511a51286",
+        "freshness": "fingerprint-bound",
+        "kind": "direct_user_request",
+        "locator": "conversation:weltgewebe-gewebezellen-plan-20260828",
+        "observed_at": "2026-08-28T15:00:00+02:00",
+        "sha256": null
+      },
+      "source_fingerprint": "02a2874313f9b76ddf3776e38fa9535cc69ce06d819ea0e1250227a511a51286",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "02a2874313f9b76ddf3776e38fa9535cc69ce06d819ea0e1250227a511a51286",
+          "freshness": "fingerprint-bound",
+          "kind": "direct_user_request",
+          "locator": "conversation:weltgewebe-gewebezellen-plan-20260828",
+          "observed_at": "2026-08-28T15:00:00+02:00",
+          "sha256": null
+        }
+      ]
+    },
+    "registered_at": "2026-07-15T20:50:00Z",
+    "verification": {
+      "closed_at": "2026-08-29T07:37:08.650181Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "b511798b2a20bd22889539a07e82ca1ac4f180c06027c538e8c590e4a572cf47",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "preview_sha256": "0b59ef9a038a47a88f564ca7fe459db0def74c76f6d8c7b5aa78d33dc539fa7f",
+      "receipt": {
+        "authentications": {
+          "authority-boundary": {
+            "authority": "manual",
+            "criterion_id": "authority-boundary",
+            "evidence_sha256": "cbd0d28fc0c5c554a5e2e2ccb1c2033cc89477fe0b268dea47a9a43459ca80d7",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t006:authority-boundary",
+            "observer": "chatgpt-t006-evidence-auditor-20260829",
+            "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "bounded-jobs": {
+            "authority": "manual",
+            "criterion_id": "bounded-jobs",
+            "evidence_sha256": "67e056a06d932cd5faa324bdf27fe305b7e7d87b09a56e5db14487f11b2bf636",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t006:bounded-jobs",
+            "observer": "chatgpt-t006-evidence-auditor-20260829",
+            "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "gitops-effect": {
+            "authority": "manual",
+            "criterion_id": "gitops-effect",
+            "evidence_sha256": "a8d06c9568a8f6c456649c07171dc83eb48e00c897ab4ee3fafb3d0991ef45f9",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t006:gitops-effect",
+            "observer": "chatgpt-t006-evidence-auditor-20260829",
+            "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "recovery-loop": {
+            "authority": "manual",
+            "criterion_id": "recovery-loop",
+            "evidence_sha256": "1b59ccc55d805b0b705be5e50bfa81e035043770fcb71b385ddc558af17fc3a3",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "weltgewebe:t006:recovery-loop",
+            "observer": "chatgpt-t006-evidence-auditor-20260829",
+            "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-29T07:37:08.650181Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 128.650181,
+              "authority": "manual",
+              "criterion_id": "bounded-jobs",
+              "domain": "observation",
+              "observed_at": "2026-08-29T07:35:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "grabowski:runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905;live-tool-contracts:task-start,work-acquire,resource-acquire,secret-use",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 128.650181,
+              "authority": "manual",
+              "criterion_id": "gitops-effect",
+              "domain": "observation",
+              "observed_at": "2026-08-29T07:35:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "grabowski:live-contracts:saga-plan,saga-run,captain-run,branch-publish,pr-create-or-update,runtime-deploy;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 128.650181,
+              "authority": "manual",
+              "criterion_id": "authority-boundary",
+              "domain": "observation",
+              "observed_at": "2026-08-29T07:35:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "grabowski:live-contracts:captain-preflight,captain-run,operator-blockade-status,resource-acquire;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 128.650181,
+              "authority": "manual",
+              "criterion_id": "recovery-loop",
+              "domain": "observation",
+              "observed_at": "2026-08-29T07:35:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "grabowski:live-contracts:runtime-refresh,work-lane-terminal-closeout,recovery-provenance,task-resume-policy;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-29T07:37:08.650181Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "WELTGEWEBE-OS-V1-T006",
+          "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+        },
+        "evidence": {
+          "authority-boundary": {
+            "criterion_id": "authority-boundary",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Current high-impact actions remain Captain-/intent-/review-bound, mutating tools require explicit mutation authority, and overlapping foreign leases are preserved fail-closed. The current blockade readback reports no active kill-switch block while explicitly stating that it grants no future action authority. Multiple attempted operations in this session were refused rather than widening authority, force-releasing foreign work, or treating reachability as permission.",
+              "observation_scope": "weltgewebe:t006:authority-boundary",
+              "observer": "chatgpt-t006-evidence-auditor-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T07:35:00Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t006:authority-boundary",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "grabowski:live-contracts:captain-preflight,captain-run,operator-blockade-status,resource-acquire;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905"
+            }
+          },
+          "bounded-jobs": {
+            "criterion_id": "bounded-jobs",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Fresh live Grabowski contracts on repo/runtime head b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905 expose server-owned runtime_seconds plus CPU, IO and memory limits for persistent work, exact resource/work-lane leases, bounded paths and hash-bound secret use. Runtime health is deployment_complete=true, deployment_integrity_valid=true and audit_valid=true. Generic Kubernetes agent network namespaces and true per-task monetary budgets are deliberately not claimed here; they remain deferred to candidate-8d0d7c3860e05a60bfbdf049 after T044.",
+              "observation_scope": "weltgewebe:t006:bounded-jobs",
+              "observer": "chatgpt-t006-evidence-auditor-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T07:35:00Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t006:bounded-jobs",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "grabowski:runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905;live-tool-contracts:task-start,work-acquire,resource-acquire,secret-use"
+            }
+          },
+          "gitops-effect": {
+            "criterion_id": "gitops-effect",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "The live operator surface binds repository changes and runtime effects to explicit source/target revisions, narrow work lanes, review or execution intents, exact branch/PR publication and receipt-bound post-state readback. In this session the #2191 merge path, single-use Bureau runtime refresh and T048 closeout all stopped on stale or mismatched evidence before effect and proceeded only after fresh authoritative binding. Process existence or technical reachability alone never established success.",
+              "observation_scope": "weltgewebe:t006:gitops-effect",
+              "observer": "chatgpt-t006-evidence-auditor-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T07:35:00Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t006:gitops-effect",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "grabowski:live-contracts:saga-plan,saga-run,captain-run,branch-publish,pr-create-or-update,runtime-deploy;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905"
+            }
+          },
+          "recovery-loop": {
+            "criterion_id": "recovery-loop",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Grabowski's live contracts require authoritative readback before retry after ambiguous outcomes, preserve exact result/intent bindings for runtime refresh lease release and closeout, and support typed recovery or rollback rather than process-status completion. The Bureau runtime refresh in this session used resume_policy=never for the effectful apply, then independent manifest/runtime readback, exact result-bound lease release and authority closeout; replay-filter and transport ambiguities were resolved by readback rather than blind repetition.",
+              "observation_scope": "weltgewebe:t006:recovery-loop",
+              "observer": "chatgpt-t006-evidence-auditor-20260829"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-29T07:35:00Z",
+            "revision": {
+              "observation_scope": "weltgewebe:t006:recovery-loop",
+              "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+              "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "grabowski:live-contracts:runtime-refresh,work-lane-terminal-closeout,recovery-provenance,task-resume-policy;runtime=b85c59bdfa698b0f3d5aae6f5617a5cc6bb0c905"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "b511798b2a20bd22889539a07e82ca1ac4f180c06027c538e8c590e4a572cf47",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+        "preview_sha256": "0b59ef9a038a47a88f564ca7fe459db0def74c76f6d8c7b5aa78d33dc539fa7f",
+        "receipt_sha256": "6f81e977fa1806e3f3a1c358f989659cda80a4d1b49449556e9f4d7e8f7b2432",
+        "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "WELTGEWEBE-OS-V1-T006",
+        "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "e141e400fc2e542c0c8c1f56185c683932692d193e08558425b31cda3d42b38c"
+      },
+      "receipt_sha256": "6f81e977fa1806e3f3a1c358f989659cda80a4d1b49449556e9f4d7e8f7b2432",
+      "reviewer": "chatgpt-t006-independent-reviewer-20260829",
+      "schema_version": 1,
+      "task_sha256": "844480bf32a2b7201b34af18446fab54965246e317bea6b22c09903aa46a6b99"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 4
+  },
   "required_capabilities": [
-    "python",
-    "kubernetes",
-    "gitops",
     "bureau",
-    "chronik",
+    "grabowski",
+    "gitops",
     "security"
   ],
-  "acceptance": [
-    {
-      "id": "bounded-jobs",
-      "assertion": "Agentenjobs besitzen Namespace-, Ressourcen-, Secret-, Netz-, Zeit- und Kostenbudgets.",
-      "evidence_type": "object",
-      "verifier": "job policy and non-ideal tests"
-    },
-    {
-      "id": "gitops-effect",
-      "assertion": "Plattformänderungen durchlaufen Zielvertrag, Review, Artefakt, GitOps, Laufzeitbeobachtung und Wirkungsbeleg.",
-      "evidence_type": "object",
-      "verifier": "end-to-end operator receipt"
-    },
-    {
-      "id": "authority-boundary",
-      "assertion": "Grabowski kann keine unklare Primärinstanz ernennen, Sicherheitsregeln umgehen oder fremde Zellen übernehmen.",
-      "evidence_type": "object",
-      "verifier": "negative authorization tests"
-    },
-    {
-      "id": "recovery-loop",
-      "assertion": "Fehlgeschlagene Wirkungen führen zu überprüfbarer Nacharbeit oder Rücknahme statt bloßem Prozessstatus.",
-      "evidence_type": "object",
-      "verifier": "failure and rollback receipts"
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-07-15T20:50:00Z",
-    "ecosystem_role": "controlled-operator"
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Grabowski auf Weltgewebe-OS-Regelkreis ausrichten"
 }

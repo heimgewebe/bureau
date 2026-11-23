@@ -77,7 +77,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.grabowski"
+      "resource": "component.grabowski.reposkop-effectiveness"
     }
   ],
   "depends_on": [
@@ -90,7 +90,9 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
+      "path:/home/alex/repos/grabowski/src/grabowski_reposkop_effectiveness.py",
+      "path:/home/alex/repos/grabowski/tests/test_reposkop_effectiveness.py",
+      "path:/home/alex/repos/grabowski/docs/reposkop-effectiveness-policy-v3.md"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -108,38 +110,9 @@
       "causal_reposkop_value"
     ],
     "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-992ff47ce0c661c179615e3e",
-      "event_id": 8252,
-      "event_created_at": "2026-08-18T07:29:39.979734Z",
-      "request_sha256": "0b400866b9cdb573a01f121fd82fb44e6c692717f767eac94795936129015661",
-      "candidate_event_id": "candidate-event-c2cc2ae2b4a2fc2adb5cf727",
-      "source_fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
-      "content_fingerprint": "82c7e72f63fb26e7a83aec2aadc5c52093c3f3dfb6a8e91b10e85ba596dda5cd",
-      "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
-        "freshness": "fingerprint-bound",
-        "kind": "conversation",
-        "locator": "chat:2026-08-18:reposkop-effectiveness-live-review",
-        "observed_at": "2026-08-18T07:29:39.863839Z",
-        "sha256": null
-      },
-      "source_observations": [
-        {
-          "does_not_establish": [
-            "source_content_identity"
-          ],
-          "fingerprint": "5b88678a8c4fa39411823fa7da95bd709bc8274866342b6c2a5e737de0253f39",
-          "freshness": "fingerprint-bound",
-          "kind": "conversation",
-          "locator": "chat:2026-08-18:reposkop-effectiveness-live-review",
-          "observed_at": "2026-08-18T07:29:39.863839Z",
-          "sha256": null
-        }
-      ],
+      "candidate_event_id": "candidate-event-cd9c08d20b998649f1dfd06f",
+      "candidate_id": "candidate-b0ae739f2f863b7f6fe004d6",
+      "content_fingerprint": "b0ae739f2f863b7f6fe004d6e7d71406404cbaa0a83c185703115daa28909ef7",
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
@@ -147,10 +120,43 @@
         "dispatch_authority",
         "merge_authority",
         "deployment_authority"
+      ],
+      "event_created_at": "2026-08-19T06:21:17.765350Z",
+      "event_id": 8709,
+      "request_sha256": "5afe1c216b5aa1f892b775c0f550e4c1d8465b3ae4f9999efebc4e104d49d85f",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "990bd19b48513ad338db297a75185f3216ffc156a2c15acd021cd707ebbc3807",
+        "freshness": "fingerprint-bound",
+        "kind": "operator-live-diagnostic",
+        "locator": "bureau:claim-intent:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086:open-pr-scope-required:pr=829,831;implementation-pr=828;runtime=46318df4e24b41f0b0175dfaaa678a9dba7955dc",
+        "observed_at": "2026-08-19T06:21:17.627751Z",
+        "sha256": null
+      },
+      "source_fingerprint": "990bd19b48513ad338db297a75185f3216ffc156a2c15acd021cd707ebbc3807",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "990bd19b48513ad338db297a75185f3216ffc156a2c15acd021cd707ebbc3807",
+          "freshness": "fingerprint-bound",
+          "kind": "operator-live-diagnostic",
+          "locator": "bureau:claim-intent:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T086:open-pr-scope-required:pr=829,831;implementation-pr=828;runtime=46318df4e24b41f0b0175dfaaa678a9dba7955dc",
+          "observed_at": "2026-08-19T06:21:17.627751Z",
+          "sha256": null
+        }
       ]
     },
     "reason": "Die Live-Projektion lieferte mit dem normalen 10k-Fenster null historische Evaluationen, obwohl jüngere Review-Evidenzreferenzen derselben Policy-v3-Arbeit noch vorhanden waren. Ein erster Recovery-Patch existiert, ist aber wegen aktiver fremder Custody und offener Reviewpunkte noch nicht integrationsreif.",
-    "source": "operator-intake-candidate-8252-reposkop-durable-effectiveness-20260818"
+    "source": "operator-intake-candidate-8252-reposkop-durable-effectiveness-20260818",
+    "verification": {
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "task_sha256": "e18f996ea5183b5f9aa8d3198d2205dc4aa98c0d7944b880f1eb1d9f28900706"
+    }
   },
   "priority": {
     "lane": "now",
@@ -164,6 +170,6 @@
     "audit"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Reposkop-Effectiveness-Kohorten auditgebunden dauerhaft messbar machen"
 }

@@ -1,66 +1,398 @@
 {
-  "schema_version": 1,
-  "id": "GRIP-ROADMAP-V1-T021",
-  "initiative": "GRIP-ROADMAP-V1",
-  "title": "Add immutable captain-run audit trail",
-  "state": "planned",
-  "goal": "Define an append-only or externally anchored audit trail for captain-run high-impact execution attempts separate from ordinary receipts.",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T014"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 210
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Audit record binds action, target digest, expected_head, expected_base, execution result digest, actor/context and timestamp without exposing secrets.",
+      "evidence_type": "object",
+      "id": "audit-record",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t021:audit-record"
+      }
+    },
+    {
+      "assertion": "Failure to write required audit evidence blocks high-impact execution before executor invocation unless an explicitly documented bootstrap exception applies.",
+      "evidence_type": "object",
+      "id": "fail-closed",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t021:fail-closed"
+      }
+    },
+    {
+      "assertion": "Audit records are append-only or tamper-evident by hash chain or external anchor.",
+      "evidence_type": "object",
+      "id": "tamper-evidence",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t021:tamper-evidence"
+      }
+    },
+    {
+      "assertion": "Tests cover audit write success, audit write failure, tamper detection and no-secret leakage.",
+      "evidence_type": "object",
+      "id": "tests",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:grip-roadmap-v1-t021:tests"
+      }
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "audit-record",
-      "assertion": "Audit record binds action, target digest, expected_head, expected_base, execution result digest, actor/context and timestamp without exposing secrets."
-    },
-    {
-      "id": "fail-closed",
-      "assertion": "Failure to write required audit evidence blocks high-impact execution before executor invocation unless an explicitly documented bootstrap exception applies."
-    },
-    {
-      "id": "tamper-evidence",
-      "assertion": "Audit records are append-only or tamper-evident by hash chain or external anchor."
-    },
-    {
-      "id": "tests",
-      "assertion": "Tests cover audit write success, audit write failure, tamper detection and no-secret leakage."
-    }
-  ],
+  "goal": "Define an append-only or externally anchored audit trail for captain-run high-impact execution attempts separate from ordinary receipts.",
+  "id": "GRIP-ROADMAP-V1-T021",
+  "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
-    "phase": "captain-run-followup",
-    "effect": "repository_hardening",
-    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
-    "related_issue": "heimgewebe/bureau#212",
-    "related_prs": [
-      "heimgewebe/grabowski#104",
-      "heimgewebe/grabowski#106"
-    ],
-    "reason": "PR #106 preserves receipts but does not introduce an independent immutable audit trail.",
     "does_not_establish": [
       "implementation_complete",
       "merge_authority_change",
       "runtime_deployed",
       "safety_proof"
-    ]
-  }
+    ],
+    "effect": "repository_hardening",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-8dd6ca1b13f00c80e85510e1",
+      "candidate_id": "candidate-42da118fb7407459d835fb2d",
+      "content_fingerprint": "42da118fb7407459d835fb2dc0c4a2c255bfb2d6847c0c99d262a400cb0f1ec2",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-09-05T16:51:11.398565Z",
+      "event_id": 14631,
+      "request_sha256": "a52513e542535e54b58204beb4ad4401eb28b0c3bc6c5c0dc2bd4dec7013dc25",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "4f05f84aa5f76e0d35a57bb715686c69c978eed04a7761c1ccca009e08dc0b91",
+        "freshness": "fingerprint-bound",
+        "kind": "github",
+        "locator": "heimgewebe/grabowski#471@0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+        "observed_at": "2026-09-05T16:50:00Z",
+        "sha256": null
+      },
+      "source_fingerprint": "4f05f84aa5f76e0d35a57bb715686c69c978eed04a7761c1ccca009e08dc0b91",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "4f05f84aa5f76e0d35a57bb715686c69c978eed04a7761c1ccca009e08dc0b91",
+          "freshness": "fingerprint-bound",
+          "kind": "github",
+          "locator": "heimgewebe/grabowski#471@0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+          "observed_at": "2026-09-05T16:50:00Z",
+          "sha256": null
+        }
+      ]
+    },
+    "phase": "captain-run-followup",
+    "reason": "PR #106 preserves receipts but does not introduce an independent immutable audit trail.",
+    "related_issue": "heimgewebe/bureau#212",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "truth_reconcile_note": "2026-09-05: legacy untyped acceptance migrated to executable manual_observation solely for current-head revalidation of the already-merged PR #471 implementation; no implementation or authority claim is established by this revision.",
+    "verification": {
+      "closed_at": "2026-09-05T16:55:13.123423Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "daa4e73c3af80200153b42d4c1f15025ba2a7fcc57dd2715a147e5146568e468",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "preview_sha256": "d750eb7067fdea48db9a65330f65c2aeab916177723dd9f04fd76de240f04a98",
+      "receipt": {
+        "authentications": {
+          "audit-record": {
+            "authority": "manual",
+            "criterion_id": "audit-record",
+            "evidence_sha256": "0b588b34a832e43d0089d32caedf9ca4a0e71e4ff5fd6e284005147478fda7c2",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t021:audit-record",
+            "observer": "chatgpt-grip-t021-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "fail-closed": {
+            "authority": "manual",
+            "criterion_id": "fail-closed",
+            "evidence_sha256": "1e9b582cc99f36bd216f2a267e601a6bfe7369707f0caeca11e81076b7b05329",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t021:fail-closed",
+            "observer": "chatgpt-grip-t021-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "tamper-evidence": {
+            "authority": "manual",
+            "criterion_id": "tamper-evidence",
+            "evidence_sha256": "e36d84b954566841cfb63498e502d975f4d63b78e91762e2385ad4bf17756ac2",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t021:tamper-evidence",
+            "observer": "chatgpt-grip-t021-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "tests": {
+            "authority": "manual",
+            "criterion_id": "tests",
+            "evidence_sha256": "c966650f6a4c09927d314a4221d84a82629ca54a74da7946d5fea7e580711219",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:grip-roadmap-v1-t021:tests",
+            "observer": "chatgpt-grip-t021-evidence-producer-20260905",
+            "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-09-05T16:55:13.123423Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 38.123423,
+              "authority": "manual",
+              "criterion_id": "audit-record",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:54:35Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T021:audit-record",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 38.123423,
+              "authority": "manual",
+              "criterion_id": "fail-closed",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:54:35Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T021:fail-closed",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 38.123423,
+              "authority": "manual",
+              "criterion_id": "tamper-evidence",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:54:35Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T021:tamper-evidence",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 38.123423,
+              "authority": "manual",
+              "criterion_id": "tests",
+              "domain": "observation",
+              "observed_at": "2026-09-05T16:54:35Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-observation:GRIP-ROADMAP-V1-T021:tests",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-09-05T16:55:13.123423Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "GRIP-ROADMAP-V1-T021",
+          "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+        },
+        "evidence": {
+          "audit-record": {
+            "criterion_id": "audit-record",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 10,
+              "github_pr": 471,
+              "merge_commit": "0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+              "observation": "Exact current Grabowski main 50cee73c6372e7bb3fe538a8e33312d14e5dd866 retains Captain audit intent/completion records. Action material binds action, target_sha256, expected_head, expected_base, expected_base_sha, request_sha256 and context_sha256; completion additionally binds intent_audit_sha256 and execution_result_sha256/receipt/output digests. Actor identity and timestamp are added by the append chain; context contents including secrets are not logged.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:audit-record",
+              "observer": "chatgpt-grip-t021-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:54:35Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:audit-record",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T021:audit-record"
+            }
+          },
+          "fail-closed": {
+            "criterion_id": "fail-closed",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 10,
+              "github_pr": 471,
+              "merge_commit": "0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+              "observation": "Current CaptainAuditTrailTests prove intent audit append failure returns a blocked receipt before grabowski_grips.grip_run is invoked. Intent lock timeout is not retried; completion retries are limited to known pre-append lock timeouts, while ambiguous runtime errors are not retried.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:fail-closed",
+              "observer": "chatgpt-grip-t021-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:54:35Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:fail-closed",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T021:fail-closed"
+            }
+          },
+          "tamper-evidence": {
+            "criterion_id": "tamper-evidence",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 10,
+              "github_pr": 471,
+              "merge_commit": "0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+              "observation": "Current _append_audit_with_digest verifies the audit log and bound descriptor before append, enriches each record against the verified chain including previous record identity, appends through a bound descriptor with fsync and exact size postflight, and rolls back a failed append. PR #471 merge 0bd18426357bb520b79a9efa9757ba0d2fa2dd39 is 537 commits behind current main with no divergent commits.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:tamper-evidence",
+              "observer": "chatgpt-grip-t021-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:54:35Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:tamper-evidence",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T021:tamper-evidence"
+            }
+          },
+          "tests": {
+            "criterion_id": "tests",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "current_main": "50cee73c6372e7bb3fe538a8e33312d14e5dd866",
+              "focused_tests_passed": 10,
+              "github_pr": 471,
+              "merge_commit": "0bd18426357bb520b79a9efa9757ba0d2fa2dd39",
+              "observation": "On exact current main, CaptainAuditTrailTests runs 10/10 PASS and covers material binding/no-secret leakage, exact digest return, missing digest rejection, pre-append retry policy, intent fail-closed before dispatch, bounded completion failure and successful intent/completion references.",
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:tests",
+              "observer": "chatgpt-grip-t021-evidence-producer-20260905"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-09-05T16:54:35Z",
+            "revision": {
+              "observation_scope": "grabowski:grip-roadmap-v1-t021:tests",
+              "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+              "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-observation:GRIP-ROADMAP-V1-T021:tests"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "daa4e73c3af80200153b42d4c1f15025ba2a7fcc57dd2715a147e5146568e468",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+        "preview_sha256": "d750eb7067fdea48db9a65330f65c2aeab916177723dd9f04fd76de240f04a98",
+        "receipt_sha256": "3e209fa0db87975b90ffc07d95c16f0f3e598f2242bf7d2582bcad981a17b842",
+        "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "GRIP-ROADMAP-V1-T021",
+        "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "df3f0436232cc9e6b418396915385dd1a68798df4cd8df29f3f542ef9d6d8407"
+      },
+      "receipt_sha256": "3e209fa0db87975b90ffc07d95c16f0f3e598f2242bf7d2582bcad981a17b842",
+      "reviewer": "chatgpt-grip-t021-independent-reviewer-20260905",
+      "schema_version": 1,
+      "task_sha256": "66acbc1ae08d5e0d0bc34460449386611810d1bc09983dfad47118da3dd8a21f"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 210
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add immutable captain-run audit trail"
 }

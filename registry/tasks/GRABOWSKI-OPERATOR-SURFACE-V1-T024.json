@@ -1,59 +1,396 @@
 {
-  "schema_version": 1,
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "state": "planned",
+  "acceptance": [
+    {
+      "assertion": "Ein aktueller Consumer des persistenten Recall-Stores ist mit konkreter Task-, Runtime- oder Produktreferenz belegt, oder die vollständige aktuelle TaskSpec-/Consumer-Prüfung belegt, dass kein solcher Consumer existiert.",
+      "evidence_type": "object",
+      "id": "named-current-consumer",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t024:named-current-consumer"
+      }
+    },
+    {
+      "assertion": "Chronik bleibt append-only Historienautorität; ein eventueller Recall-Store darf ausschließlich regenerierbare Derived-Projektion oder Cache sein und keine neue Wissens-, Policy-, Routing-, Recovery- oder Taskautorität besitzen.",
+      "evidence_type": "object",
+      "id": "truth-owner-boundary",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t024:truth-owner-boundary"
+      }
+    },
+    {
+      "assertion": "Eine Implementierung ist nur zulässig, wenn ein konkret benötigter Recallzustand nicht ausreichend aus Chronik und den aktuellen repositorygebundenen Quellen rekonstruiert werden kann; andernfalls wird no-change entschieden.",
+      "evidence_type": "object",
+      "id": "reconstructability-gap",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t024:reconstructability-gap"
+      }
+    },
+    {
+      "assertion": "Die Entscheidung implement oder no-change nennt Consumer, Nutzen, zusätzliche dauerhafte Wahrheit, Wartungskosten und Restrisiko; fehlender Consumer führt ausdrücklich zu no-change statt zu Vorratspersistenz.",
+      "evidence_type": "object",
+      "id": "decision-recorded",
+      "verifier": "manual_observation",
+      "verifier_config": {
+        "observation_scope": "grabowski:t024:decision-recorded"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.chronik"
+    }
+  ],
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
   ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "No repository mutation is warranted unless a named current consumer and a non-reconstructable persistence need are proven; otherwise close no-change.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Entscheide revisionsgebunden, ob ein separater persistenter Operator-Recall-Store nach Etablierung von Chronik als append-only Historienautorität und Archivierung von Heimlern noch einen belegten aktuellen Consumer und eine nicht bereits rekonstruierbare Funktion besitzt. Ohne benannten Consumer und belegte Lücke endet der Task als no-change; eine spätere Persistenz wäre ausschließlich als regenerierbare Projektion oder Cache zulässig und niemals als Wissens-, Policy- oder Taskautorität.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "audit_evidence": {
+      "chronik_role": "append-only historical authority",
+      "current_dependencies_on_t024": 0,
+      "current_metadata_mentions_of_t024": 0,
+      "freshness_pattern": "RPU-V1-T015 revalidates cited memory against source hash/freshness",
+      "heimlern": "archived",
+      "historical_recall_source": "validated Chronik history"
+    },
+    "does_not_establish": [
+      "persistent_recall_store_needed",
+      "automatic_store_creation",
+      "policy_oracle",
+      "task_completion",
+      "routing_authority",
+      "current_truth"
+    ],
+    "effect": "decision_only_unless_need_proven",
+    "operator_intake": {
+      "candidate_event_id": "candidate-event-7f42976344fbe097a08922b7",
+      "candidate_id": "candidate-011a6afd55c2b8d50123f808",
+      "content_fingerprint": "011a6afd55c2b8d50123f8088ae1193b02866719d843197cffedb2cb5cc3f28e",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "event_created_at": "2026-08-30T06:31:23.763640Z",
+      "event_id": 12734,
+      "request_sha256": "bbe4bd6bcb8654300eda8334b3a54cdba83f18bc1e273369478d6285fad2cc47",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "fingerprint": "f411c9a75dba5d3b0ea24591ada57e60cf7318119b2c4567b7d8449f09e569c3",
+        "freshness": "fingerprint-bound",
+        "kind": "live-system-audit",
+        "locator": "operator-ecosystem-audit:t024-revalidation-2026-08-30",
+        "observed_at": "2026-08-30T08:12:00+02:00",
+        "sha256": null
+      },
+      "source_fingerprint": "f411c9a75dba5d3b0ea24591ada57e60cf7318119b2c4567b7d8449f09e569c3",
+      "source_observations": [
+        {
+          "does_not_establish": [
+            "source_content_identity"
+          ],
+          "fingerprint": "f411c9a75dba5d3b0ea24591ada57e60cf7318119b2c4567b7d8449f09e569c3",
+          "freshness": "fingerprint-bound",
+          "kind": "live-system-audit",
+          "locator": "operator-ecosystem-audit:t024-revalidation-2026-08-30",
+          "observed_at": "2026-08-30T08:12:00+02:00",
+          "sha256": null
+        }
+      ]
+    },
+    "phase": "operator-recall-revalidation",
+    "source": "Live operator-ecosystem audit 2026-08-30 after Chronik/Recall/Systemkatalog convergence.",
+    "verification": {
+      "closed_at": "2026-08-30T06:47:58.982695Z",
+      "does_not_establish": [
+        "run_identity",
+        "retroactive_claim_authority",
+        "synthetic_run_authority",
+        "bureau_execution_of_the_completed_work",
+        "merge_authority",
+        "deployment_authority"
+      ],
+      "evidence_bundle_sha256": "2a0d25d3795566f9d80d9622ec304f876388f1dd76036c35f660b792147b8098",
+      "kind": "bureau.task_no_run_closeout_verification",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "preview_sha256": "ddedf982707204d4eb5265077207b7241c9987a0856616dfc6cb76f441c49801",
+      "receipt": {
+        "authentications": {
+          "decision-recorded": {
+            "authority": "manual",
+            "criterion_id": "decision-recorded",
+            "evidence_sha256": "8041e40972e57dc7d020d312bece3e82890a6eacf493355890dd0d79b6bced1e",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:t024:decision-recorded",
+            "observer": "chatgpt-operator-audit-observer-20260830",
+            "reviewer": "chatgpt-operator-self-review-20260830",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "named-current-consumer": {
+            "authority": "manual",
+            "criterion_id": "named-current-consumer",
+            "evidence_sha256": "051beb8fe2513ebb2089751f2d524cb68fdc51eb95cd6fd4f8f57cd89df70f4c",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:t024:named-current-consumer",
+            "observer": "chatgpt-operator-audit-observer-20260830",
+            "reviewer": "chatgpt-operator-self-review-20260830",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "reconstructability-gap": {
+            "authority": "manual",
+            "criterion_id": "reconstructability-gap",
+            "evidence_sha256": "70aedf35ad5c6022fa730060c9fc006dc415fd5b1d715b56f96e7fe3819fb96a",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:t024:reconstructability-gap",
+            "observer": "chatgpt-operator-audit-observer-20260830",
+            "reviewer": "chatgpt-operator-self-review-20260830",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          },
+          "truth-owner-boundary": {
+            "authority": "manual",
+            "criterion_id": "truth-owner-boundary",
+            "evidence_sha256": "981f69cd009c55d4f0dc01cd404f2adab0f1c0f1a803fa2a2c24d060b3ada63b",
+            "kind": "bureau.task_no_run_source_authentication",
+            "observation_scope": "grabowski:t024:truth-owner-boundary",
+            "observer": "chatgpt-operator-audit-observer-20260830",
+            "reviewer": "chatgpt-operator-self-review-20260830",
+            "schema_version": 1,
+            "verifier": "manual_observation"
+          }
+        },
+        "closed_at": "2026-08-30T06:47:58.982695Z",
+        "does_not_establish": [
+          "run_identity",
+          "retroactive_claim_authority",
+          "synthetic_run_authority",
+          "bureau_execution_of_the_completed_work",
+          "merge_authority",
+          "deployment_authority"
+        ],
+        "evaluation": {
+          "criteria": [
+            {
+              "age_seconds": 178.982695,
+              "authority": "manual",
+              "criterion_id": "named-current-consumer",
+              "domain": "observation",
+              "observed_at": "2026-08-30T06:45:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-ecosystem-audit:t024-current-consumer-20260830",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.982695,
+              "authority": "manual",
+              "criterion_id": "truth-owner-boundary",
+              "domain": "observation",
+              "observed_at": "2026-08-30T06:45:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "systemkatalog-authority-audit:20260830",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.982695,
+              "authority": "manual",
+              "criterion_id": "reconstructability-gap",
+              "domain": "observation",
+              "observed_at": "2026-08-30T06:45:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "operator-recall-and-repoground-audit:20260830",
+              "state": "passed",
+              "verifier": "manual_observation"
+            },
+            {
+              "age_seconds": 178.982695,
+              "authority": "manual",
+              "criterion_id": "decision-recorded",
+              "domain": "observation",
+              "observed_at": "2026-08-30T06:45:00Z",
+              "reason": "manual-observation-accepted",
+              "revision_reason": "revision-bound",
+              "source_reference": "direct-user:2026-08-30:operational-guidance-plan-umsetzen",
+              "state": "passed",
+              "verifier": "manual_observation"
+            }
+          ],
+          "cross_criterion_revision": {
+            "conflicts": [],
+            "shared_fields": {},
+            "state": "passed"
+          },
+          "does_not_establish": [
+            "run_identity",
+            "retroactive_claim_authority",
+            "synthetic_run_authority",
+            "bureau_execution_of_the_completed_work",
+            "merge_authority",
+            "deployment_authority"
+          ],
+          "domains": [
+            "observation"
+          ],
+          "evaluated_at": "2026-08-30T06:47:58.982695Z",
+          "kind": "bureau.task_no_run_acceptance_evaluation",
+          "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+          "schema_version": 1,
+          "state": "passed",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
+          "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+        },
+        "evidence": {
+          "decision-recorded": {
+            "criterion_id": "decision-recorded",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Decision is no-change: do not build a persistent Recall store without a named current consumer. This avoids a second durable historical/knowledge surface and its maintenance cost. Residual risk is repeated derivation cost; reopen only if a concrete consumer proves that cost or a non-reconstructable need, and then only as a regenerable projection/cache.",
+              "observation_scope": "grabowski:t024:decision-recorded",
+              "observer": "chatgpt-operator-audit-observer-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T06:45:00Z",
+            "revision": {
+              "observation_scope": "grabowski:t024:decision-recorded",
+              "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+              "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "direct-user:2026-08-30:operational-guidance-plan-umsetzen"
+            }
+          },
+          "named-current-consumer": {
+            "criterion_id": "named-current-consumer",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "A complete current TaskSpec scan found zero depends_on references to T024 and zero metadata references to T024. Heimlern, the former optional offline consumer, is archived. No current runtime or product consumer requiring a persistent Recall store was identified.",
+              "observation_scope": "grabowski:t024:named-current-consumer",
+              "observer": "chatgpt-operator-audit-observer-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T06:45:00Z",
+            "revision": {
+              "observation_scope": "grabowski:t024:named-current-consumer",
+              "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+              "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-ecosystem-audit:t024-current-consumer-20260830"
+            }
+          },
+          "reconstructability-gap": {
+            "criterion_id": "reconstructability-gap",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Current historical recall is reconstructable from validated Chronik history. Repository knowledge remains source-bound through RepoGround, and RPU-V1-T015 already defines hash/freshness revalidation for cited memory. No non-reconstructable persistence gap was proven.",
+              "observation_scope": "grabowski:t024:reconstructability-gap",
+              "observer": "chatgpt-operator-audit-observer-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T06:45:00Z",
+            "revision": {
+              "observation_scope": "grabowski:t024:reconstructability-gap",
+              "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+              "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "operator-recall-and-repoground-audit:20260830"
+            }
+          },
+          "truth-owner-boundary": {
+            "criterion_id": "truth-owner-boundary",
+            "evidence_type": "manual_observation",
+            "facts": {
+              "accepted": true,
+              "observation": "Systemkatalog assigns append_only_history to Chronik. Grabowski historical recall is a derived historical-evidence surface and explicitly does not establish current truth, policy, routing, recovery or task authority.",
+              "observation_scope": "grabowski:t024:truth-owner-boundary",
+              "observer": "chatgpt-operator-audit-observer-20260830"
+            },
+            "kind": "bureau.acceptance_evidence",
+            "observed_at": "2026-08-30T06:45:00Z",
+            "revision": {
+              "observation_scope": "grabowski:t024:truth-owner-boundary",
+              "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+              "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+            },
+            "schema_version": 1,
+            "source": {
+              "authority": "manual",
+              "reference": "systemkatalog-authority-audit:20260830"
+            }
+          }
+        },
+        "evidence_bundle_sha256": "2a0d25d3795566f9d80d9622ec304f876388f1dd76036c35f660b792147b8098",
+        "kind": "bureau.task_no_run_closeout_receipt",
+        "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+        "preview_sha256": "ddedf982707204d4eb5265077207b7241c9987a0856616dfc6cb76f441c49801",
+        "receipt_sha256": "732a6142f16f773d095c93ccd1aca1a7e982659bd5c463c3a639c5eff58d7c04",
+        "reviewer": "chatgpt-operator-self-review-20260830",
+        "schema_version": 1,
+        "status": "verified",
+        "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
+        "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882",
+        "task_spec_revision": 3,
+        "task_spec_sha256": "2c22922ac2bb18bbc7e58b0504bc3d3c5bbfe87beb8e584bda2e7406855da404"
+      },
+      "receipt_sha256": "732a6142f16f773d095c93ccd1aca1a7e982659bd5c463c3a639c5eff58d7c04",
+      "reviewer": "chatgpt-operator-self-review-20260830",
+      "schema_version": 1,
+      "task_sha256": "77722608a26933dd8c199a330f009bc29e8a5f18871bf47e159f4f3aa0e34882"
+    }
+  },
   "priority": {
     "lane": "later",
     "rank": 440
   },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "shell",
-    "grabowski"
+    "grabowski",
+    "chronik"
   ],
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect"
-  },
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
-  "title": "Add persistent recall store boundary",
-  "goal": "Design and implement an optional append-only operator recall store with retention, dedupe and export semantics while preserving evidence refs and non-claims.",
-  "metadata": {
-    "phase": "operator-recall-followup",
-    "effect": "optional_append_only_store",
-    "source": "deferred from PR #116; current PR exports on demand only",
-    "non_goal": "Does not create free-form chat memory, automatic task completion or policy oracle behavior."
-  },
-  "acceptance": [
-    {
-      "id": "append-only",
-      "assertion": "Recall store writes are append-only or versioned with hash-bound records and cannot overwrite evidence history silently."
-    },
-    {
-      "id": "dedupe",
-      "assertion": "Duplicate recall items are detected by stable hash over source/evidence/topic/learned_rule without losing provenance."
-    },
-    {
-      "id": "retention",
-      "assertion": "Retention and export limits are explicit and visible in status/output."
-    },
-    {
-      "id": "no-policy-oracle",
-      "assertion": "Stored recall cannot authorize merges, recovery actions, routing changes or Bureau task completion."
-    },
-    {
-      "id": "tests",
-      "assertion": "Focused tests cover append, duplicate, corrupt record, bounded export and no-free-form-memory rejection."
-    }
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Persistenten Recall-Store gegen aktuelle Wahrheitsarchitektur revalidieren"
 }

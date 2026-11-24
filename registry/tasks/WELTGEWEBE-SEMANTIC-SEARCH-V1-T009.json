@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "SemantAH stilllegen, archivieren und Ökosystemreferenzen bereinigen",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Erst nach verifiziertem T008-Live-Beweis die durch Weltgewebe Semantic Search ersetzten aktiven SemantAH-Rollen kontrolliert entfernen, das Repository archivieren statt löschen und Bureau sowie Systemkatalog auf die neue Wahrheit nachziehen.",
   "priority": {
     "lane": "later",

@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T003",
   "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
   "title": "Declare and verify PMTiles Content-Type",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Configure the public PMTiles route to emit one documented, client-compatible Content-Type for full and Range responses, and lock the contract with CI plus production readiness checks.",
   "depends_on": [
     "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002"
@@ -65,6 +65,19 @@
       "current_browser_failure",
       "pmtiles_payload_corruption",
       "need_to_change_artifact_bytes"
-    ]
+    ],
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "reviewed_at": "2026-11-23T21:05:46Z",
+      "reason": "Der normale produktive Deutschland-PMTiles-Pfad liefert bereits HTTP 200/206 mit explizitem application/octet-stream, Accept-Ranges und korrektem Content-Range auf Build 34910f9b. Der Juli-Implementierungsauftrag sowie erneute Vollabnahme aller alten Regionalartefakte sind überholt. Keine neue Browser- oder Vollartefaktprüfung behauptet.",
+      "evidence_refs": [
+        "https://commonthing.net/local-basemap/basemap-germany.pmtiles",
+        "github:heimgewebe/commonthing:34910f9bb15403776cae81d13f850bf6ef0caadd:infra/caddy/Caddyfile.vps",
+        "grabowski-terminal:argv-sha256:65f946232c62a89428c492bb13a49f97276ca6965e0d7395d200a65f8fa7fd98",
+        "grabowski-terminal:argv-sha256:bc00535ce84d2abc32bc366fabaa6f7b742076ef0a6d33dcb8ea59535557b67c",
+        "grabowski-task:8c8ac966896b42bc919a5cdb",
+        "github:heimgewebe/bureau:main:cd598500e05e8135cfb3739684d1b146550c6cab"
+      ]
+    }
   }
 }

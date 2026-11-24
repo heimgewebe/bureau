@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T011",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Unify Bureau canonical runtime and Grabowski contract deployment",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Remove the remaining dual-deployment model by making Grabowski's Bureau lease consumer verify and execute the same immutable manifest-bound release selected by the canonical Bureau launcher, without weakening package integrity, exact-scope lease policy or rollback safety.",
   "priority": {
     "lane": "later",
@@ -112,6 +112,18 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "reviewed_at": "2026-11-23T21:05:46Z",
+      "reason": "Der aktive Grabowski-Consumer und die kanonische Bureau-CLI verwenden bereits denselben managed-manifest Launcher und immutable Bureau-Source cd598500e05e. Eine neue Migration gegen den Juli-Stand d85ad423 und das Entfernen des weiterhin gemeinsam benötigten Dependency-venv haben keinen belegten Betriebsnutzen. Historischen Implementierungsauftrag stilllegen; keine vollständige Erfüllung aller damaligen Lösungszwänge behauptet.",
+      "evidence_refs": [
+        "grabowski-task:68a9d6f5bf1f4cb884d4ee85",
+        "grabowski-task:a7c33bff016449db83b5f66d",
+        "sha256:50f3d1418c2fb5026a8f37ee800f5b9e0450ee9e7fb12bb034687d98884810de",
+        "grabowski-task:8c8ac966896b42bc919a5cdb",
+        "github:heimgewebe/bureau:main:cd598500e05e8135cfb3739684d1b146550c6cab"
       ]
     }
   }

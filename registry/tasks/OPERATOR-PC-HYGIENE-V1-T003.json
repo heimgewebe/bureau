@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T003",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Add narrow stale systemd cleanup privilege",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 203
@@ -239,6 +239,15 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:0871bc748e284b3ead4b0ae6",
+        "grabowski-task:cf5bbe9ba3cb440dbbe5ae0a"
+      ],
+      "reason": "Die vier historischen systemd-Ziele (user@111.service und drei alte Broker-Instanzen) sind jetzt alle inactive mit Result=success; systemctl --failed zeigte keine fehlgeschlagenen System-Units. Die zusätzliche Sonderprivilegierung für das kosmetische Rücksetzen dieser Juli-Fehler hat keinen aktuellen Betriebsnutzen; ein Standard-Systemctl-Reset ist im Bedarfsfall möglich und vorhandener Rootbroker ist betriebsbereit. Die T012-Abhängigkeit war reine Scheduling-Preemption, kein fachlicher Zusammenhang. Keine neue Root-Aktion, kein künstlicher Fehlerfixture, keine angebliche Erfüllung alter Acceptance.",
+      "reviewed_at": "2026-11-24T06:47:38.045215+00:00"
     }
   },
   "depends_on": [

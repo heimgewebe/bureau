@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T012",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Classify and retire stale Docker development residues",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 212
@@ -195,6 +195,18 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:f852026296ed4a4e817553b2",
+        "grabowski-task:cf5bbe9ba3cb440dbbe5ae0a",
+        "grabowski-task:0871bc748e284b3ead4b0ae6",
+        "grabowski-task:99ff1b24cba0487785ec4772",
+        "grabowski-power-request:271b6ec18b5b4e4a8951116f4be7e53b"
+      ],
+      "reason": "Der Juli-Auftrag gilt sieben konkreten alten Pop!_OS-Docker-Containern und deren damaliger Compose-Umgebung. Im aktiven NixOS existieren weder Docker-Daemon/-Socket noch /var/lib/docker; Docker ist Podman-Kompatibilität, alle 24 beobachteten Rootless-Podman-Container laufen und keiner trägt einen der sieben Namen. Die historischen benannten Volumes sind in diesem Store nicht vorhanden. Rootful-Podman-Abfrage war nicht erfolgreich (Socket-Zugriff verweigert bzw. Broker-Read-only-Filesystem); keine Aussage über archivierte oder rootful Daten. Kein Beleg für notwendigen Löschauftrag; historische konkrete Docker-Bereinigung und temporäre Scheduling-Rücksetzung sind überholt. Keine Container, Volumes, Netzwerke, Backups oder Proof-Daten löschen. Keine historische Acceptance-Verifikation behaupten.",
+      "reviewed_at": "2026-11-24T06:47:37.885465+00:00"
     }
   }
 }

@@ -1068,6 +1068,78 @@ def _open_pr_claim_guard_workers(repository_count: int) -> int:
     return min(value, MAX_OPEN_PR_CLAIM_GUARD_WORKERS, repository_count)
 
 
+def _github_open_pull_requests_rest(repository: str) -> list[dict[str, Any]]:
+    """Observe open PR metadata when the GraphQL quota is unavailable."""
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [binary, "api", "--paginate", "--slurp",
+             f"repos/{repository}/pulls?state=open&per_page=100"],
+            text=True, capture_output=True, check=False, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot observe REST open pull requests for {repository}: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
+        raise OpenPullRequestObservationError(
+            f"gh api open pull requests failed for {repository}: {detail or 'no diagnostic'}"
+        )
+    try:
+        pages = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"REST open PR observation returned invalid JSON for {repository}"
+        ) from exc
+    if (
+        not isinstance(pages, list) or not pages
+        or any(not isinstance(page, list) or len(page) > 100 for page in pages)
+        or any(len(page) != 100 for page in pages[:-1])
+    ):
+        raise OpenPullRequestObservationError(
+            f"REST open PR observation returned invalid pagination for {repository}"
+        )
+    rows = [item for page in pages for item in page]
+    if len(rows) >= _open_pr_claim_guard_limit():
+        raise OpenPullRequestObservationError(
+            "open PR observation reached BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT "
+            f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
+        )
+    seen: set[int] = set()
+    normalized = []
+    for item in rows:
+        if not isinstance(item, dict):
+            raise OpenPullRequestObservationError(f"invalid REST open PR row for {repository}")
+        number = item.get("number")
+        base, head = item.get("base"), item.get("head")
+        labels, body = item.get("labels"), item.get("body")
+        if (
+            item.get("state") != "open" or type(number) is not int or number < 1
+            or number in seen
+            or not all(isinstance(ref, dict) and isinstance(ref.get("ref"), str)
+                       and ref["ref"] and isinstance(ref.get("sha"), str)
+                       and _GIT_OID_RE.fullmatch(ref["sha"]) for ref in (base, head))
+            or not isinstance(item.get("title"), str)
+            or not isinstance(item.get("html_url"), str) or not item["html_url"]
+            or "body" not in item or (body is not None and not isinstance(body, str))
+            or not isinstance(labels, list)
+            or any(not isinstance(label, dict) or not isinstance(label.get("name"), str)
+                   for label in labels)
+        ):
+            raise OpenPullRequestObservationError(
+                f"invalid or duplicate REST open PR metadata for {repository}#{number}"
+            )
+        seen.add(number)
+        normalized.append({
+            "number": number, "title": item["title"], "url": item["html_url"],
+            "headRefName": head["ref"], "headRefOid": head["sha"],
+            "baseRefName": base["ref"], "baseRefOid": base["sha"],
+            "body": body or "", "labels": labels,
+        })
+    return normalized
+
+
 def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     limit = str(_open_pr_claim_guard_limit())
@@ -1096,17 +1168,25 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
         raise OpenPullRequestObservationError(
             f"cannot observe open pull requests for {repository}: {exc}"
         ) from exc
+    rest_inventory = False
     if result.returncode != 0:
         detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
-        raise OpenPullRequestObservationError(
-            f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
-        )
-    try:
-        value = json.loads(result.stdout or "[]")
-    except json.JSONDecodeError as exc:
-        raise OpenPullRequestObservationError(
-            f"gh pr list returned invalid JSON for {repository}: {exc}"
-        ) from exc
+        diagnostic = detail.lower()
+        if "graphql_rate_limit" not in diagnostic and not (
+            "graphql" in diagnostic and "rate limit" in diagnostic
+        ):
+            raise OpenPullRequestObservationError(
+                f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
+            )
+        value = _github_open_pull_requests_rest(repository)
+        rest_inventory = True
+    else:
+        try:
+            value = json.loads(result.stdout or "[]")
+        except json.JSONDecodeError as exc:
+            raise OpenPullRequestObservationError(
+                f"gh pr list returned invalid JSON for {repository}: {exc}"
+            ) from exc
     if not isinstance(value, list):
         raise OpenPullRequestObservationError(f"gh pr list returned non-list JSON for {repository}")
     if len(value) >= _open_pr_claim_guard_limit():
@@ -1152,6 +1232,22 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             raise OpenPullRequestObservationError(
                 f"open PR {repository}#{number} has invalid head OID"
             )
+        if rest_inventory:
+            # The list endpoint does not provide changed_files. Bind the detail
+            # response to the enumerated revision before reading its file pages.
+            initial = _github_pull_request_identity(repository, number)
+            if initial["base_oid"] != base_oid or initial["head_oid"] != head_oid:
+                raise OpenPullRequestObservationError(
+                    f"open PR {repository}#{number} identity changed before file observation"
+                )
+            changed_files = initial["changed_files"]
+            if changed_files >= _open_pr_file_limit():
+                raise OpenPullRequestObservationError(
+                    "open PR file observation reached BUREAU_OPEN_PR_CLAIM_GUARD_FILE_LIMIT "
+                    f"({_open_pr_file_limit()}) for {repository}#{number}; "
+                    "coverage is bounded and fails closed"
+                )
+            item = {**item, "changedFiles": changed_files}
         if (
             not isinstance(changed_files, int)
             or isinstance(changed_files, bool)

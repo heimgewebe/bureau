@@ -48,6 +48,16 @@
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "metadata": {
     "baseline_reproduction_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:6db775cdac0f41609a763d11",
+        "https://github.com/heimgewebe/repoground/actions/runs/44360576771/job/135000492630",
+        "github:heimgewebe/repoground:commit:c1b9b38e819737d9a4545f0c59ae47fdacf81c14"
+      ],
+      "reason": "Der alte Pop-OS-Namespace-Ressourcenausfall vom Juli ist am heutigen NixOS-Host nicht reproduzierbar: minimale bwrap-User-/PID-Namespace-Probe Exit 0. RepoGround-Quellstand c1b9b38e ist auf der unterstützten CI-Testumgebung grün. Die zwei alten Testmodule liefern nativ 33 Fehler wegen der separaten FHS-Toolauflösung (bwrap nicht im fest codierten Systempfad), nicht wegen des alten Namespace-EAGAIN. Der externe Sidecar ist laut Vertrag ein Prototyp ohne nachgewiesenen aktiven Grabowski-/Host-Verbraucher. Keine Host-Reparatur oder pauschale NixOS-Portierung ohne konkreten Bedarf; native Kompatibilität bleibt ausdrücklich unbelegt.",
+      "reviewed_at": "2026-11-24T06:59:30.503548+00:00"
+    },
     "corrective_merge_commit": "03c6070bb7bb65cb8b308f17ec2a28d5b34910c9",
     "does_not_establish": [
       "that a specific browser or Flatpak process caused exhaustion",
@@ -68,15 +78,17 @@
       "user_slice_pids_current": 1148,
       "user_slice_pids_max": 12633
     },
-    "registered_at": "2026-07-25T17:28:00Z",
-    "source_finding": "35 Patch-Evaluation-Sidecar-Tests scheiterten lokal vor der Testlogik, weil Bubblewrap keinen neuen Namespace erzeugen konnte. Derselbe Fehler trat auf dem unveränderten Merge-Commit c91d640bce2b14c4a78a64e83169d56c818fa662 auf und ist daher keine Regression von PR #1104.",
-    "source_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T016",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "bubblewrap-namespace-resource-exhaustion-20260725",
-      "event_id": 1180,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-25T19:00:36.767762Z",
+      "event_id": 1180,
       "request_sha256": "21c2b1f2d710861bed22a6b2ee98453d51f81bddb0942a71a455f2bba4b3a3ef",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -84,13 +96,11 @@
         "locator": "/home/alex/.local/state/repoground-deploy/03c6070bb7bb65cb8b308f17ec2a28d5b34910c9/bubblewrap-host-task.pending.json",
         "observed_at": "2026-07-25T17:28:00Z",
         "sha256": "a4f5af1f955ac5af2535ea4c5a9f4e4ee72514fb7fc5ed1f5a9dfd4464c46296"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      }
+    },
+    "registered_at": "2026-07-25T17:28:00Z",
+    "source_finding": "35 Patch-Evaluation-Sidecar-Tests scheiterten lokal vor der Testlogik, weil Bubblewrap keinen neuen Namespace erzeugen konnte. Derselbe Fehler trat auf dem unveränderten Merge-Commit c91d640bce2b14c4a78a64e83169d56c818fa662 auf und ist daher keine Regression von PR #1104.",
+    "source_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T016"
   },
   "priority": {
     "lane": "now",
@@ -105,6 +115,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Bubblewrap-Namespace-Ausfall ursächlich beheben"
 }

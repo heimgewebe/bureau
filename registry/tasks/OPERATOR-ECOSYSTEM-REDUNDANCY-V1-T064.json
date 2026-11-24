@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T064",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Bureau-Claim-Pfad revisionsgebunden und checkout-unabhängig machen",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Repariere den Grabowski–Bureau-Claim-Pfad so, dass eine bereite Aufgabe aus einem sauberen, aktuellen und schreibbaren Registry-Ausgangspunkt mit vollständigen Fähigkeiten und explizit aktuellem Repository-Basiscommit atomar geclaimt werden kann, ohne fremde schmutzige Checkouts zu verändern. Gib konkrete, strukturierte Ablehnungsgründe statt des pauschalen claim-intent-not-ready zurück.",
   "priority": {
     "lane": "now",
@@ -40,54 +40,54 @@
   "depends_on": [],
   "acceptance": [
     {
-      "id": "clean-current-registry-source",
       "assertion": "The claim adapter uses a clean, current, explicitly revision-bound Registry source and does not require or mutate a foreign dirty Bureau main checkout.",
       "evidence_type": "object",
+      "id": "clean-current-registry-source",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:clean-current-registry-source"
       }
     },
     {
-      "id": "complete-capability-propagation",
       "assertion": "All task-required capabilities are preserved through candidate selection, claim intent and coordinated execution; missing capabilities produce an exact structured rejection.",
       "evidence_type": "object",
+      "id": "complete-capability-propagation",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:complete-capability-propagation"
       }
     },
     {
-      "id": "current-repository-base-binding",
       "assertion": "A new implementation workspace is bound to an explicitly approved current remote repository commit and fails closed when the local source head is stale or ambiguous.",
       "evidence_type": "object",
+      "id": "current-repository-base-binding",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:current-repository-base-binding"
       }
     },
     {
-      "id": "scoped-receipt-drift",
       "assertion": "Receipt drift reports the exact blocking task, receipt and revision mismatch; unrelated task drift does not silently collapse into claim-intent-not-ready without a documented global-policy reason.",
       "evidence_type": "object",
+      "id": "scoped-receipt-drift",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:scoped-receipt-drift"
       }
     },
     {
-      "id": "lease-contract-health",
       "assertion": "Required Registry, repository and workspace leases can be acquired and released through a healthy typed contract without bypassing foreign ownership.",
       "evidence_type": "object",
+      "id": "lease-contract-health",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:lease-contract-health"
       }
     },
     {
-      "id": "regression-coverage",
       "assertion": "Regression tests cover dirty shared Registry checkout, canonical read-only snapshot, stale repository base, missing capabilities, foreign receipt drift, healthy claim creation and zero-effect rejection readback.",
       "evidence_type": "object",
+      "id": "regression-coverage",
       "verifier": "manual_observation",
       "verifier_config": {
         "observation_scope": "grabowski:claim-path:regression-coverage"
@@ -95,39 +95,28 @@
     }
   ],
   "metadata": {
-    "source_candidate": "candidate-c3b46ab578a1d37d576f4fc7",
-    "source_event": 1473,
-    "source_sha256": "20d355f28a12214eb1b9ba124f1a2eb4fb88d3655e42c3d15e7568a2e062d5e6",
-    "reviewed_plan": {
-      "reviewer": "chatgpt",
-      "reviewed_at": "2026-07-28",
-      "scope": "task-definition-only",
-      "decision": "approved",
-      "basis": "Live reproductions on Grabowski runtime 476c06bad629722b03768b0684d25897405b7cfd: dirty explicit Registry root blocks, canonical snapshot is read-only, and proposal/claim paths fail before effects."
-    },
-    "does_not_establish": [
-      "automatic_T004_execution",
-      "permission_to_reset_foreign_dirty_checkouts",
-      "permission_to_weaken_global_receipt_integrity",
-      "deployment_authorization",
-      "merge_readiness"
-    ],
     "broad_bureau_scope_migration": {
-      "schema_version": 1,
-      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
-      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to mutate Bureau Registry sources",
+        "permission to alter terminal history"
+      ],
       "introducing_commit": "8fcb6f28f4e1974cdce6f56ba1c5a2b24c8b09ab",
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "rationale": "The implementation belongs to Grabowski. Bureau is consumed only as a revision-bound read-only Registry and schema source, so a repository-wide Bureau lease is unnecessary.",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
       "replacement": {
         "claims": [
           {
-            "resource": "repo.grabowski",
+            "isolation": "worktree",
             "mode": "exclusive",
-            "isolation": "worktree"
+            "resource": "repo.grabowski"
           },
           {
-            "resource": "component.bureau.registry",
+            "isolation": "none",
             "mode": "read",
-            "isolation": "none"
+            "resource": "component.bureau.registry"
           }
         ],
         "grabowski_resources": [
@@ -136,26 +125,48 @@
           "path:/home/alex/repos/bureau/schemas"
         ]
       },
-      "rationale": "The implementation belongs to Grabowski. Bureau is consumed only as a revision-bound read-only Registry and schema source, so a repository-wide Bureau lease is unnecessary.",
-      "does_not_establish": [
-        "implementation completion",
-        "task readiness",
-        "permission to mutate Bureau Registry sources",
-        "permission to alter terminal history"
-      ]
+      "schema_version": 1
     },
     "bureau_cleanup": {
       "decision": "remove-obsolete-replay",
-      "reviewed_at": "2026-11-23T21:05:46Z",
-      "reason": "Die Pflicht zum erneuten Claim/Replay von REPOGROUND-LEGACY-RECONCILIATION-V1-T004 entfällt ersatzlos, weil dieser Zielauftrag cancelled ist. Die sechs verbliebenen fachlichen Kriterien behalten ihre Assertions und werden mit dem bereits existierenden manual_observation-Verifier schemafähig; keine neue Freigabe oder Prüfung hinzugefügt.",
-      "removed_acceptance_ids": [
-        "t004-replay"
-      ],
       "evidence_refs": [
         "bureau-task:REPOGROUND-LEGACY-RECONCILIATION-V1-T004:cancelled",
         "grabowski-task:8c8ac966896b42bc919a5cdb",
         "github:heimgewebe/bureau:main:cd598500e05e8135cfb3739684d1b146550c6cab"
-      ]
-    }
+      ],
+      "reason": "Die Pflicht zum erneuten Claim/Replay von REPOGROUND-LEGACY-RECONCILIATION-V1-T004 entfällt ersatzlos, weil dieser Zielauftrag cancelled ist. Die sechs verbliebenen fachlichen Kriterien behalten ihre Assertions und werden mit dem bereits existierenden manual_observation-Verifier schemafähig; keine neue Freigabe oder Prüfung hinzugefügt.",
+      "removed_acceptance_ids": [
+        "t004-replay"
+      ],
+      "reviewed_at": "2026-11-23T21:05:46Z"
+    },
+    "bureau_cleanup_followup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:7ed452a03591404caa53df9e",
+        "sha256:f7aeabb94443a890e654aa581b868f7b039dae0dcd8fedb8ab3d2dfe1172f1f9",
+        "bureau-run:BUR-RUN-20261124T051906Z-88e85eb883",
+        "github:heimgewebe/grabowski:commit:e53e95800481bc0a399433cd2f19aefe75ed207c"
+      ],
+      "reason": "Der historische Claim-Umbau vom Juli ist durch den installierten Adapter und den manifestgebundenen Registry-/StateStore-Pfad überholt: heutiger schemafähiger Claim-Intent ohne Runtime-Blocker, heutiger realer Schreib-Claim mit angelegtem Checkout, 386 fokussierte Tests und 115 Subtests grün. Historische Receipt-Drift wird bereits differenziert; keine pauschale Wiederimplementierung. Der separat beobachtete abgelaufene Lease/Heartbeat des aktiven Schaubild-Runs bleibt ein eigenständiger Befund; keine vollständige historische Acceptance-Verifikation.",
+      "reviewed_at": "2026-11-24T06:59:30.503548+00:00"
+    },
+    "does_not_establish": [
+      "automatic_T004_execution",
+      "permission_to_reset_foreign_dirty_checkouts",
+      "permission_to_weaken_global_receipt_integrity",
+      "deployment_authorization",
+      "merge_readiness"
+    ],
+    "reviewed_plan": {
+      "basis": "Live reproductions on Grabowski runtime 476c06bad629722b03768b0684d25897405b7cfd: dirty explicit Registry root blocks, canonical snapshot is read-only, and proposal/claim paths fail before effects.",
+      "decision": "approved",
+      "reviewed_at": "2026-07-28",
+      "reviewer": "chatgpt",
+      "scope": "task-definition-only"
+    },
+    "source_candidate": "candidate-c3b46ab578a1d37d576f4fc7",
+    "source_event": 1473,
+    "source_sha256": "20d355f28a12214eb1b9ba124f1a2eb4fb88d3655e42c3d15e7568a2e062d5e6"
   }
 }

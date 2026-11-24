@@ -91,6 +91,17 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:f035da1bbe6c4e22a2f89a04",
+        "git:heimgewebe/grabowski@bf96dc3d158c46e324106e480ddc56ac424809e3",
+        "active-package:f5de3721",
+        "historical-key-readback:resources.sqlite3:absent"
+      ],
+      "reason": "Aktiver checkout_archive prueft relevante Koordination vor Erwerb eigener exakter Checkout-/Common-Dir-/Branch-Ressourcen. Reale isolierte Git-Archivtests belegen Recovery-Refs und erhaltenen Branch; aktive relevante Fremd-/auch eigene Vorleases blockieren. Fehlerpfade mit unklarem Effekt behalten Fence. Historisches Checkout-Ziel und alte Lease fehlen. T078-Abhaengigkeit ebenfalls superseded. Keine Wiederholung der alten Operation oder neue Filterarchitektur.",
+      "reviewed_at": "2026-11-24T15:04:25.349404+00:00"
     }
   },
   "priority": {
@@ -105,6 +116,6 @@
     "checkout-lifecycle"
   ],
   "schema_version": 1,
-  "state": "blocked",
+  "state": "superseded",
   "title": "checkout_archive gegen eigene Archiv-Lease entkoppeln"
 }

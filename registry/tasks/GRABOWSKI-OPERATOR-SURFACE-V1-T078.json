@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T078",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Einmalige Operation-Leases nach belegtem Effekt schließen",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 215
@@ -87,6 +87,17 @@
       "dass der Worktree-Erstellungseffekt vollständig oder fehlerfrei war",
       "Berechtigung zu Force-Release oder Merge-Guard-Bypass",
       "Merge- oder Deployment-Bereitschaft von PR #321"
-    ]
+    ],
+    "bureau_cleanup": {
+      "decision": "superseded",
+      "evidence_refs": [
+        "grabowski-task:f035da1bbe6c4e22a2f89a04",
+        "git:heimgewebe/grabowski@bf96dc3d158c46e324106e480ddc56ac424809e3",
+        "active-package:f5de3721",
+        "historical-key-readback:resources.sqlite3:absent"
+      ],
+      "reason": "Heutiger Worktree-Erstellungspfad nutzt exakte Path-/Branch-Lane und gebundene Lifecycle-Identitaet; keine generische worktree-add-Operation-Lease im normalen Work-Acquire. Verbliebene automatische Deploy-Materialisierung gibt eigene Operation-/Common-Dir-Leases snapshotgebunden nach Readback frei; unklare Effekte behalten Pfad/Common-Dir und durable Fence. Historischer July-Schluessel nicht in Ressourcen-DB. 155 gezielte Regressionen/26 Subtests gruen, einschliesslich auto_deploy_source. Keine neue generische Closeout-Abstraktion und kein historischer Acceptance-Replay.",
+      "reviewed_at": "2026-11-24T15:04:25.191461+00:00"
+    }
   }
 }

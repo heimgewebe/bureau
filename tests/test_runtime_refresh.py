@@ -3349,6 +3349,186 @@ def github_fixture(
     return github, calls
 
 
+def rest_rate_limited_github(**changes: Any):
+    """Real REST response shape, plus the exact observed GraphQL failure."""
+    original, _ = github_fixture()
+    calls_rest: list[list[str]] = []
+    pr = {
+        "number": 42,
+        "state": "closed",
+        "merged": True,
+        "draft": False,
+        "merged_at": "2026-07-14T07:30:00Z",
+        "merge_commit_sha": MAIN,
+        "html_url": "https://example.invalid/pr/42",
+        "head": {"sha": HEAD},
+        "base": {"ref": "main", "repo": {"full_name": "heimgewebe/bureau"}},
+    }
+    checks = {
+        "total_count": 3,
+        "check_runs": [
+            {"name": name, "head_sha": HEAD, "status": "completed", "conclusion": "success"}
+            for name in refresh.DEFAULT_REQUIRED_CHECKS
+        ],
+    }
+    statuses = {"sha": HEAD, "total_count": 0, "statuses": []}
+    pr.update(changes.get("pr", {}))
+    checks.update(changes.get("checks", {}))
+    statuses.update(changes.get("statuses", {}))
+
+    def github(arguments: list[str]) -> Any:
+        if arguments[:3] == ["pr", "view", "42"]:
+            raise refresh.RuntimeRefreshError(
+                "command-failed",
+                "command failed: gh",
+                details={"stderr": "GraphQL: API rate limit already exceeded for user ID 123."},
+            )
+        endpoint = arguments[-1]
+        if endpoint == "repos/heimgewebe/bureau/pulls/42":
+            calls_rest.append(arguments)
+            return pr
+        if endpoint == (
+            f"repos/heimgewebe/bureau/commits/{HEAD}/check-runs?filter=latest&per_page=100"
+        ):
+            calls_rest.append(arguments)
+            return checks
+        if endpoint == f"repos/heimgewebe/bureau/commits/{HEAD}/status?per_page=100":
+            calls_rest.append(arguments)
+            return statuses
+        return original(arguments)
+
+    return github, calls_rest
+
+
+def test_refresh_rest_fallback_preserves_candidate_digest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    original, _ = github_fixture()
+    github, calls = rest_rate_limited_github()
+    args = dict(repository="heimgewebe/bureau", manifest_path=manifest_path, now=NOW)
+    expected = refresh.observe_runtime_refresh(**args, github=original)
+    actual = refresh.observe_runtime_refresh(**args, github=github)
+    assert actual["status"] == "candidate"
+    assert actual["target_sha256"] == expected["target_sha256"]
+    assert actual["check_summary"] == expected["check_summary"]
+    assert actual["pull_request"] == expected["pull_request"]
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"pr": {"merged": False}},
+        {"pr": {"draft": None}},
+        {"pr": {"base": {"ref": "main", "repo": {"full_name": "other/bureau"}}}},
+        {"pr": {"head": {"sha": "not-a-commit"}}},
+        {"checks": {"total_count": 4}},
+        {
+            "checks": {
+                "total_count": 1,
+                "check_runs": [
+                    {
+                        "name": "validate (3.10)",
+                        "head_sha": "f" * 40,
+                        "status": "completed",
+                        "conclusion": "success",
+                    }
+                ],
+            }
+        },
+        {"statuses": {"sha": "f" * 40}},
+        {"statuses": {"total_count": 1}},
+        {
+            "checks": {
+                "total_count": 1,
+                "check_runs": [
+                    {
+                        "name": "validate (3.10)",
+                        "head_sha": HEAD,
+                        "status": "success",
+                        "conclusion": "success",
+                    }
+                ],
+            }
+        },
+        {
+            "statuses": {
+                "total_count": 1,
+                "statuses": [{"context": "validate (3.10)", "state": "completed"}],
+            }
+        },
+    ],
+)
+def test_refresh_rest_fallback_rejects_incomplete_or_unbound_evidence(change) -> None:
+    github, _ = rest_rate_limited_github(**change)
+    with pytest.raises(refresh.RuntimeRefreshError) as error:
+        refresh._runtime_refresh_pr_detail(github, "heimgewebe/bureau", 42)
+    assert error.value.code.startswith("github-rest-")
+
+
+@pytest.mark.parametrize(
+    "status,conclusion,expected",
+    [
+        ("in_progress", "success", "pending"),
+        ("completed", "failure", "failure"),
+        ("completed", "skipped", "failure"),
+    ],
+)
+def test_refresh_rest_fallback_does_not_accept_non_success_checks(
+    tmp_path: Path, status, conclusion, expected
+) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    github, _ = rest_rate_limited_github(
+        checks={
+            "total_count": 1,
+            "check_runs": [
+                {
+                    "name": "validate (3.10)",
+                    "head_sha": HEAD,
+                    "status": status,
+                    "conclusion": conclusion,
+                }
+            ],
+        }
+    )
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest_path, now=NOW, github=github
+    )
+    assert result["status"] == "blocked"
+    assert result["check_summary"]["validate (3.10)"]["state"] == expected
+
+
+def test_refresh_rest_fallback_includes_conflicting_commit_status(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "prefix/deployment-manifest.json"
+    write_manifest(manifest_path)
+    github, _ = rest_rate_limited_github(
+        statuses={
+            "total_count": 1,
+            "statuses": [{"context": "validate (3.10)", "state": "failure"}],
+        }
+    )
+    result = refresh.observe_runtime_refresh(
+        repository="heimgewebe/bureau", manifest_path=manifest_path, now=NOW, github=github
+    )
+    assert result["status"] == "blocked"
+    assert result["check_summary"]["validate (3.10)"]["state"] == "failure"
+
+
+def test_refresh_rest_fallback_only_for_explicit_graphql_quota() -> None:
+    calls = []
+
+    def github(arguments):
+        calls.append(arguments)
+        raise refresh.RuntimeRefreshError(
+            "command-failed", "command failed: gh", details={"stderr": "HTTP 403: Forbidden"}
+        )
+
+    with pytest.raises(refresh.RuntimeRefreshError, match="command failed"):
+        refresh._runtime_refresh_pr_detail(github, "heimgewebe/bureau", 42)
+    assert len(calls) == 1
+
+
 def candidate(tmp_path: Path, **github_options: Any) -> tuple[dict[str, Any], Path]:
     manifest_path = tmp_path / "prefix/deployment-manifest.json"
     write_manifest(manifest_path)

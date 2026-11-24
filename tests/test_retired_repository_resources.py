@@ -76,7 +76,7 @@ def test_six_archived_repositories_keep_github_and_fleet_evidence() -> None:
 def test_retired_legacy_leitstand_task_has_no_active_write_route() -> None:
     path = ROOT / "registry" / "tasks" / "WELTGEWEBE-OS-V1-T008.json"
     task = json.loads(path.read_text(encoding="utf-8"))
-    assert task["state"] == "ready"  # Historical source, StateStore is terminal verified
+    assert task["state"] == "superseded"  # Archived source matches the terminal TaskSpec
     assert task["claims"] == [
         {"resource": "repo.leitstand", "mode": "read", "isolation": "none"}
     ]

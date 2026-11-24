@@ -136,7 +136,20 @@
         "heimgewebe/metarepo#756",
         "heimgewebe/systemkatalog#187"
       ],
-      "note": "Source Registry state remains historical ready while authoritative StateStore task_status is terminal verified. The old GitHub-archived target is read-only; do not infer a currently serving Leitstand deployment."
+      "note": "Historical archive and verification evidence retained. The current authoritative TaskSpec is superseded; no new runtime verification is asserted.",
+      "state_store_closeout": {
+        "evidence_refs": [
+          "bureau:run:BUR-RUN-20260818T145420Z-634b7e999a",
+          "bureau:receipt:sha256:5ccdb94defc8bb6f456fee69171fd236754d9a3f5ac0b1efdaaaabf7c2c40739",
+          "github:heimgewebe/systemkatalog:main:6f6da8836bf47a394c84fe4abf6417f9a3642bf6",
+          "https://github.com/heimgewebe/metarepo/pull/756",
+          "https://github.com/heimgewebe/systemkatalog/pull/187"
+        ],
+        "observed_at": "2026-11-24T12:17:36.214161+00:00",
+        "reason": "Historical task already has a succeeded run and preserved source-authenticated evidence; its scope is exclusively an archived reference repository excluded from active Fleet authority. Historical findings remain intact. No renewed maintenance of the retired repo is justified; superseded, not a new runtime verification or claim all historic defects were fixed.",
+        "revision": 3,
+        "spec_sha256": "cf2f95816b5bdd41b9f6151ff49a94a2ea60ca1f10f4d7b457454f9a1e495dfa"
+      }
     }
   },
   "priority": {
@@ -151,6 +164,6 @@
     "kubernetes"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Leitstand auf SLO-, Zell- und Föderationsbetrieb ausrichten"
 }

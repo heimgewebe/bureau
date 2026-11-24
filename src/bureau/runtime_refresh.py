@@ -1083,6 +1083,126 @@ def _target_payload(observation: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _runtime_refresh_pr_detail(
+    github: Callable[[list[str]], Any], repository: str, number: int
+) -> Any:
+    """Read the merged PR; only a proven GraphQL quota failure uses REST."""
+    fields = (
+        "number,state,isDraft,mergedAt,mergeCommit,headRefOid,baseRefName,statusCheckRollup,url"
+    )
+    try:
+        return github(["pr", "view", str(number), "--repo", repository, "--json", fields])
+    except RuntimeRefreshError as exc:
+        error_text = f"{exc.details.get('stdout', '')}\n{exc.details.get('stderr', '')}"
+        if (
+            exc.code != "command-failed"
+            or "GraphQL: API rate limit already exceeded" not in error_text
+        ):
+            raise
+
+    # Both API representations are authoritative GitHub reads. Bind every
+    # required check to this exact PR head. Refuse incomplete pages instead
+    # of making an optimistic projection or accepting a different commit.
+    pr = github(["api", f"repos/{repository}/pulls/{number}"])
+    head = pr.get("head") if isinstance(pr, dict) else None
+    base = pr.get("base") if isinstance(pr, dict) else None
+    base_repo = base.get("repo") if isinstance(base, dict) else None
+    head_sha = head.get("sha") if isinstance(head, dict) else None
+    merge_sha = pr.get("merge_commit_sha") if isinstance(pr, dict) else None
+
+    def valid_sha(value: Any) -> bool:
+        return (
+            isinstance(value, str)
+            and len(value) == 40
+            and all(c in "0123456789abcdef" for c in value)
+        )
+
+    if (
+        not isinstance(pr, dict)
+        or pr.get("number") != number
+        or pr.get("state") != "closed"
+        or pr.get("merged") is not True
+        or pr.get("draft") is not False
+        or not isinstance(pr.get("merged_at"), str)
+        or not pr["merged_at"]
+        or not isinstance(pr.get("html_url"), str)
+        or not pr["html_url"]
+        or not isinstance(base, dict)
+        or base.get("ref") != "main"
+        or not isinstance(base_repo, dict)
+        or not isinstance(base_repo.get("full_name"), str)
+        or base_repo["full_name"].casefold() != repository.casefold()
+        or not valid_sha(head_sha)
+        or not valid_sha(merge_sha)
+    ):
+        raise RuntimeRefreshError("github-rest-pr-invalid", "REST pull request identity is invalid")
+
+    prefix = f"repos/{repository}/commits/{head_sha}"
+    checks = github(["api", f"{prefix}/check-runs?filter=latest&per_page=100"])
+    statuses = github(["api", f"{prefix}/status?per_page=100"])
+
+    def complete_page(document: Any, key: str) -> list[dict[str, Any]]:
+        rows = document.get(key) if isinstance(document, dict) else None
+        count = document.get("total_count") if isinstance(document, dict) else None
+        if (
+            not isinstance(rows, list)
+            or type(count) is not int
+            or count != len(rows)
+            or any(not isinstance(row, dict) for row in rows)
+        ):
+            raise RuntimeRefreshError(
+                "github-rest-checks-incomplete", f"REST {key} response is incomplete"
+            )
+        return rows
+
+    rollup = []
+    for item in complete_page(checks, "check_runs"):
+        name = item.get("name")
+        state = item.get("status")
+        if (
+            item.get("head_sha") != head_sha
+            or not isinstance(name, str)
+            or not name
+            or state
+            not in ("completed", "queued", "in_progress", "waiting", "requested", "pending")
+        ):
+            raise RuntimeRefreshError(
+                "github-rest-checks-invalid", "REST check run identity or state is invalid"
+            )
+        # A stale conclusion must not make an unfinished check successful.
+        rollup.append(
+            {"name": name, "state": item.get("conclusion") if state == "completed" else state}
+        )
+    if not isinstance(statuses, dict) or statuses.get("sha") != head_sha:
+        raise RuntimeRefreshError(
+            "github-rest-checks-invalid", "REST combined status head differs from PR head"
+        )
+    for item in complete_page(statuses, "statuses"):
+        name = item.get("context")
+        state = item.get("state")
+        if (
+            not isinstance(name, str)
+            or not name
+            or state not in ("error", "failure", "pending", "success")
+        ):
+            raise RuntimeRefreshError(
+                "github-rest-checks-invalid", "REST status context is invalid"
+            )
+        rollup.append({"context": name, "state": state})
+
+    return {
+        "number": number,
+        "state": "MERGED",
+        "isDraft": False,
+        "mergedAt": pr["merged_at"],
+        "mergeCommit": {"oid": merge_sha},
+        "headRefOid": head_sha,
+        "baseRefName": "main",
+        "url": pr["html_url"],
+        "statusCheckRollup": rollup,
+    }
+
+
 def observe_runtime_refresh(
     *,
     repository: str,
@@ -1189,17 +1309,7 @@ def observe_runtime_refresh(
             reasons.append("merged-main-pr-ambiguous")
         else:
             number = candidates[0].get("number")
-            detail = github(
-                [
-                    "pr",
-                    "view",
-                    str(number),
-                    "--repo",
-                    repository,
-                    "--json",
-                    "number,state,isDraft,mergedAt,mergeCommit,headRefOid,baseRefName,statusCheckRollup,url",
-                ]
-            )
+            detail = _runtime_refresh_pr_detail(github, repository, number)
             merge_commit = detail.get("mergeCommit") if isinstance(detail, dict) else None
             merge_oid = merge_commit.get("oid") if isinstance(merge_commit, dict) else None
             if (

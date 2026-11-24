@@ -2876,3 +2876,124 @@ def test_open_pr_oversize_file_cap_fails_without_sibling_rest_calls(monkeypatch)
     with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="FILE_LIMIT"):
         bureau_v2._github_open_pull_requests("heimgewebe/commonworld")
     assert len(calls) == 1
+
+
+def _rest_open_pr_row(number=17):
+    return {
+        "number": number, "state": "open", "title": f"PR {number}",
+        "head": {"ref": f"fix/{number}", "sha": "b" * 40},
+        "base": {"ref": "main", "sha": "a" * 40},
+        "html_url": f"https://github.example/pull/{number}",
+        "body": "Bureau-Task: TASK-17", "labels": [{"name": "bureau"}],
+    }
+
+
+def test_open_pr_graphql_rate_limit_uses_complete_rest_scope(monkeypatch):
+    calls = []
+    identity = {"state": "open", "base": {"sha": "a" * 40},
+                "head": {"sha": "b" * 40}, "changed_files": 1}
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            return subprocess.CompletedProcess(argv, 1, "",
+                "GraphQL: API rate limit already exceeded for user ID 123.")
+        if argv[-1].endswith("/pulls?state=open&per_page=100"):
+            value = [[_rest_open_pr_row()]]
+        elif argv[-1].endswith("/files?per_page=100"):
+            value = [[{"filename": "src/new.py", "previous_filename": "src/old.py",
+                       "status": "renamed"}]]
+        else:
+            value = identity
+        return subprocess.CompletedProcess(argv, 0, json.dumps(value), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    item, = bureau_v2._github_open_pull_requests("heimgewebe/example")
+    assert item["headRefOid"] == "b" * 40
+    assert item["baseRefOid"] == "a" * 40
+    assert item["changedFiles"] == 1
+    assert item["body"] == "Bureau-Task: TASK-17"
+    assert item["labels"] == [{"name": "bureau"}]
+    assert item["fileScope"]["changed_paths"] == ["src/new.py", "src/old.py"]
+    assert [cmd[-1] for cmd in calls[1:]] == [
+        "repos/heimgewebe/example/pulls?state=open&per_page=100",
+        "repos/heimgewebe/example/pulls/17",
+        "repos/heimgewebe/example/pulls/17/files?per_page=100",
+        "repos/heimgewebe/example/pulls/17",
+    ]
+
+
+@pytest.mark.parametrize("pages, diagnostic", [
+    ([], "invalid pagination"),
+    ([[], [_rest_open_pr_row()]], "invalid pagination"),
+    ([[_rest_open_pr_row(), _rest_open_pr_row()]], "duplicate"),
+    ([[{**_rest_open_pr_row(), "labels": None}]], "invalid or duplicate"),
+])
+def test_open_pr_rest_fallback_rejects_incomplete_metadata(monkeypatch, pages, diagnostic):
+    def fake_run(argv, **_kwargs):
+        if argv[1] == "pr":
+            return subprocess.CompletedProcess(argv, 1, "", "GraphQL rate limit exceeded")
+        assert argv[-1].endswith("/pulls?state=open&per_page=100")
+        return subprocess.CompletedProcess(argv, 0, json.dumps(pages), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match=diagnostic):
+        bureau_v2._github_open_pull_requests("heimgewebe/example")
+
+
+def test_open_pr_rest_fallback_rejects_identity_drift_before_files(monkeypatch):
+    def fake_run(argv, **_kwargs):
+        if argv[1] == "pr":
+            return subprocess.CompletedProcess(argv, 1, "", "GraphQL rate limit exceeded")
+        if argv[-1].endswith("/pulls?state=open&per_page=100"):
+            value = [[_rest_open_pr_row()]]
+        else:
+            assert argv[-1].endswith("/pulls/17")
+            value = {"state": "open", "base": {"sha": "a" * 40},
+                     "head": {"sha": "c" * 40}, "changed_files": 1}
+        return subprocess.CompletedProcess(argv, 0, json.dumps(value), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError,
+                       match="identity changed before file observation"):
+        bureau_v2._github_open_pull_requests("heimgewebe/example")
+
+
+@pytest.mark.parametrize("failure, pages, rest_rc, expected", [
+    ("GraphQL rate limit exceeded", [[]], 0, "empty"),
+    ("GraphQL rate limit exceeded", [[]], 1, "REST failure"),
+    ("authentication failed", [[]], 0, "no fallback"),
+])
+def test_open_pr_rest_fallback_empty_or_failed(monkeypatch, failure, pages, rest_rc, expected):
+    calls = []
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            return subprocess.CompletedProcess(argv, 1, "", failure)
+        return subprocess.CompletedProcess(argv, rest_rc, json.dumps(pages), "REST failure")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    if expected == "empty":
+        assert bureau_v2._github_open_pull_requests("heimgewebe/example") == []
+    else:
+        with pytest.raises(bureau_v2.OpenPullRequestObservationError):
+            bureau_v2._github_open_pull_requests("heimgewebe/example")
+    assert len(calls) == (1 if expected == "no fallback" else 2)
+
+
+def test_rest_open_pr_pagination_complete_and_bounded(monkeypatch):
+    pages = [[_rest_open_pr_row(n) for n in range(1, 101)], [_rest_open_pr_row(101)]]
+
+    def fake_run(argv, **_kwargs):
+        assert "--paginate" in argv and "--slurp" in argv
+        return subprocess.CompletedProcess(argv, 0, json.dumps(pages), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT", "102")
+    rows = bureau_v2._github_open_pull_requests_rest("heimgewebe/example")
+    assert [row["number"] for row in rows] == list(range(1, 102))
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT", "101")
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError,
+                       match="BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT"):
+        bureau_v2._github_open_pull_requests_rest("heimgewebe/example")

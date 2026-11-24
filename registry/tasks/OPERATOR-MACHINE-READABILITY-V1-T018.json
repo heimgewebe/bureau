@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T018",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Migrate Weltgewebe legacy validation commands and duplicate preflights",
-  "state": "planned",
+  "state": "superseded",
   "goal": "After consumer parity is proven, replace free-form validation_commands, legacy minimal parsers and duplicate Agent preflight surfaces in Weltgewebe with named fail-closed validation profiles and one canonical contract path, then remove only the superseded compatibility code.",
   "priority": {
     "lane": "later",
@@ -80,6 +80,19 @@
       "permission to remove compatibility code before proof",
       "task readiness",
       "merge readiness"
-    ]
+    ],
+    "bureau_cleanup": {
+      "evidence_refs": [
+        "https://github.com/heimgewebe/commonthing/pull/2215",
+        "github:heimgewebe/commonthing:merge:febdef05d43c8e91fe326f19a827820907da131a",
+        "github:heimgewebe/commonthing:main:366551a647fc4109d512075f10de9f266ca8aede",
+        "chronik:sha256:3041b417fad4dae487e057c85b9fcd9c033152511048ad4660743f5a94cdefb3",
+        "chronik:sha256:a6eb166ac7dbfdb9d9e91b2a6501195f266b9b8f8814f21b7d85d03c6e46457e"
+      ],
+      "observed_at": "2026-11-24T12:07:48.586987+00:00",
+      "reason": "Useful duplicate-preflight reduction integrated by PR2215 (three redundant CI steps removed, real module CLI coverage retained, 209 tests passed; cookie patch 0.18.3). Current main 366551a6 descends from merged febdef05 and retains the changes. The rest of the old named execution-profile/parser migration has no demonstrated benefit: validation_commands are review/handoff metadata, dry-run never executes commands, named profiles already exist. Retain compatible consumers and actual checks. Superseded, not historical acceptance verified; no application runtime rollout claimed.",
+      "state_store_revision": 4,
+      "state_store_spec_sha256": "2e319845f789d4aad53d9cbd14894a346ddff1edb2ffb70533026e02d08b69ff"
+    }
   }
 }

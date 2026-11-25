@@ -7134,14 +7134,34 @@ class Dispatcher(legacy.Dispatcher):
                         _materialize_receipt(self.store, receipt)
             overlays = self.store.overlays(connection, self.registry)
             stale_tasks = sorted(task for task, state in overlays.items() if state == "stale")
-            for row in connection.execute("SELECT * FROM workspaces WHERE state<>'removed'"):
+            for row in connection.execute(
+                "SELECT w.*,r.state AS run_state FROM workspaces w "
+                "LEFT JOIN runs r ON r.run_id=w.run_id WHERE w.state<>'removed'"
+            ):
                 path = Path(row["workspace_path"])
-                if not path.exists():
+                finding = None
+                try:
+                    path.lstat()
+                except FileNotFoundError:
+                    finding = "workspace path missing"
+                except OSError:
+                    finding = "workspace path unobservable"
+                else:
+                    if not path.is_dir():
+                        finding = "workspace path is not a directory"
+                    elif row["run_state"] is None:
+                        finding = "workspace run missing"
+                    elif row["state"] == "active" and row["run_state"] in {
+                        "succeeded", "failed", "cancelled"
+                    }:
+                        finding = "terminal run workspace active"
+                if finding is not None:
                     workspace_findings.append(
                         {
                             "run_id": row["run_id"],
                             "state": row["state"],
-                            "finding": "workspace path missing",
+                            "run_state": row["run_state"],
+                            "finding": finding,
                         }
                     )
             terminal_queue_states = {"verified", "cancelled", "superseded"}
@@ -10098,30 +10118,59 @@ def _workspace_squash_merge_proof(repo: Path, head_sha: str) -> dict[str, Any] |
     return {**material, "proof_sha256": legacy.sha256_json(material)}
 
 
-def cleanup_workspace(store: StateStore, run_id: str, force: bool = False) -> dict[str, Any]:
+def _cleanup_missing_workspace(
+    store: StateStore, run_id: str, *, force: bool = False
+) -> dict[str, Any]:
+    """Reconcile an absent path without ever entering the Git cleanup path."""
+    with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT w.*,r.state AS run_state FROM workspaces w "
+            "LEFT JOIN runs r ON r.run_id=w.run_id WHERE w.run_id=?", (run_id,)
+        ).fetchone()
+        if row is None:
+            raise legacy.StateError(f"run {run_id} has no workspace")
+        if row["run_state"] not in TERMINAL_STATES:
+            raise legacy.StateError("workspace cleanup requires a terminal run")
+        # is_dir()/exists() alone would misclassify regular files and dangling
+        # symlinks as absent. Recheck the exact path inside the state transaction.
+        try:
+            Path(row["workspace_path"]).lstat()
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            raise legacy.StateError(f"workspace path cannot be observed: {exc}") from exc
+        else:
+            raise legacy.StateError("workspace path is present; missing-only cleanup refused")
+        if row["state"] != "removed":
+            connection.execute(
+                "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
+                (legacy.utc_now(), run_id),
+            )
+            store.event(connection, "workspace-removed", {"force": force}, run_id)
+        current = connection.execute(
+            "SELECT w.*,r.state AS run_state FROM workspaces w "
+            "JOIN runs r ON r.run_id=w.run_id WHERE w.run_id=?", (run_id,)
+        ).fetchone()
+        assert current is not None
+        result = dict(current)
+    return {
+        **result, "exists": False, "dirty": None, "head": None, "merged": None,
+        "cleanup": "already-missing",
+    }
+
+
+def cleanup_workspace(
+    store: StateStore, run_id: str, force: bool = False, *, missing_only: bool = False
+) -> dict[str, Any]:
+    if missing_only:
+        if force:
+            raise legacy.StateError("missing-only workspace cleanup cannot be forced")
+        return _cleanup_missing_workspace(store, run_id)
     status = workspace_status(store, run_id)
     if status["run_state"] not in TERMINAL_STATES:
         raise legacy.StateError("workspace cleanup requires a terminal run")
     if not status["exists"]:
-        with store.immediate() as connection:
-            row = connection.execute(
-                "SELECT state FROM workspaces WHERE run_id=?", (run_id,)
-            ).fetchone()
-            if row is None:
-                raise legacy.StateError(f"run {run_id} has no workspace")
-            if row["state"] != "removed":
-                connection.execute(
-                    "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
-                    (legacy.utc_now(), run_id),
-                )
-                store.event(
-                    connection,
-                    "workspace-removed",
-                    {"force": force},
-                    run_id,
-                )
-        current = workspace_status(store, run_id)
-        return {**current, "cleanup": "already-missing"}
+        return _cleanup_missing_workspace(store, run_id, force=force)
     if status["dirty"] and not force:
         return preserve_workspace(store, run_id, "dirty workspace")
     repo = Path(status["repository_path"])

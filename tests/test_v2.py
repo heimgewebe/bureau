@@ -766,6 +766,145 @@ def test_missing_workspace_cleanup_reconciles_once(
     assert event_count == 1
 
 
+def test_missing_only_cleanup_has_no_git_effect_and_is_idempotent(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    fail_run(store, run_id, "test")
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "remove", str(workspace)],
+        check=True, capture_output=True,
+    )
+
+    def reject_git(*args, **kwargs):
+        pytest.fail("missing-only cleanup must not invoke Git")
+
+    monkeypatch.setattr(bureau_v2, "_git", reject_git)
+    first = cleanup_workspace(store, run_id, missing_only=True)
+    second = cleanup_workspace(store, run_id, missing_only=True)
+    assert first == second
+    assert first["cleanup"] == "already-missing"
+    assert first["state"] == "removed"
+    assert first["run_state"] == "failed"
+    assert first["exists"] is False
+    with store.connect() as connection:
+        events = connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='workspace-removed'",
+            (run_id,),
+        ).fetchone()[0]
+    assert events == 1
+
+
+@pytest.mark.parametrize("replacement", ["directory", "file", "dangling-symlink"])
+def test_missing_only_cleanup_refuses_present_paths(
+    registry_factory, tmp_path, monkeypatch, replacement
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    fail_run(store, run_id, "test")
+    if replacement != "directory":
+        subprocess.run(
+            ["git", "-C", str(root), "worktree", "remove", str(workspace)],
+            check=True, capture_output=True,
+        )
+        if replacement == "file":
+            workspace.write_text("must survive")
+        else:
+            workspace.symlink_to(tmp_path / "absent-target")
+
+    def reject_git(*args, **kwargs):
+        pytest.fail("missing-only cleanup must not invoke Git")
+
+    monkeypatch.setattr(bureau_v2, "_git", reject_git)
+    with pytest.raises(StateError, match="workspace path is present"):
+        cleanup_workspace(store, run_id, missing_only=True)
+    # The normal missing branch must also reject files or dangling symlinks.
+    if replacement != "directory":
+        with pytest.raises(StateError, match="workspace path is present"):
+            cleanup_workspace(store, run_id)
+    assert workspace.lstat()
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT state FROM workspaces WHERE run_id=?", (run_id,)
+        ).fetchone()
+        assert row["state"] == "active"
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND event_type='workspace-removed'",
+            (run_id,),
+        ).fetchone()[0] == 0
+
+
+def test_missing_only_cleanup_requires_terminal_run(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "remove", str(workspace)],
+        check=True, capture_output=True,
+    )
+    with pytest.raises(StateError, match="workspace cleanup requires a terminal run"):
+        cleanup_workspace(store, run_id, missing_only=True)
+
+
+def test_workspace_cleanup_missing_only_cli_contract():
+    args = bureau_cli.parser().parse_args(["workspace-cleanup", "run-1", "--missing-only"])
+    assert args.missing_only is True
+    assert args.force is False
+    with pytest.raises(SystemExit):
+        bureau_cli.parser().parse_args(
+            ["workspace-cleanup", "run-1", "--missing-only", "--force"]
+        )
+
+
+def test_doctor_reports_present_terminal_workspace_and_absent_workspace(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    checkout = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+    run_id = checkout["run"]["run_id"]
+    workspace = Path(checkout["run"]["workspace_path"])
+    assert dispatcher.doctor()["workspace_findings"] == []
+    fail_run(store, run_id, "test")
+    assert dispatcher.doctor()["workspace_findings"] == [
+        {"run_id": run_id, "state": "active", "run_state": "failed",
+         "finding": "terminal run workspace active"}
+    ]
+    subprocess.run(
+        ["git", "-C", str(root), "worktree", "remove", str(workspace)],
+        check=True, capture_output=True,
+    )
+    assert dispatcher.doctor()["workspace_findings"] == [
+        {"run_id": run_id, "state": "active", "run_state": "failed",
+         "finding": "workspace path missing"}
+    ]
+    cleanup_workspace(store, run_id, missing_only=True)
+    assert dispatcher.doctor()["workspace_findings"] == []
+
+
 def test_normal_workspace_cleanup_returns_removed_projection_and_repeat_is_noop(
     registry_factory, tmp_path, monkeypatch
 ):

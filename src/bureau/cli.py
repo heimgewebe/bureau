@@ -532,7 +532,12 @@ def parser() -> argparse.ArgumentParser:
     workspace_show.add_argument("run_id")
     workspace_clean = sub.add_parser("workspace-cleanup")
     workspace_clean.add_argument("run_id")
-    workspace_clean.add_argument("--force", action="store_true")
+    workspace_clean_mode = workspace_clean.add_mutually_exclusive_group()
+    workspace_clean_mode.add_argument("--force", action="store_true")
+    workspace_clean_mode.add_argument(
+        "--missing-only", action="store_true",
+        help="reconcile an already absent workspace without removing files or invoking Git",
+    )
     workspace_keep = sub.add_parser("workspace-preserve")
     workspace_keep.add_argument("run_id")
     workspace_keep.add_argument("--reason", required=True)
@@ -2291,7 +2296,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "workspace-status":
             value = workspace_status(store, args.run_id)
         elif args.command == "workspace-cleanup":
-            value = cleanup_workspace(store, args.run_id, args.force)
+            value = cleanup_workspace(
+                store, args.run_id, args.force, missing_only=args.missing_only
+            )
         elif args.command == "workspace-preserve":
             value = preserve_workspace(store, args.run_id, args.reason)
         elif args.command == "verification-stamp":

@@ -2963,6 +2963,8 @@ def test_open_pr_rest_fallback_rejects_identity_drift_before_files(monkeypatch):
     ("GraphQL rate limit exceeded", [[]], 0, "empty"),
     ("GraphQL rate limit exceeded", [[]], 1, "REST failure"),
     ("authentication failed", [[]], 0, "no fallback"),
+    ("GraphQL: secondary rate limit exceeded", [[]], 0, "no fallback"),
+    ("GraphQL: rate limit HTTP 429; Retry-After: 60", [[]], 0, "no fallback"),
 ])
 def test_open_pr_rest_fallback_empty_or_failed(monkeypatch, failure, pages, rest_rc, expected):
     calls = []
@@ -3149,3 +3151,75 @@ def test_claim_provider_deferred_until_local_eligibility(
             assert "missing capabilities" in str(exc.value)
     expected = 0 if scenario in {"missing_capability", "terminal"} else 1
     assert len(calls) == expected
+
+
+
+@pytest.mark.parametrize("case", [
+    "exact", "head-drift", "base-drift", "count-drift", "missing",
+    "new", "duplicate", "invalid", "primary-quota", "secondary-quota",
+])
+def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypatch, case):
+    calls = []
+    rows = [
+        {
+            "number": n,
+            "baseRefOid": "a" * 40,
+            "headRefOid": "b" * 40,
+            "changedFiles": 1,
+            "files": [{"path": f"src/{n}.py", "changeType": "MODIFIED"}],
+        }
+        for n in (17, 18, 19)
+    ]
+
+    def fake_run(argv, **_kwargs):
+        if argv[1] == "pr":
+            fields = argv[argv.index("--json") + 1].split(",")
+            if "files" in fields:
+                calls.append("inventory")
+                value = rows
+            else:
+                calls.append("identity-batch")
+                assert set(fields) == {"number", "baseRefOid", "headRefOid", "changedFiles"}
+                assert argv[argv.index("--state") + 1] == "open"
+                value = [{k: row[k] for k in fields} for row in rows]
+                if case == "head-drift":
+                    value[0]["headRefOid"] = "c" * 40
+                elif case == "base-drift":
+                    value[0]["baseRefOid"] = "c" * 40
+                elif case == "count-drift":
+                    value[0]["changedFiles"] = 2
+                elif case == "missing":
+                    value.pop()
+                elif case == "new":
+                    value.append({**value[0], "number": 20})
+                elif case == "duplicate":
+                    value.append(dict(value[0]))
+                elif case == "invalid":
+                    value[0]["changedFiles"] = True
+                elif case == "primary-quota":
+                    return subprocess.CompletedProcess(
+                        argv, 1, "", "GraphQL: API rate limit exceeded"
+                    )
+                elif case == "secondary-quota":
+                    return subprocess.CompletedProcess(
+                        argv, 1, "", "HTTP 429: secondary rate limit"
+                    )
+            return subprocess.CompletedProcess(argv, 0, json.dumps(value), "")
+        assert argv[1] == "api" and "/files?" not in argv[-1]
+        calls.append("rest-identity")
+        return subprocess.CompletedProcess(argv, 0, json.dumps({
+            "state": "open", "base": {"sha": "a" * 40},
+            "head": {"sha": "b" * 40}, "changed_files": 1,
+        }), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    if case in {"exact", "primary-quota"}:
+        observed = bureau_v2._github_open_pull_requests("heimgewebe/example")
+        assert [item["number"] for item in observed] == [17, 18, 19]
+        assert all(item["fileScope"]["changed_files"] == 1 for item in observed)
+        assert calls[:2] == ["inventory", "identity-batch"]
+        assert calls.count("rest-identity") == (3 if case == "primary-quota" else 0)
+    else:
+        with pytest.raises(bureau_v2.OpenPullRequestObservationError):
+            bureau_v2._github_open_pull_requests("heimgewebe/example")
+        assert calls == ["inventory", "identity-batch"]

@@ -1140,6 +1140,86 @@ def _github_open_pull_requests_rest(repository: str) -> list[dict[str, Any]]:
     return normalized
 
 
+def _github_secondary_throttle(detail: str) -> bool:
+    diagnostic = detail.lower()
+    return any(
+        marker in diagnostic
+        for marker in ("secondary rate limit", "secondary rate-limit",
+                       "secondary_rate_limit", "http 429", "retry-after")
+    )
+
+
+def _revalidate_open_pull_request_batch(
+    repository: str, observed: list[dict[str, Any]]
+) -> bool:
+    """Re-read exact identities together after file observation.
+
+    A failed optional batch can use the original per-PR REST readback.
+    A contradictory successful response is evidence of drift, not a fallback
+    opportunity. Secondary throttling must not trigger a burst of REST reads.
+    """
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [
+                binary, "pr", "list", "--repo", repository, "--state", "open",
+                "--limit", str(_open_pr_claim_guard_limit()), "--json",
+                "number,baseRefOid,headRefOid,changedFiles",
+            ],
+            text=True, capture_output=True, check=False, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if result.returncode != 0:
+        detail = "\n".join(
+            part for part in (result.stdout.strip(), result.stderr.strip()) if part
+        )
+        if _github_secondary_throttle(detail):
+            raise OpenPullRequestObservationError(
+                f"open PR identity batch throttled for {repository}: {detail}"
+            )
+        return False
+    try:
+        rows = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"open PR identity batch returned invalid JSON for {repository}"
+        ) from exc
+    expected = {
+        item["number"]: (item["baseRefOid"], item["headRefOid"], item["changedFiles"])
+        for item in observed
+    }
+    if (
+        len(expected) != len(observed)
+        or not isinstance(rows, list)
+        or len(rows) >= _open_pr_claim_guard_limit()
+    ):
+        raise OpenPullRequestObservationError(
+            f"open PR identity batch has invalid or incomplete coverage for {repository}"
+        )
+    identities = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise OpenPullRequestObservationError(f"invalid PR identity batch row for {repository}")
+        number = row.get("number")
+        base, head, count = row.get("baseRefOid"), row.get("headRefOid"), row.get("changedFiles")
+        if (
+            type(number) is not int or number < 1 or number in identities
+            or not isinstance(base, str) or _GIT_OID_RE.fullmatch(base) is None
+            or not isinstance(head, str) or _GIT_OID_RE.fullmatch(head) is None
+            or type(count) is not int or count < 0
+        ):
+            raise OpenPullRequestObservationError(
+                f"invalid or duplicate PR identity batch row for {repository}"
+            )
+        identities[number] = (base, head, count)
+    if identities != expected:
+        raise OpenPullRequestObservationError(
+            f"open PR inventory or identity changed during file observation for {repository}"
+        )
+    return True
+
+
 def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     limit = str(_open_pr_claim_guard_limit())
@@ -1172,6 +1252,10 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     if result.returncode != 0:
         detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
         diagnostic = detail.lower()
+        if _github_secondary_throttle(detail):
+            raise OpenPullRequestObservationError(
+                f"open PR inventory throttled for {repository}: {detail}"
+            )
         if "graphql_rate_limit" not in diagnostic and not (
             "graphql" in diagnostic and "rate limit" in diagnostic
         ):
@@ -1209,6 +1293,8 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                     f"({_open_pr_file_limit()}) for {repository}#{item.get('number')}; "
                     "coverage is bounded and fails closed"
                 )
+
+    batch_readback = not rest_inventory and len(value) > 1
 
     def observe_one(indexed: tuple[int, Any]) -> dict[str, Any]:
         index, item = indexed
@@ -1264,26 +1350,36 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             expected_changed_files=changed_files,
             graphql_files=item.get("files"),
         )
+        observed = {**item, "fileScope": file_scope}
+        if not batch_readback:
+            revalidate_one(observed)
+        return observed
+
+    def revalidate_one(item: dict[str, Any]) -> None:
+        number = item["number"]
         identity = _github_pull_request_identity(repository, number)
         expected_identity = {
-            "base_oid": base_oid,
-            "head_oid": head_oid,
-            "changed_files": changed_files,
+            "base_oid": item["baseRefOid"],
+            "head_oid": item["headRefOid"],
+            "changed_files": item["changedFiles"],
         }
         if identity != expected_identity:
             raise OpenPullRequestObservationError(
                 f"open PR {repository}#{number} identity changed during file observation"
             )
-        return {**item, "fileScope": file_scope}
 
     if len(value) < 2:
         return [observe_one(pair) for pair in enumerate(value)]
-    # Inspect independent PRs concurrently and retain input ordering.
-    # Each worker still validates file scope and re-reads identity.
+    # Preserve independent file-read concurrency and input ordering. For a
+    # successful GraphQL inventory, batch the final identity readback once.
+    # A REST inventory already indicates unavailable GraphQL quota.
     with ThreadPoolExecutor(
         max_workers=min(4, len(value)), thread_name_prefix="bureau-pr-detail"
     ) as pool:
-        return list(pool.map(observe_one, enumerate(value)))
+        observed = list(pool.map(observe_one, enumerate(value)))
+        if batch_readback and not _revalidate_open_pull_request_batch(repository, observed):
+            list(pool.map(revalidate_one, observed))
+        return observed
 
 
 def _observe_open_pull_requests(

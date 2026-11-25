@@ -85,6 +85,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "89657b12f46d7bb4871cf19ff0fcf5c873477ef9c53abce6c14d304a245c3b3c",
+      "historical_receipt_sha256": "f134806e1121674cfcd9b4f4a8cfd9ad2894d419c993af93c9f4faf79c70daf2",
+      "historical_run": "BUR-RUN-20260807T053901Z-7eaf55628a",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.445467+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Grabowski PR670 ancestor of active bf96dc3d; self-scoped key and broad scope tests passed."
     }
   },
   "priority": {
@@ -105,6 +117,6 @@
     "strategy": "Bei Scope-Ausweitung oder Regression breite Repository-Leases nicht mergen beziehungsweise den revisionsgebundenen Fix zurücknehmen; keine fremden Leases, Dirty-States oder Prozesse verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Selbstgescopte Repository-Leases im Bureau-Pickup korrekt akquirieren"
 }

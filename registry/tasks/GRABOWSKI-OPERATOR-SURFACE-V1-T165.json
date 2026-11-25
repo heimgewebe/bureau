@@ -117,6 +117,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "18006316839aa37300e2c89e189f5a4832c02a1a2934daa3ff585082baa87cef",
+      "historical_receipt_sha256": "9e8986e9ecd2f46700c8cba5ac5a5a6023e6057fc8ecbb072b7f278e9d4fec25",
+      "historical_run": "BUR-RUN-20260812T070905Z-a9b4362d10",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.458420+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Grabowski PR729 ancestor of active bf96dc3d; explicit approval transport and terminal reconcile CAS tests passed; no real orphan apply required."
     }
   },
   "priority": {
@@ -138,6 +150,6 @@
     "strategy": "Bei Approval-Ausweitung, Auto-Eskalation, Grip-Scope-Regressions oder unzureichendem Terminalbeweis den revisionsgebundenen Fix normal revertieren. Bestehende Checkout-Bindings, Audit-Historie, fremde Worktrees, Leases und Prozesse nicht rückwirkend umschreiben oder löschen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Break-Glass-Pickup und Checkout-Binding-Reconcile sicher exponieren"
 }

@@ -6592,6 +6592,107 @@ def test_coordinated_runtime_claim_rejects_worker_and_reviewer_transfer(
     assert store.list_runs() == []
 
 
+def test_coordinated_read_observation_keeps_logical_reservations_without_repo_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    resource_path = root / "registry/resources/1.json"
+    resource = json.loads(resource_path.read_text())
+    assert resource["id"] == "repo"
+    resource["grabowski_key"] = f"repo:{root}"
+    resource_path.write_text(json.dumps(resource))
+    for path in (root / "registry/tasks").glob("*.json"):
+        spec = json.loads(path.read_text())
+        spec["claims"] = [{"resource": "repo", "mode": "read", "isolation": "none"}]
+        path.write_text(json.dumps(spec))
+
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    for index, task_id in enumerate(sorted(registry.tasks)):
+        task = registry.tasks[task_id]
+        # Legacy/explicit dispatch projection is unchanged.
+        assert bureau_v2.grabowski_resource_keys_for_task(registry.resources, task) == {
+            f"repo:{root}"
+        }
+        result = dispatcher.claim_intent(
+            f"reader-{index}", ("repository",), task_id=task_id
+        )
+        intent = result["intent"]
+        assert intent["required_resource_keys"] == []
+        assert intent["workspace"] is None
+        assert result["claim_commit_handoff"]["lease_binding_required"] is False
+        claimed = dispatcher.commit_claim_intent(intent, None)
+        handoff = bureau_v2.grabowski_handoff(registry, store, claimed["run"]["run_id"])
+        assert handoff["resource_keys"] == []
+
+    with store.connect() as connection:
+        reservations = store.reservations(connection)
+    assert len(reservations) == 2
+    assert all(item.resource == "repo" and item.mode == "read" for item in reservations)
+    assert not legacy.claim_conflicts(
+        legacy.Claim("repo", "read"), reservations, registry.resources
+    )
+    assert legacy.claim_conflicts(legacy.Claim("repo", "write"), reservations, registry.resources)
+
+
+@pytest.mark.parametrize(
+    "mode,policy,claim_mode,isolation,extra_execution,expected_repo",
+    [
+        ("interactive-agent", "autonomous", "read", "none", {}, False),
+        ("interactive-agent", "autonomous", "read", "none",
+         {"grabowski_resources": ["repo:/tmp/repo"]}, True),
+        ("interactive-agent", "autonomous", "read", "worktree", {}, True),
+        ("interactive-agent", "autonomous", "read", "none",
+         {"workspace_isolation": "worktree"}, True),
+        ("interactive-agent", "autonomous", "write", "none", {}, True),
+        ("interactive-agent", "autonomous", "exclusive", "none", {}, True),
+        ("interactive-agent", "review-before-effect", "read", "none", {}, True),
+        ("interactive-agent", "autonomous", "read", "none",
+         {"approval": {"action_class": "runtime_mutation"}}, True),
+        ("grabowski-task", "autonomous", "read", "none", {"argv": ["/usr/bin/true"]}, True),
+        ("grabowski-operation", "autonomous", "read", "none", {"operation": "observe"}, True),
+    ],
+)
+def test_coordinated_read_observation_only_omits_implicit_repo_keys(
+    mode, policy, claim_mode, isolation, extra_execution, expected_repo
+):
+    execution = {
+        "mode": mode,
+        "policy": policy,
+        "grabowski_resources": ["path:/tmp/repo/snapshot"],
+        **extra_execution,
+    }
+    claims = (
+        legacy.Claim("repo", claim_mode, isolation=isolation),
+        legacy.Claim("component", "read"),
+        legacy.Claim("repo.shared", "read"),
+        legacy.Claim("component.shared", "read"),
+    )
+    raw = {"id": "READ-TEST", "execution": execution, "claims": [c.as_dict() for c in claims]}
+    task = legacy.Task(
+        id="READ-TEST", initiative="TEST", title="Read scope", state="ready",
+        depends_on=(), capabilities=(), lane="now", rank=1, execution=execution,
+        claims=claims, acceptance=(), raw=raw, sha256="0" * 64,
+    )
+    resources = {
+        "repo": legacy.Resource("repo", "git-repository", None, None,
+                                "/tmp/repo", None, "repo:/tmp/repo"),
+        "component": legacy.Resource("component", "component", "repo", None,
+                                     None, None, "path:/tmp/component"),
+        "repo.shared": legacy.Resource("repo.shared", "git-repository", None, None,
+                                       "/tmp/shared", None, "repo:/tmp/shared"),
+        # A different claim may still need the same concrete key.
+        "component.shared": legacy.Resource("component.shared", "component", "repo.shared",
+                                            None, None, None, "repo:/tmp/shared"),
+    }
+    keys = bureau_v2._coordinated_grabowski_resource_keys(resources, task, {})
+    expected = set(execution["grabowski_resources"]) | {
+        "path:/tmp/component", "repo:/tmp/shared"
+    }
+    if expected_repo:
+        expected.add("repo:/tmp/repo")
+    assert keys == expected
+
+
 def test_coordinated_claim_handoff_does_not_require_absent_lease(
     registry_factory, tmp_path, monkeypatch
 ):

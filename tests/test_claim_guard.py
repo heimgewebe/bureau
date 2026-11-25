@@ -1312,7 +1312,7 @@ def test_valid_bound_pr_disjoint_source_scope_preserves_read_only_extra_claims(
         if isinstance(item, bureau_v2.OpenPullRequestReservation) and item.number == 10
     )
 
-    assert reservation.scope_resources == ("repo.alpha", "repo.beta")
+    assert reservation.scope_resources == ("repo.alpha",)
 
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
     dispatcher = Dispatcher(
@@ -2997,3 +2997,95 @@ def test_rest_open_pr_pagination_complete_and_bounded(monkeypatch):
     with pytest.raises(bureau_v2.OpenPullRequestObservationError,
                        match="BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT"):
         bureau_v2._github_open_pull_requests_rest("heimgewebe/example")
+
+
+@pytest.mark.parametrize(
+    "source_complete,target_status,expected",
+    [
+        (True, "empty", True),
+        (True, "disjoint", True),
+        (True, "overlap", False),
+        (True, "unknown", False),
+        (False, "empty", False),
+    ],
+)
+def test_bound_pr_cross_repo_claims_use_independent_observation(
+    registry_factory, tmp_path, monkeypatch, source_complete, target_status, expected
+):
+    root = registry_factory(2, mode="write")
+    alpha, beta = _split_repository_resources(root)
+    for fixture_repo in (alpha, beta):
+        subprocess.run(["git", "init", "-q", str(fixture_repo)], check=True)
+        subprocess.run(
+            ["git", "-C", str(fixture_repo), "-c", "user.name=Fixture",
+             "-c", "user.email=fixture@example.invalid", "commit",
+             "--allow-empty", "-qm", "fixture"],
+            check=True,
+        )
+    task_id = "BUR-TEST-001-T002"
+    task_path = root / f"registry/tasks/{task_id}.json"
+    second = json.loads(task_path.read_text())
+    second["execution"]["working_repository"] = str(beta)
+    second["execution"]["grabowski_resources"] = [f"path:{beta / 'src/feature.py'}"]
+    task_path.write_text(json.dumps(second))
+    registry = Registry.load(root)
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+
+    def repo_for_path(path):
+        if path == alpha:
+            return "heimgewebe/alpha"
+        if path == beta:
+            return "heimgewebe/beta"
+        return None
+
+    def pr(slug, number, paths, *, complete=True):
+        result = {
+            "number": number,
+            "title": "fixture",
+            "headRefName": "feat/test",
+            "body": "Bureau-Task: BUR-TEST-001-T001",
+            "url": f"https://github.com/{slug}/pull/{number}",
+        }
+        if complete:
+            result["fileScope"] = _t068_file_scope(
+                repository=slug, number=number, paths=paths
+            )
+        return result
+
+    def pull_requests(slug):
+        if slug == "heimgewebe/alpha":
+            return [pr(slug, 10, ("docs/other.md",), complete=source_complete)]
+        if target_status == "unknown":
+            raise bureau_v2.OpenPullRequestObservationError("target unavailable")
+        if target_status == "overlap":
+            return [pr(slug, 11, ("src/feature.py",))]
+        if target_status == "disjoint":
+            return [pr(slug, 11, ("docs/unrelated.md",))]
+        return []
+
+    monkeypatch.setattr(bureau_v2, "_github_repository_for_path", repo_for_path)
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", pull_requests)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _: reservations
+    )
+    item = next(x for x in dispatcher.frontier({"repository"}) if x["task_id"] == task_id)
+    assert item["eligible"] is expected, item["reasons"]
+    if expected:
+        intent = dispatcher.claim_intent(
+            "fixture-worker", ("repository",), task_id=task_id, approved=True,
+            approval_source="isolated-test-fixture",
+        )
+        assert isinstance(intent.get("intent"), dict)
+    else:
+        with pytest.raises(NoEligibleTask):
+            dispatcher.claim_intent(
+                "fixture-worker", ("repository",), task_id=task_id, approved=True,
+                approval_source="isolated-test-fixture",
+            )
+    regular = bureau_v2.legacy.Reservation("active-fixture-run", "repo.beta", "write", 1)
+    reasons = dispatcher.reasons(
+        registry.tasks[task_id], {"repository"}, [], [*reservations, regular], {}
+    )
+    assert any("active-fixture-run" in str(reason) for reason in reasons)

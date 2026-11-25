@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Consolidate RepoBrief daily artifact surface",
-  "state": "ready",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 340
@@ -155,6 +155,17 @@
         "cleanup or takeover of foreign RepoGround worktrees",
         "merge or deployment"
       ]
+    },
+    "bureau_cleanup": {
+      "current_evidence": "grabowski-task:ce3ee043ad4842528750d819",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "e56cfd1b6ed13bb8e5f76cc751ebb34c1d9fd1f84568320430979514969f0546",
+      "historical_receipt_sha256": "0aa494ddf612c58a1c8c5f0e51d8f2a0d434161e790b9f1059cc36cb5a33d16e",
+      "historical_run": "BUR-RUN-20260731T152008Z-287eff15d0",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T08:11:31.431012+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "PR1138 ancestor of managed publisher f424895e; fleet-context default still in actual runtime, last fleet publication successful. Historical measured storage reduction 42.6944%, not newly measured."
     }
   },
   "depends_on": []

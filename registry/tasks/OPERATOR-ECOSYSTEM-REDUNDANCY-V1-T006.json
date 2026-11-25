@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Define Chronik high-value operator events",
-  "state": "planned",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 330
@@ -89,6 +89,17 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "bureau_cleanup": {
+      "current_evidence": "grabowski-task:4fe45a6540e34f2388edef7f",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "3267c4db9e2f620db1336c48ed36f18455d49af62bd06656301865af485a797f",
+      "historical_receipt_sha256": "794a755a3d86358bf0a7c7a7faaf0aa39f2a313bae377d1660956d721184b8ba",
+      "historical_run": "BUR-RUN-20260902T123022Z-6a315700f9",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T08:11:31.263316+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "PR1027 ancestor of active bf96dc3d; Chronik admission/filter/idempotence/redaction tests 7/7 pass, installed chronik module exact. No repeat implementation."
     }
   },
   "depends_on": [

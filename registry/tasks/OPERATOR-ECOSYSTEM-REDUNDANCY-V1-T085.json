@@ -133,6 +133,17 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "current_evidence": "path:/usr/local/libexec/weltgewebe-reconcile-production-main",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "f20959c2dc8927259b36d676f65ebcaf82eef4e41b9c4781fa63d25e66237d7b",
+      "historical_receipt_sha256": "2545e023f3f18fa65376a4cfcd59766f2b622221c71d15ed83430291d08d25f5",
+      "historical_run": "BUR-RUN-20260818T065616Z-5eac3ed775",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T08:11:31.438990+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Actual commonserver installed reconciler retains pre-build headroom, unused-cache-only prune (min-free-space or age fallback), active-cache block, remeasure and insufficient-headroom block. Current reconciler contract CI passed; no live cleanup triggered or needed here."
     }
   },
   "priority": {
@@ -151,6 +162,6 @@
     "strategy": "Housekeeping-Automatik deaktivieren und auf den bisherigen fail-closed Disk-Preflight zurückfallen. Keine Datenbank-, Volume-, DNS- oder Netzwerkänderung ist Teil des Tasks."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "superseded",
   "title": "Weltgewebe-Produktionsdeploy gegen Docker-Build-Cache-Druck absichern"
 }

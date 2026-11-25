@@ -5391,7 +5391,7 @@ class Dispatcher(legacy.Dispatcher):
             + uuid.uuid4().hex[:10]
         )
         capabilities_set = set(capabilities)
-        open_pr_reservations = self._open_pr_reservations(strict=True)
+        open_pr_reservations = None
         with self.store.connect() as connection:
             current_rows = connection.execute(
                 "SELECT * FROM runs WHERE worker_id=? "
@@ -5407,7 +5407,7 @@ class Dispatcher(legacy.Dispatcher):
                     "envelope": json.loads(current["envelope_json"]),
                 }
             runs = self.store.active_runs(connection)
-            reservations = self.store.reservations(connection) + open_pr_reservations
+            reservations = self.store.reservations(connection)
             overlays = self.store.overlays(connection, self.registry)
             fresh_source_registry = Registry.load(self.source_registry.root)
             fresh_initiative_registry, _ = _state_store_initiative_registry(
@@ -5432,6 +5432,26 @@ class Dispatcher(legacy.Dispatcher):
                     initiative_registry=fresh_initiative_registry,
                 )
                 review_reason = f"execution is {task.mode}/{task.policy}"
+                # Observe live PRs only once a locally eligible candidate exists.
+                if open_pr_reservations is None and (
+                    not reasons
+                    or (
+                        reasons == [review_reason]
+                        and task.mode == "interactive-agent"
+                        and task.policy == "review-before-effect"
+                        and (approved or break_glass)
+                    )
+                ):
+                    open_pr_reservations = self._open_pr_reservations(strict=True)
+                    reservations += open_pr_reservations
+                    reasons = self.reasons(
+                        task,
+                        capabilities_set,
+                        runs,
+                        reservations,
+                        overlays,
+                        initiative_registry=fresh_initiative_registry,
+                    )
                 if (
                     review_reason in reasons
                     and task.mode == "interactive-agent"
@@ -5471,6 +5491,7 @@ class Dispatcher(legacy.Dispatcher):
                 + 1
             )
         assert selected_effective_state is not None
+        assert open_pr_reservations is not None
         if approval_evidence is None:
             approval, _approval_decision = _coordinated_claim_approval(
                 selected,
@@ -5991,13 +6012,13 @@ class Dispatcher(legacy.Dispatcher):
                     "worker already has an active assignment outside resource filter; "
                     "use a resource-scoped worker id"
                 )
-            open_pr_reservations = self._open_pr_reservations(strict=True)
+            open_pr_reservations = None
             worker = connection.execute(
                 "SELECT * FROM workers WHERE worker_id=?", (worker_id,)
             ).fetchone()
             worker_capabilities = set(json.loads(worker["capabilities_json"]))
             runs = self.store.active_runs(connection)
-            reservations = self.store.reservations(connection) + open_pr_reservations
+            reservations = self.store.reservations(connection)
             overlays = self.store.overlays(connection, self.registry)
             fresh_source_registry = Registry.load(self.source_registry.root)
             fresh_initiative_registry, _ = _state_store_initiative_registry(
@@ -6016,6 +6037,17 @@ class Dispatcher(legacy.Dispatcher):
                     overlays,
                     initiative_registry=fresh_initiative_registry,
                 )
+                if not reasons and open_pr_reservations is None:
+                    open_pr_reservations = self._open_pr_reservations(strict=True)
+                    reservations += open_pr_reservations
+                    reasons = self.reasons(
+                        task,
+                        worker_capabilities,
+                        runs,
+                        reservations,
+                        overlays,
+                        initiative_registry=fresh_initiative_registry,
+                    )
                 if not reasons:
                     selected = task
                     break

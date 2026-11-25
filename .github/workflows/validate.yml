@@ -63,6 +63,29 @@ jobs:
               ;;
           esac
           echo "scope_kind=${scope_kind}" >> "${GITHUB_OUTPUT}"
+      - name: Choose validation tier
+        id: tier
+        if: steps.scope.outputs.scope_kind == 'full'
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tier=full
+          # Only normal PR admission to Bureau's queued main may be lighter.
+          # An unavailable rule read is not evidence of a mandatory queue.
+          if [[ "$EVENT_NAME" == pull_request && "$BASE_REF" == main && "$REPOSITORY" == heimgewebe/bureau ]]; then
+            if queued="$(timeout 10s gh api "repos/$REPOSITORY/rules/branches/main" \
+              --jq 'if type == "array" then any(.[]; .type == "merge_queue") else false end')" \
+              && [[ "$queued" == true ]]; then
+              tier=admission
+            fi
+          fi
+          echo "tier=$tier" >> "$GITHUB_OUTPUT"
+          echo "Validation tier: $tier"
       - name: Install full validation dependencies
         if: steps.scope.outputs.scope_kind == 'full'
         run: python -m pip install -e '.[dev]'
@@ -70,8 +93,11 @@ jobs:
         if: steps.scope.outputs.scope_kind != 'full'
         run: python -m pip install -e .
       - name: Validate code and repository contracts
-        if: steps.scope.outputs.scope_kind == 'full'
+        if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier != 'admission'
         run: make validate
+      - name: Validate PR queue admission (not final integration)
+        if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'admission'
+        run: make validate-admission
       - name: Validate Registry task-only change
         if: steps.scope.outputs.scope_kind == 'task-only'
         run: PYTHONPATH=src python -m bureau.cli --root . --json check

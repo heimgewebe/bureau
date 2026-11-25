@@ -95,6 +95,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "a75c781ee3febc037874aa13d59717fcd0d3fd70429f4eca715bbb89fd060999",
+      "historical_receipt_sha256": "f1d57f55049813372fa97871b436b57e05a4ae313752089b30400e6880b03a3a",
+      "historical_run": "BUR-RUN-20260810T120610Z-13bbe3e8c1",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.455099+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Grabowski PR723 ancestor of active bf96dc3d; corrected replay and multigroup preflight before effects passed."
     }
   },
   "priority": {
@@ -115,6 +127,6 @@
     "strategy": "Bei jeder Lockerung von Idempotenz, Lease-Sicherheit oder Recovery den revisionsgebundenen Fix zurücknehmen. Bestehende immutable Run-Artefakte und Audit-Historie nicht umschreiben; fremde Leases, Dirty-States und aktive Prozesse nicht verändern."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Pre-Commit-Pickup vor immutable Run-Artefakten validieren"
 }

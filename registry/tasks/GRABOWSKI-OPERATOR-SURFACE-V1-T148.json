@@ -96,7 +96,19 @@
       "workspace_isolation": "omitted"
     },
     "source_merge_commit": "b5a91d58cd82aa9c45387712ffb0ceb851789f29",
-    "source_pr": "https://github.com/heimgewebe/bureau/pull/1596"
+    "source_pr": "https://github.com/heimgewebe/bureau/pull/1596",
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "1506a83b03cb67987158f6af93332dd067ab30a1606ee913b642d026c9009ad7",
+      "historical_receipt_sha256": "bc2ed0dbb39a999f81f20a48add09a5ae996b47b3d8fa71bdfcfec4e6d759daf",
+      "historical_run": "BUR-RUN-20260807T072300Z-12312c5646",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.277696+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Bureau PR1607; T147 verified, no claims, no automatic workspace; historical correction is already semantically superseded."
+    }
   },
   "priority": {
     "lane": "now",
@@ -114,6 +126,6 @@
     "strategy": "Nur eigenen Reparatur-Clone, Branch und eigene Ressourcen bereinigen; geschützte Checkouts unverändert lassen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Unsicheren T147-Workspacevertrag korrigieren"
 }

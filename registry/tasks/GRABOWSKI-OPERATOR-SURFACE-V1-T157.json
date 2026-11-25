@@ -86,6 +86,18 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "2878d8f7081fe10552d9be4eef5fe795c766d3984924294cd42ff0ad32b0ae6b",
+      "historical_receipt_sha256": "43aa6b509ba38d4b3a7ee8f9653260a226bfd79d7bf173d3f71c4263c22863c4",
+      "historical_run": "BUR-RUN-20260807T144026Z-7c7ef8cc27",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.448627+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Grabowski PR674 ancestor of active bf96dc3d; tag/branch/operation and broad scope regressions passed."
     }
   },
   "priority": {
@@ -106,6 +118,6 @@
     "strategy": "Bei Regression den revisionsgebundenen Nachtrag per normalem Revert zurücknehmen und die bisherige strengere Klassifikation wiederherstellen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Repository-Referenzschlüssel um tag-Scope ergänzen"
 }

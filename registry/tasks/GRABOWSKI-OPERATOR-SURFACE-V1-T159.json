@@ -97,6 +97,18 @@
       "source": "canonical_operational_verification_stamp",
       "closeout_mode": "post-merge-live-reconciliation",
       "verified_at": "2026-08-09T22:57:16.295320Z"
+    },
+    "bureau_cleanup": {
+      "active_operator": "bf96dc3d158c46e324106e480ddc56ac424809e3",
+      "current_regression_evidence": "grabowski-task:6045818010a740a696bc5f02",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "7c8ba438aef914f6f3b59e46238b96d4d5f1d597d8b8ed20bb5438ab12996242",
+      "historical_receipt_sha256": "ef4a640a14ccaeae267c1598c63818d87798222036fca4a53464323b4b39f382",
+      "historical_run": "BUR-RUN-20260809T151638Z-8c1a839c29",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T06:48:53.451794+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Grabowski PR713 ancestor of active bf96dc3d; symmetric disjoint/overlap merge guard tests passed."
     }
   },
   "priority": {
@@ -118,6 +130,6 @@
     "strategy": "Die Wirkungs-/Scope-Klassifikation und Merge-Guard-Ausnahme per normalem Revert zurücknehmen; unbekannte Operationen fallen dadurch wieder auf die strengere pauschale Konfliktbehandlung zurück. Keine Lease- oder Audit-Historie verändern."
   },
   "schema_version": 1,
-  "state": "verified",
+  "state": "superseded",
   "title": "Merge-Guard: disjunkte Operations-Leases parallelisieren"
 }

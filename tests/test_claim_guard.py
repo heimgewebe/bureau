@@ -3089,3 +3089,63 @@ def test_bound_pr_cross_repo_claims_use_independent_observation(
         registry.tasks[task_id], {"repository"}, [], [*reservations, regular], {}
     )
     assert any("active-fixture-run" in str(reason) for reason in reasons)
+
+
+@pytest.mark.parametrize("method", ["claim_next", "claim_intent"])
+@pytest.mark.parametrize(
+    "scenario", ["missing_capability", "terminal", "live_failure", "live_success"]
+)
+def test_claim_provider_deferred_until_local_eligibility(
+    registry_factory, tmp_path, method, scenario
+):
+    root = registry_factory(1, mode="write")
+    if scenario == "terminal":
+        task_file = root / "registry/tasks/BUR-TEST-001-T001.json"
+        data = json.loads(task_file.read_text())
+        data["state"] = "cancelled"
+        task_file.write_text(json.dumps(data))
+        queue_file = root / "registry/queue.json"
+        queue = json.loads(queue_file.read_text())
+        queue["lanes"]["now"] = []
+        queue_file.write_text(json.dumps(queue))
+    if scenario == "live_success" and method == "claim_intent":
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        subprocess.run(
+            [
+                "git", "-C", str(root), "-c", "user.name=Test",
+                "-c", "user.email=test@example.invalid", "commit",
+                "--allow-empty", "-qm", "fixture",
+            ],
+            check=True,
+        )
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    calls = []
+
+    def provider(_registry):
+        calls.append(1)
+        if scenario == "live_failure":
+            raise bureau_v2.OpenPullRequestObservationError("test provider unavailable")
+        return []
+
+    dispatcher = Dispatcher(registry, store, open_pr_reservations_provider=provider)
+    caps = () if scenario == "missing_capability" else ("repository",)
+    args = (
+        {"task_id": "BUR-TEST-001-T001", "approved": True}
+        if method == "claim_intent"
+        else {"reconcile_first": False}
+    )
+    if scenario == "live_success":
+        result = getattr(dispatcher, method)("worker", caps, **args)
+        assert result["status"] in {"claimed", "claim-intent"}
+    else:
+        with pytest.raises(NoEligibleTask) as exc:
+            getattr(dispatcher, method)("worker", caps, **args)
+        if scenario == "live_failure":
+            assert "test provider unavailable" in str(exc.value)
+        elif scenario == "terminal":
+            assert "state is cancelled" in str(exc.value)
+        else:
+            assert "missing capabilities" in str(exc.value)
+    expected = 0 if scenario in {"missing_capability", "terminal"} else 1
+    assert len(calls) == expected

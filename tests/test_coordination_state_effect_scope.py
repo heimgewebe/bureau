@@ -96,3 +96,16 @@ def test_read_only_doctor_modes_remain_read_only() -> None:
 
         assert bureau_cli._command_mutates(args) is False
         assert bureau_cli._command_effect_scope(args) == "read_only"
+
+
+def test_proposal_and_review_are_coordination_state_mutations() -> None:
+    for argv in (
+        ["operator-task-propose", "--candidate-id", "candidate-1",
+         "--task-json", "task.json", "--publishing-task-id", "INIT-T001",
+         "--write-plan", "plan.json"],
+        ["operator-task-review", "--plan", "plan.json", "--reviewer", "operator",
+         "--proposal-sha256", "a" * 64],
+    ):
+        args = bureau_cli._parse_arguments(argv)
+        assert bureau_cli._command_mutates(args) is True
+        assert bureau_cli._command_effect_scope(args) == COORDINATION_STATE_MUTATION

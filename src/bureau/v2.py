@@ -2372,6 +2372,8 @@ def plan_sha256(registry: legacy.Registry, initiative_id: str) -> str:
 def grabowski_resource_keys_for_task(
     resources: dict[str, legacy.Resource],
     task: legacy.Task,
+    *,
+    omit_implicit_read_repo_keys: bool = False,
 ) -> set[str]:
     keys: set[str] = set()
     configured = task.execution.get("grabowski_resources", [])
@@ -2379,8 +2381,17 @@ def grabowski_resource_keys_for_task(
         keys.update(item for item in configured if isinstance(item, str) and item.strip())
     for claim in task.claims:
         resource = resources.get(claim.resource)
-        if resource is not None and resource.grabowski_key:
-            keys.add(resource.grabowski_key)
+        if resource is None or not resource.grabowski_key:
+            continue
+        if (
+            omit_implicit_read_repo_keys
+            and claim.mode == "read"
+            and resource.type == "git-repository"
+            and resource.path
+            and resource.grabowski_key == f"repo:{resource.path}"
+        ):
+            continue
+        keys.add(resource.grabowski_key)
     return keys
 
 
@@ -2389,7 +2400,19 @@ def _coordinated_grabowski_resource_keys(
     task: legacy.Task,
     open_pr_scope: dict[str, Any],
 ) -> set[str]:
-    keys = grabowski_resource_keys_for_task(resources, task)
+    # A pure interactive observation does not write or create a checkout.
+    # Bureau still reserves its logical read claims. A caller needing a
+    # stable mutable checkout must explicitly declare the concrete lease;
+    # an implicit repository read must not become a broad writer lease.
+    read_observation = (
+        task.mode == "interactive-agent"
+        and all(claim.mode == "read" and claim.isolation == "none" for claim in task.claims)
+        and not _task_uses_worktree_workspace(task)
+        and task_approval_contract(task.raw).get("action_class") == "read_only_observation"
+    )
+    keys = grabowski_resource_keys_for_task(
+        resources, task, omit_implicit_read_repo_keys=read_observation
+    )
     if open_pr_scope.get("requires_evidence") is not True:
         return keys
     requested_scopes = open_pr_scope.get("requested_scopes")
@@ -9656,7 +9679,18 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
             f"run {run_id} claim-bound task references unknown resources: "
             + ", ".join(missing_claim_resources)
         )
-    keys = grabowski_resource_keys_for_task(registry.resources, task)
+    # Coordinated runs already freeze the concrete lease projection in their
+    # hash-bound envelope. Never recompute it after a policy/runtime change.
+    intent = envelope.get("claim_intent")
+    if isinstance(intent, dict):
+        required_keys = intent.get("required_resource_keys")
+        if not isinstance(required_keys, list) or not all(
+            isinstance(key, str) and key for key in required_keys
+        ):
+            raise legacy.StateError(f"run {run_id} has invalid claim-bound resource keys")
+        keys = set(required_keys)
+    else:
+        keys = grabowski_resource_keys_for_task(registry.resources, task)
     if task.mode == "grabowski-task" and not keys:
         raise legacy.StateError(
             f"run {run_id} claim-bound grabowski-task has no Grabowski resource keys"

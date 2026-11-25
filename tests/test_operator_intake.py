@@ -7646,3 +7646,101 @@ def test_operator_task_publish_cli_rejects_resource_db_override(capsys):
 
     assert exc.value.code == 2
     assert "unrecognized arguments: --resource-db" in capsys.readouterr().err
+
+
+def test_state_store_intake_uses_manifest_snapshot_without_control_checkout(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root, registry = _committed_registry(registry_factory)
+    state_root = tmp_path / "coordination"
+    store = StateStore(state_root / "bureau.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = _record(registry, store)
+    snapshot_registry, snapshot = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+    binding = operator_intake_module._runtime_snapshot_binding(snapshot)
+    assert binding is not None
+    source_before = {
+        p.relative_to(snapshot): p.read_bytes()
+        for p in snapshot.rglob("*") if p.is_file()
+    }
+    # The now-advanced Git checkout is not the installed release and must not
+    # be consulted to construct or validate the StateStore proposal.
+    task_file = root / "registry/tasks/BUR-TEST-001-T001.json"
+    original = json.loads(task_file.read_text())
+    original["title"] = "Control checkout newer than deployed snapshot"
+    task_file.write_text(json.dumps(original))
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "advance control checkout")
+    task_path = tmp_path / "task.json"
+    task_path.write_text(json.dumps(_task(root)))
+    plan_path = tmp_path / "proposal.json"
+    common = ["--root", str(snapshot), "--state-root", str(state_root), "--json"]
+    rc = bureau_cli.main([*common,
+        "operator-task-propose", "--candidate-id", recorded["candidate_id"],
+        "--task-json", str(task_path), "--publishing-task-id", "BUR-TEST-001-T001",
+        "--write-plan", str(plan_path),
+    ])
+    observed = json.loads(capsys.readouterr().out)
+    assert rc == 0, observed
+    plan = json.loads(plan_path.read_text())
+    assert plan["registry"] == {
+        "commit": binding["commit"], "registry_tree": binding["registry_tree"],
+    }
+    assert store.task_spec(plan["task_id"]) is None
+    rc = bureau_cli.main([*common,
+        "operator-task-review", "--plan", str(plan_path), "--reviewer", "operator-test",
+        "--proposal-sha256", plan["proposal_sha256"],
+    ])
+    observed = json.loads(capsys.readouterr().out)
+    assert rc == 0, observed
+    assert observed["result"]["status"] == "not_required"
+    rc = bureau_cli.main([*common,
+        "operator-task-publish", "--plan", str(plan_path), "--preview",
+    ])
+    observed = json.loads(capsys.readouterr().out)
+    assert rc == 0, observed
+    preview = observed["result"]
+    assert preview["publication_mode"] == "state_store"
+    assert preview["required_resource_keys"] == ["path:" + str(state_root)]
+    assert store.task_spec(plan["task_id"]) is None
+    receipt = tmp_path / "receipt.json"
+    resource_db = _lease_db(preview, tmp_path)
+    result = publish_task_proposal(
+        snapshot_registry, store, plan_path=plan_path, lease_binding=_lease_binding(),
+        resource_db=resource_db, workspace_root=tmp_path / "unused", receipt_path=receipt,
+    )
+    assert result["status"] == "published"
+    assert result["publication_mode"] == "state_store"
+    assert result["queue_mutated"] is False
+    assert store.task_spec(plan["task_id"])["revision"] == 1
+    replay = publish_task_proposal(
+        snapshot_registry, store, plan_path=plan_path, lease_binding=_lease_binding(),
+        resource_db=resource_db, workspace_root=tmp_path / "unused", receipt_path=receipt,
+    )
+    assert replay["idempotent_replay"] is True
+    assert store.task_spec(plan["task_id"])["revision"] == 1
+    assert source_before == {
+        p.relative_to(snapshot): p.read_bytes()
+        for p in snapshot.rglob("*") if p.is_file()
+    }
+
+
+def test_proposal_rejects_tampered_runtime_snapshot_before_artifact_write(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    store.import_registry_task_specs(registry)
+    recorded = _record(registry, store)
+    snapshot_registry, snapshot = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+    target = snapshot / "registry/tasks/BUR-TEST-001-T001.json"
+    target.write_text(target.read_text() + "\n")
+    path = tmp_path / "proposal.json"
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            snapshot_registry, store, candidate_id=recorded["candidate_id"],
+            task_json=_task(root), publishing_task_id="BUR-TEST-001-T001", path=path,
+        )
+    assert caught.value.code == "registry-git-read-failed"
+    assert not path.exists()
+    assert store.task_spec("BUR-TEST-001-T099") is None

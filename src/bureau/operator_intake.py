@@ -3098,7 +3098,7 @@ def task_propose(
     placeholder_justification: str | None = None,
 ) -> dict[str, Any]:
     """Write one source-, Registry- and candidate-bound task proposal."""
-    registry, identity = _canonical_registry_snapshot(registry)
+    registry, identity = _canonical_read_registry_snapshot(registry)
     event = current_candidate_record(store, candidate_id=candidate_id, event_id=event_id)
     if event["record"].get("status") not in ACTIVE_LIVE_STATUSES:
         raise OperatorIntakeError(
@@ -3707,7 +3707,7 @@ def _validated_proposal(
             "unsupported task publication approval contract",
             details={"publication": publication},
         )
-    registry, identity = _canonical_registry_snapshot(registry)
+    registry, identity = _canonical_read_registry_snapshot(registry)
     publishing_task_id = str(plan.get("publishing_task_id", ""))
     onboarding = "first_task_onboarding" in plan
     if not onboarding:
@@ -4031,7 +4031,7 @@ def _publish_first_task_onboarding(
                 )
                 # Registry and proposal files are outside SQLite. Check them
                 # again after lease validation, immediately before the CAS.
-                _, identity = _canonical_registry_snapshot(registry)
+                _, identity = _canonical_read_registry_snapshot(registry)
                 if (
                     task_specs.get_current(connection, plan["task_id"]) is None
                     and identity != plan["registry"]

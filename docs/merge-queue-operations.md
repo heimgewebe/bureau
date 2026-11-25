@@ -6,7 +6,7 @@ The `main` branch is protected by repository ruleset `20228857` (`Bureau main st
 - `validate (3.12)`
 - `registry-registration-preflight/freshness`
 
-The ruleset also enables the GitHub merge queue. Queue entries are integrated serially (`max_entries_to_merge=1`) using merge commits. GitHub evaluates the required checks on the generated merge-group commit. Pull-request heads therefore do not need a manual update after every unrelated `main` advance.
+The ruleset also enables the GitHub merge queue. Queue entries are integrated serially (`max_entries_to_merge=1`) using merge commits. GitHub evaluates the required checks on the generated merge-group commit, including any preceding queued changes. This avoids repeated manual branch updates within the queue.
 
 Both required workflow surfaces already accept `merge_group` events:
 
@@ -24,15 +24,17 @@ The readback must show:
 - active enforcement on `refs/heads/main`;
 - no bypass actors;
 - the three required checks above;
-- `strict_required_status_checks_policy=false`;
+- one active required-status-check rule; the original T025 acceptance used `strict_required_status_checks_policy=false`, but GitHub ruleset history records a change to `true` on 2026-08-04. Do not infer the reason or silently change this setting;
 - one `merge_queue` rule with `max_entries_to_merge=1`.
 
-A pull request is merge-ready only after its exact head is reviewed and its required pull-request checks are green. Queue admission does not reuse those checks as final integration evidence: the queue-generated merge-group commit must pass the same required check contexts.
+A pull request may enter the queue after its exact head is reviewed and the required pull-request checks are green. For code changes to Bureau's `main`, the PR checks run real admission validation (Ruff, Systemkatalog boundary, Registry check, and representative Bureau/CI tests) when the active merge-queue rule is confirmed. If rule discovery fails, the queue is absent, or the target differs, the normal full validation runs. The existing task-only and queue-only Registry fast paths are unchanged.
+
+Admission is not full integration evidence. The merge-group commit still runs the complete `make validate` on both Python versions for full-scope changes, and the main-push workflow is unchanged. All three required check names remain stable. Do not interpret a PR admission success as a complete test-suite result.
 
 ## Failure and recovery
 
 A conflict, missing check, red check, timeout or cancelled queue entry blocks integration without changing the pull-request branch. Re-run or re-enqueue only after reading the current pull-request head, mergeability and required check set. Do not force-push a foreign branch or bypass the ruleset.
 
-If the queue itself must be rolled back, update only ruleset `20228857`: remove the `merge_queue` rule and restore `strict_required_status_checks_policy=true`, while preserving the required checks and empty bypass list. Verify the exact ruleset readback immediately after the update.
+If the queue itself must be rolled back, first restore full PR validation and ensure outstanding PRs have passed it, then remove the `merge_queue` rule and retain `strict_required_status_checks_policy=true`, required checks and empty bypass list. Verify the exact ruleset readback immediately after the update. Never administratively merge an admission-only PR around the queue.
 
 This operational setting does not by itself complete `BUREAU-TRUTH-MODEL-V2-T025`. Completion additionally requires revisions bound to two conflict-free queued pull requests, final merge-group check evidence, merge commits, failure/recovery evidence, and a post-merge readback.

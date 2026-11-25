@@ -308,6 +308,10 @@ def parser() -> argparse.ArgumentParser:
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     frontier.add_argument("--resource")
+    frontier.add_argument(
+        "--live-pr", action="store_true",
+        help="Explicitly observe live GitHub PR scope (default: local advisory projection)",
+    )
     explain = sub.add_parser("explain-next")
     explain.add_argument("--capability", action="append", default=[])
     explain.add_argument("--resource")
@@ -1924,7 +1928,10 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)
         elif args.command == "frontier":
-            value = dispatcher.frontier(set(args.capability), resource=args.resource)
+            # Discovery is advisory. Claims still perform their own live PR checks.
+            value = dispatcher.frontier(
+                set(args.capability), resource=args.resource, advisory=not args.live_pr,
+            )
         elif args.command == "explain-next":
             value = dispatcher.explain_next(set(args.capability), resource=args.resource)
         elif args.command == "what-now":

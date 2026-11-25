@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T030",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "RepoBrief-Quellcheckouts nach RepoGround-Cutover schließen",
-  "state": "ready",
+  "state": "superseded",
   "goal": "Liveinventur 2026-07-19: Die aktive RepoGround-Fleet-Publikation verwendet standardmäßig `/home/alex/repos/.repoground-sources`; `.repobrief-sources` wird im aktuellen Publisher nur noch als auszuschließende Fleetwurzel genannt. Es laufen keine Prozesse aus dem Altpfad. Die alte Fläche enthält 43 Checkouts mit 424 MiB, die neue 42 mit 160 MiB; 41 Namen überschneiden sich, alt-only sind `heim-assi` und `vault-gewebe`, neu-only ist `repoground`. Zahlreiche absolute Altpfadreferenzen liegen in unveränderlichen Task-Outcomes, Audit-, Verifier-, Benchmark- und Archivbelegen und dürfen nicht umgeschrieben werden. Aufgabe: nach Abschluss der fremden RepoGround-Publisher-Arbeit jeden Altcheckout auf Dirty-State, Git-Bindung, Lease, Prozess und Recoverybeleg klassifizieren, benötigte Wiederherstellung hashgebunden sichern und nur terminale redundante Checkouts entfernen; historische Receipts bleiben unverändert.",
   "priority": {
     "lane": "next",
@@ -130,6 +130,17 @@
         "classification of individual dirty states",
         "permission to rewrite historical evidence"
       ]
+    },
+    "bureau_cleanup": {
+      "current_evidence": "grabowski-task:ce3ee043ad4842528750d819",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "4130cd86482f1c9cdd6edc4b4efa78d775117a0fa6226d82c2f527d3f3fbb36e",
+      "historical_receipt_sha256": "665cbb35d18a74b19e72e46875ec4c92927ffe79fc3ef073b204eae16962e8df",
+      "historical_run": "BUR-RUN-20260808T120444Z-aadc51ef7c",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T08:11:31.434321+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Actual managed RepoGround publisher uses .repoground-sources; legacy .repobrief-sources root no longer exists; historical classifications and receipts remain. No new deletion."
     }
   }
 }

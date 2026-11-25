@@ -125,6 +125,17 @@
         "merge_authority",
         "deployment_authority"
       ]
+    },
+    "bureau_cleanup": {
+      "current_evidence": "github:heimgewebe/commonthing/actions/runs/45560540581",
+      "disposition": "superseded after historical successful delivery; no renewed historical acceptance claimed",
+      "historical_receipt_file_sha256": "87181233b9a284a7ba4c2d9d82487a1abce0cc1cc4aa6ec4159144d7c86d5016",
+      "historical_receipt_sha256": "bff8747330f9792a90ba188bb366d2a1727cdbfff42af171e093e14a1a6297bd",
+      "historical_run": "BUR-RUN-20260814T165232Z-405d6a3518",
+      "no_active_runs_or_external_dependents": true,
+      "observed_at": "2026-11-25T08:11:31.437456+00:00",
+      "preserve_historical_receipts": true,
+      "reason": "Historical network recovery completed; current production verifier actually reads frontend/API and rejects mismatched revisions, run45560540581. New rollout drift is separate and covered by existing WELTGEWEBE-OS-V1-FU-COMMONTHING-ROUTINE-ROLLOUT-20261124. No claim current production matches main."
     }
   },
   "priority": {
@@ -142,6 +153,6 @@
     "strategy": "Revert only the live-contract observation-path change. Do not alter the already merged T048 supply-chain hardening or production security boundaries."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Restore Weltgewebe production live-contract network readback"
 }

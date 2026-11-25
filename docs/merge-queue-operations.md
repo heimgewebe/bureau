@@ -29,7 +29,9 @@ The readback must show:
 
 A pull request may enter the queue after its exact head is reviewed and the required pull-request checks are green. For code changes to Bureau's `main`, the PR checks run real admission validation (Ruff, Systemkatalog boundary, Registry check, and representative Bureau/CI tests) when the active merge-queue rule is confirmed. If rule discovery fails, the queue is absent, or the target differs, the normal full validation runs. The existing task-only and queue-only Registry fast paths are unchanged.
 
-Admission is not full integration evidence. The merge-group commit still runs the complete `make validate` on both Python versions for full-scope changes, and the main-push workflow is unchanged. All three required check names remain stable. Do not interpret a PR admission success as a complete test-suite result.
+Admission is not full integration evidence. The merge-group commit still runs the complete `make validate` on both Python versions for full-scope changes. All three required check names remain stable. Do not interpret a PR admission success as a complete test-suite result.
+
+For a main push, the validate workflow may reuse an exact successful full merge-group run for the same commit. It checks both matrix jobs and their actual full-validation step using the repository Actions API and the recorded run attempt. It still installs dependencies, runs admission/smoke validation, and checks the accepted-main source-precondition authority history (which intentionally differs from merge-group history). If the proof is missing, ambiguous, incomplete, unavailable, or only covers a Registry fast path, main runs `make validate` as before. Registry main-push revalidation and all other workflows are unchanged. No separate evidence store or merge-queue bypass is introduced.
 
 ## Failure and recovery
 

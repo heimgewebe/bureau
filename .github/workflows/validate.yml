@@ -7,6 +7,7 @@ on:
     types: [checks_requested]
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: validate-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
@@ -71,6 +72,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
           REPOSITORY: ${{ github.repository }}
+          REF_NAME: ${{ github.ref }}
+          HEAD_SHA: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -84,6 +87,38 @@ jobs:
               tier=admission
             fi
           fi
+          # Reuse only an exact, complete two-version full merge-group run.
+          # The repository-level SHA query includes runs on retired queue refs.
+          # Missing, ambiguous, partial or unavailable evidence means full validation.
+          if [[ "$EVENT_NAME" == push && "$REPOSITORY" == heimgewebe/bureau \
+            && "${REF_NAME:-}" == refs/heads/main && "${HEAD_SHA:-}" =~ ^[0-9a-f]{40}$ ]]; then
+            if runs="$(timeout 10s gh api "repos/$REPOSITORY/actions/runs?head_sha=$HEAD_SHA&per_page=30")" \
+              && proof="$(jq -er --arg sha "$HEAD_SHA" --arg repo "$REPOSITORY" '
+                select(.total_count == (.workflow_runs | length))
+                | [.workflow_runs[] | select(
+                    .head_sha == $sha and .head_repository.full_name == $repo
+                    and .event == "merge_group" and .path == ".github/workflows/validate.yml"
+                    and .status == "completed" and .conclusion == "success"
+                    and (.head_branch | startswith("gh-readonly-queue/main/")))]
+                | select(length == 1) | .[0] | [.id, .run_attempt] | @tsv
+              ' <<< "$runs")"; then
+              read -r run_id attempt <<< "$proof"
+              if [[ "$run_id" =~ ^[1-9][0-9]*$ && "$attempt" =~ ^[1-9][0-9]*$ ]] \
+                && jobs="$(timeout 10s gh api "repos/$REPOSITORY/actions/runs/$run_id/attempts/$attempt/jobs?per_page=100")" \
+                && jq -e --arg sha "$HEAD_SHA" --argjson attempt "$attempt" '
+                  .total_count == 2 and (.jobs | length == 2)
+                  and ([.jobs[].name] | sort == ["validate (3.10)", "validate (3.12)"])
+                  and all(.jobs[];
+                    .head_sha == $sha and .run_attempt == $attempt
+                    and .status == "completed" and .conclusion == "success"
+                    and ([.steps[] | select(.name == "Validate code and repository contracts")]
+                      | length == 1 and .[0].status == "completed" and .[0].conclusion == "success"))
+                ' <<< "$jobs" >/dev/null; then
+                tier=main-reuse
+                echo "Reusing full merge-group validation: run $run_id attempt $attempt for $HEAD_SHA"
+              fi
+            fi
+          fi
           echo "tier=$tier" >> "$GITHUB_OUTPUT"
           echo "Validation tier: $tier"
       - name: Install full validation dependencies
@@ -93,11 +128,14 @@ jobs:
         if: steps.scope.outputs.scope_kind != 'full'
         run: python -m pip install -e .
       - name: Validate code and repository contracts
-        if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier != 'admission'
+        if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'full'
         run: make validate
       - name: Validate PR queue admission (not final integration)
         if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'admission'
         run: make validate-admission
+      - name: Validate main after proven full integration
+        if: steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'main-reuse'
+        run: make validate-main-reuse
       - name: Validate Registry task-only change
         if: steps.scope.outputs.scope_kind == 'task-only'
         run: PYTHONPATH=src python -m bureau.cli --root . --json check

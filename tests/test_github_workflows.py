@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -85,6 +86,8 @@ def test_validation_tier_uses_real_workflow_script(
         "PATH": f"{tmp_path}:{os.environ['PATH']}",
         "EVENT_NAME": event,
         "BASE_REF": base,
+        "REF_NAME": "",
+        "HEAD_SHA": "",
         "REPOSITORY": repo,
         "GITHUB_OUTPUT": str(output),
         "GH_MARKER": str(marker),
@@ -101,7 +104,7 @@ def test_validation_tier_uses_real_workflow_script(
 def test_validation_tiers_preserve_full_final_check_and_real_admission_checks():
     workflow = (ROOT / ".github/workflows/validate.yml").read_text()
     makefile = (ROOT / "Makefile").read_text()
-    assert "steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier != 'admission'" in (
+    assert "steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'full'" in (
         workflow
     )
     assert "steps.scope.outputs.scope_kind == 'full' && steps.tier.outputs.tier == 'admission'" in (
@@ -113,3 +116,143 @@ def test_validation_tiers_preserve_full_final_check_and_real_admission_checks():
     assert "validate-admission: lint systemkatalog-boundary" in makefile
     assert "PYTHONPATH=src python -m bureau.cli --root . check" in makefile
     assert "PYTHONPATH=src pytest tests/test_bureau.py" in makefile
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "complete",
+        "missing",
+        "push-only",
+        "wrong-sha",
+        "wrong-repository",
+        "wrong-workflow",
+        "wrong-branch",
+        "ambiguous",
+        "truncated",
+        "failed-run",
+        "partial-rerun",
+        "fast-path",
+        "wrong-job-sha",
+        "wrong-attempt",
+        "failed-job",
+        "runs-unavailable",
+        "jobs-unavailable",
+        "invalid-json",
+    ],
+)
+def test_main_reuse_requires_exact_full_merge_group_evidence(tmp_path, case):
+    sha = "a" * 40
+    run = {
+        "id": 123,
+        "run_attempt": 1,
+        "head_sha": sha,
+        "head_repository": {"full_name": "heimgewebe/bureau"},
+        "head_branch": "gh-readonly-queue/main/pr-1-" + "b" * 40,
+        "event": "merge_group",
+        "path": ".github/workflows/validate.yml",
+        "status": "completed",
+        "conclusion": "success",
+    }
+    jobs = [
+        {
+            "name": f"validate ({version})",
+            "head_sha": sha,
+            "run_attempt": 1,
+            "status": "completed",
+            "conclusion": "success",
+            "steps": [
+                {
+                    "name": "Validate code and repository contracts",
+                    "status": "completed",
+                    "conclusion": "success",
+                }
+            ],
+        }
+        for version in ("3.10", "3.12")
+    ]
+    runs = [run]
+    if case == "missing":
+        runs.clear()
+    elif case == "push-only":
+        run["event"] = "push"
+    elif case == "wrong-sha":
+        run["head_sha"] = "b" * 40
+    elif case == "wrong-repository":
+        run["head_repository"]["full_name"] = "example/bureau"
+    elif case == "wrong-workflow":
+        run["path"] = ".github/workflows/other.yml"
+    elif case == "wrong-branch":
+        run["head_branch"] = "gh-readonly-queue/release/pr-1"
+    elif case == "ambiguous":
+        runs.append({**run, "id": 124})
+    elif case == "failed-run":
+        run["conclusion"] = "failure"
+    elif case == "partial-rerun":
+        jobs.pop()
+    elif case == "fast-path":
+        jobs[0]["steps"][0]["conclusion"] = "skipped"
+    elif case == "wrong-job-sha":
+        jobs[0]["head_sha"] = "b" * 40
+    elif case == "wrong-attempt":
+        jobs[0]["run_attempt"] = 2
+    elif case == "failed-job":
+        jobs[0]["conclusion"] = "failure"
+    run_reply = {
+        "total_count": len(runs) + (case == "truncated"),
+        "workflow_runs": runs,
+    }
+    job_reply = {"total_count": len(jobs), "jobs": jobs}
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text()
+    step = workflow.split("- name: Choose validation tier\n", 1)[1]
+    step = step.split("\n      - name:", 1)[0]
+    script = dedent(step.split("        run: |\n", 1)[1])
+    output = tmp_path / "github-output"
+    marker = tmp_path / "gh-called"
+    gh = tmp_path / "gh"
+    gh.write_text(
+        '#!/bin/sh\n'
+        'printf "%s\\n" "$*" >> "$GH_MARKER"\n'
+        'case "$2" in\n'
+        '  */actions/runs?head_sha=*)\n'
+        '    printf "%s\\n" "$GH_RUNS_REPLY"; exit "$GH_RUNS_EXIT";;\n'
+        '  */actions/runs/123/attempts/1/jobs?per_page=100)\n'
+        '    printf "%s\\n" "$GH_JOBS_REPLY"; exit "$GH_JOBS_EXIT";;\n'
+        '  *) exit 2;;\n'
+        'esac\n'
+    )
+    gh.chmod(0o700)
+    env = {
+        **os.environ,
+        "PATH": f"{tmp_path}:{os.environ['PATH']}",
+        "EVENT_NAME": "push",
+        "BASE_REF": "",
+        "REF_NAME": "refs/heads/main",
+        "HEAD_SHA": sha,
+        "REPOSITORY": "heimgewebe/bureau",
+        "GITHUB_OUTPUT": str(output),
+        "GH_MARKER": str(marker),
+        "GH_RUNS_REPLY": "broken JSON" if case == "invalid-json" else json.dumps(run_reply),
+        "GH_JOBS_REPLY": json.dumps(job_reply),
+        "GH_RUNS_EXIT": "1" if case == "runs-unavailable" else "0",
+        "GH_JOBS_EXIT": "1" if case == "jobs-unavailable" else "0",
+    }
+    subprocess.run(["bash", "-c", script], env=env, check=True, capture_output=True)
+    expected = "main-reuse" if case == "complete" else "full"
+    assert output.read_text() == f"tier={expected}\n"
+    calls = marker.read_text().splitlines()
+    assert f"head_sha={sha}" in calls[0]
+    if case == "complete":
+        assert len(calls) == 2
+
+
+def test_main_reuse_preserves_main_context_and_full_fallback():
+    workflow = (ROOT / ".github/workflows/validate.yml").read_text()
+    makefile = (ROOT / "Makefile").read_text()
+    assert "actions: read" in workflow
+    assert "steps.tier.outputs.tier == 'main-reuse'" in workflow
+    assert "run: make validate-main-reuse" in workflow
+    assert "validate-main-reuse: validate-admission" in makefile
+    assert (
+        "tests/test_runtime_refresh.py::"
+        "test_registry_source_precondition_authorities_have_complete_no_run_acceptance_contracts"
+    ) in makefile

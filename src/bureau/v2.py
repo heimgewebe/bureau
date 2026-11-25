@@ -5017,6 +5017,19 @@ class Dispatcher(legacy.Dispatcher):
         except OpenPullRequestObservationError as exc:
             return _repo_write_guard_failure_reservations(self.registry, str(exc))
 
+    def _claim_requires_open_pr_observation(self, task: legacy.Task) -> bool:
+        """Native PR reservations can only block overlapping repository writes."""
+        if self.open_pr_reservations_provider is not open_pull_request_reservations:
+            # An explicitly supplied provider retains its existing contract.
+            return True
+        return any(
+            legacy.modes_conflict(claim.mode, "write-blocker")
+            and legacy.overlaps(claim.resource, resource.id, self.registry.resources)
+            for claim in task.claims
+            for resource in self.registry.resources.values()
+            if resource.type == "git-repository"
+        )
+
     def _closure_bridge_applies(
         self, task: legacy.Task, state: str, initiative: legacy.Initiative
     ) -> bool:
@@ -5528,15 +5541,20 @@ class Dispatcher(legacy.Dispatcher):
                     initiative_registry=fresh_initiative_registry,
                 )
                 review_reason = f"execution is {task.mode}/{task.policy}"
-                # Observe live PRs only once a locally eligible candidate exists.
-                if open_pr_reservations is None and (
-                    not reasons
-                    or (
-                        reasons == [review_reason]
-                        and task.mode == "interactive-agent"
-                        and task.policy == "review-before-effect"
-                        and (approved or break_glass)
+                # Observe live PRs only for a locally eligible candidate that
+                # can actually conflict with native repository write blockers.
+                if (
+                    open_pr_reservations is None
+                    and (
+                        not reasons
+                        or (
+                            reasons == [review_reason]
+                            and task.mode == "interactive-agent"
+                            and task.policy == "review-before-effect"
+                            and (approved or break_glass)
+                        )
                     )
+                    and self._claim_requires_open_pr_observation(task)
                 ):
                     open_pr_reservations = self._open_pr_reservations(strict=True)
                     reservations += open_pr_reservations
@@ -5587,7 +5605,9 @@ class Dispatcher(legacy.Dispatcher):
                 + 1
             )
         assert selected_effective_state is not None
-        assert open_pr_reservations is not None
+        if open_pr_reservations is None:
+            assert not self._claim_requires_open_pr_observation(selected)
+            open_pr_reservations = []
         if approval_evidence is None:
             approval, _approval_decision = _coordinated_claim_approval(
                 selected,
@@ -5743,7 +5763,11 @@ class Dispatcher(legacy.Dispatcher):
             task_id=task.id,
             required_level_override=_coordinated_task_declared_required_level(task),
         )
-        fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
+        fresh_open_pr_reservations = (
+            self._open_pr_reservations(strict=True)
+            if self._claim_requires_open_pr_observation(task)
+            else []
+        )
         with self.store.connect() as state_connection:
             fresh_overlays = self.store.overlays(state_connection, self.registry)
         fresh_open_pr_scope = _task_open_pr_scope_assessment(
@@ -6133,7 +6157,11 @@ class Dispatcher(legacy.Dispatcher):
                     overlays,
                     initiative_registry=fresh_initiative_registry,
                 )
-                if not reasons and open_pr_reservations is None:
+                if (
+                    not reasons
+                    and open_pr_reservations is None
+                    and self._claim_requires_open_pr_observation(task)
+                ):
                     open_pr_reservations = self._open_pr_reservations(strict=True)
                     reservations += open_pr_reservations
                     reasons = self.reasons(

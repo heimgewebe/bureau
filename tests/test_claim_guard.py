@@ -3223,3 +3223,109 @@ def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypat
         with pytest.raises(bureau_v2.OpenPullRequestObservationError):
             bureau_v2._github_open_pull_requests("heimgewebe/example")
         assert calls == ["inventory", "identity-batch"]
+
+
+
+@pytest.mark.parametrize("method", ["claim_next", "claim_intent"])
+@pytest.mark.parametrize(
+    "resource,mode,conflicts",
+    [
+        ("repo.alpha", "read", False),
+        ("local.component", "write", False),
+        ("repo.alpha", "write", True),
+        ("repo.alpha", "exclusive", True),
+        ("root", "write", True),
+    ],
+)
+def test_native_claim_observes_prs_only_if_claim_can_conflict(
+    registry_factory, tmp_path, monkeypatch, method, resource, mode, conflicts
+):
+    root = registry_factory(1)
+    (root / "registry/resources/local.json").write_text(json.dumps({
+        "schema_version": 1, "id": "local.component",
+        "type": "component", "parent": "root",
+    }))
+    task_id = "BUR-TEST-001-T001"
+    task_path = root / f"registry/tasks/{task_id}.json"
+    spec = json.loads(task_path.read_text())
+    spec["claims"] = [{"resource": resource, "mode": mode, "isolation": "none"}]
+    task_path.write_text(json.dumps(spec))
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path", lambda _: "heimgewebe/example"
+    )
+    calls = []
+
+    def unavailable(repository):
+        calls.append(repository)
+        raise bureau_v2.OpenPullRequestObservationError("fixture PR provider unavailable")
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", unavailable)
+    dispatcher = Dispatcher(registry, store)
+    args = (
+        {"task_id": task_id, "approved": True}
+        if method == "claim_intent"
+        else {"reconcile_first": False}
+    )
+    if conflicts:
+        with pytest.raises(NoEligibleTask, match="fixture PR provider unavailable"):
+            getattr(dispatcher, method)("worker", ("repository",), **args)
+        assert calls == ["heimgewebe/example"]
+    else:
+        result = getattr(dispatcher, method)("worker", ("repository",), **args)
+        assert result["status"] in {"claimed", "claim-intent"}
+        assert calls == []
+        if method == "claim_intent":
+            scope = result["ready_supply"]["open_pr_scope"]
+            assert scope["reservations"] == []
+            assert not scope["requires_evidence"]
+
+
+@pytest.mark.parametrize("custom_provider", [False, True])
+def test_coordinated_read_claim_keeps_reservation_without_native_pr_observation(
+    registry_factory, tmp_path, monkeypatch, custom_provider
+):
+    root = registry_factory(1)
+    task_id = "BUR-TEST-001-T001"
+    task_path = root / f"registry/tasks/{task_id}.json"
+    spec = json.loads(task_path.read_text())
+    spec["claims"] = [{"resource": "repo", "mode": "read", "isolation": "none"}]
+    task_path.write_text(json.dumps(spec))
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path", lambda _: "heimgewebe/example"
+    )
+    calls = []
+
+    def unavailable(repository):
+        calls.append(repository)
+        raise bureau_v2.OpenPullRequestObservationError("fixture provider unavailable")
+
+    def explicit_provider(registry):
+        calls.append("explicit")
+        return bureau_v2._repo_write_guard_failure_reservations(
+            registry, "fixture explicit provider"
+        )
+
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", unavailable)
+    dispatcher = Dispatcher(
+        registry, store,
+        open_pr_reservations_provider=explicit_provider if custom_provider else None,
+    )
+    result = dispatcher.claim_intent("reader", ("repository",), task_id=task_id)
+    intent = result["intent"]
+    assert intent["required_resource_keys"] == []
+    assert intent["workspace"] is None
+    assert result["ready_supply"]["open_pr_scope"]["reservations"] == []
+    claimed = dispatcher.commit_claim_intent(intent, None)
+    assert claimed["status"] == "claimed"
+    with store.connect() as connection:
+        reservations = store.reservations(connection)
+    assert len(reservations) == 1
+    assert reservations[0].resource == "repo"
+    assert reservations[0].mode == "read"
+    assert calls == (["explicit", "explicit"] if custom_provider else [])

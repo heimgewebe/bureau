@@ -2231,18 +2231,30 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             task_ids, binding_status, binding_reason = _pull_request_task_binding(
                 pull_request, registry
             )
-            scope_resources = tuple(
-                dict.fromkeys(
-                    (
-                        *_open_pr_scope_resources_for_binding(
-                            registry, resource.id, task_ids, binding_status
-                        ),
-                        *absorbed_scope_resources,
-                    )
-                )
-            )
             file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
                 pull_request, repository, number
+            )
+            bound_scopes = _open_pr_scope_resources_for_binding(
+                registry, resource.id, task_ids, binding_status
+            )
+            if file_scope_complete:
+                # Distinct, successfully observed repositories have their own
+                # PR reservations. Active run reservations remain independent.
+                bound_scopes = tuple(
+                    scope
+                    for scope in bound_scopes
+                    if (
+                        scope == resource.id
+                        or scope in absorbed_scope_resources
+                        or not repositories_by_resource.get(scope)
+                        or repositories_by_resource.get(scope) == repository
+                        or scope in resource_errors
+                        or repositories_by_resource.get(scope) in observation_errors
+                        or repositories_by_resource.get(scope) not in observed
+                    )
+                )
+            scope_resources = tuple(
+                dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
             )
             result.append(
                 OpenPullRequestReservation(

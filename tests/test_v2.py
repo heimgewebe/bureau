@@ -9229,6 +9229,9 @@ def test_runtime_closeout_cli_contract_parses_exact_runtime_options():
         "wrong-branch",
         "wrong-worktree",
         "remote-replaced",
+        "wrong-base-dir",
+        "dirty-worktree",
+        "clean-replay",
     ],
 )
 def test_followup_remote_baseline_probe(registry_factory, tmp_path, monkeypatch, scenario):
@@ -9295,9 +9298,11 @@ def test_followup_remote_baseline_probe(registry_factory, tmp_path, monkeypatch,
     # Canonical Registry snapshots require the dispatcher's bound runtime identity.
     # Isolate the gate's environment, not the forwarding contract.
     identity = {"test_runtime_identity": True}
+
     def runtime_gate(*args, **kwargs):
         assert kwargs["runtime_identity"] is identity
         return {"execution_blocked": False}
+
     monkeypatch.setattr(fetch, "_runtime_gate", runtime_gate)
     dispatcher = Dispatcher(registry, store, runtime_identity=identity)
     if scenario == "remote-unavailable":
@@ -9388,10 +9393,32 @@ def test_followup_remote_baseline_probe(registry_factory, tmp_path, monkeypatch,
         assert git_output(root, "rev-parse", branch) == historical
         assert not store.run(intent["run_id"])["workspace_path"]
         return
-    run = bureau_v2.create_workspace(registry, store, intent["run_id"], tmp_path / "worktrees")
+    if scenario == "wrong-base-dir":
+        wrong_root = tmp_path / "wrong-root"
+        with pytest.raises(bureau_v2.legacy.StateError, match="workspace identity"):
+            bureau_v2.create_workspace(registry, store, intent["run_id"], wrong_root)
+        assert not wrong_root.exists()
+        assert not store.run(intent["run_id"])["workspace_path"]
+        return
+    if scenario in {"dirty-worktree", "clean-replay"}:
+        branch = intent["workspace"]["workspace_branch"]
+        destination = Path(intent["workspace"]["workspace_path"])
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        git_output(root, "worktree", "add", "-b", branch, str(destination), current)
+        if scenario == "dirty-worktree":
+            (destination / "new-module.txt").write_text("unbound changes")
+            with pytest.raises(bureau_v2.legacy.StateError, match="dirty"):
+                bureau_v2.create_workspace(registry, store, intent["run_id"])
+            assert (destination / "new-module.txt").read_text() == "unbound changes"
+            assert not store.run(intent["run_id"])["workspace_path"]
+            return
+    # The current follow-up derives its planned destination without another input.
+    base_dir = tmp_path / "worktrees" if scenario in {"explicit-pin", "legacy"} else None
+    run = bureau_v2.create_workspace(registry, store, intent["run_id"], base_dir)
     worktree = Path(run["workspace_path"])
+    assert str(worktree) == intent["workspace"]["workspace_path"]
     assert git_output(worktree, "rev-parse", "HEAD") == expected
-    assert (worktree / "new-module.txt").exists() == (scenario == "current-missing")
+    assert (worktree / "new-module.txt").exists() == (scenario not in {"explicit-pin", "legacy"})
     assert git_output(root, "rev-parse", "HEAD") == historical
     assert git_output(root, "rev-parse", "refs/remotes/origin/main") == historical
     assert not (root / ".git/FETCH_HEAD").exists()

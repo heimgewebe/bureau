@@ -10390,7 +10390,6 @@ def create_workspace(
     _git(repo, "cat-file", "-e", f"{baseline}^{{commit}}")
     root = base_dir.resolve() if base_dir else repo.parent / ".bureau-worktrees"
     destination = (root / run_id).resolve()
-    root.mkdir(parents=True, exist_ok=True)
     branch_task = re.sub(r"[^A-Za-z0-9._-]+", "-", task.id).lower()
     branch = f"bureau/{branch_task}/{run_id.rsplit('-', 1)[-1].lower()}"
 
@@ -10398,10 +10397,20 @@ def create_workspace(
         envelope.get("claim_intent", {}).get("operator_approval", {})
         .get("current_baseline_identity_sha256")
     )
-    if identity and _current_followup_identity(repo) != identity:
-        raise legacy.StateError(
-            "current baseline repository identity changed before workspace creation"
-        )
+    if identity:
+        planned = envelope["claim_intent"]["workspace"]
+        if base_dir is None:
+            root = Path(planned["workspace_path"]).parent
+            destination = (root / run_id).resolve()
+        if (
+            planned["repository"] != str(repo)
+            or planned["workspace_path"] != str(destination)
+            or planned["workspace_branch"] != branch
+            or planned["baseline_commit"] != baseline
+            or _current_followup_identity(repo) != identity
+        ):
+            raise legacy.StateError("current baseline workspace identity changed")
+    root.mkdir(parents=True, exist_ok=True)
     registered = _worktree_paths(repo)
     created = False
     if destination in registered:
@@ -10410,8 +10419,13 @@ def create_workspace(
             raise legacy.StateError(
                 f"existing workspace {destination} uses unexpected branch {current_branch}"
             )
-        if identity and _git(destination, "rev-parse", "HEAD").stdout.strip() != baseline:
-            raise legacy.StateError("existing unbound workspace does not match current baseline")
+        if identity and (
+            _git(destination, "rev-parse", "HEAD").stdout.strip() != baseline
+            or _git(destination, "status", "--porcelain").stdout.strip()
+        ):
+            raise legacy.StateError(
+                "existing unbound workspace is dirty or does not match current baseline"
+            )
     elif destination.exists():
         raise legacy.StateError(
             f"workspace destination exists but is not registered: {destination}"

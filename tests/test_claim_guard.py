@@ -3363,6 +3363,10 @@ def test_coordinated_read_claim_keeps_reservation_without_native_pr_observation(
 
 @pytest.mark.parametrize("workers", [1, 16])
 def test_primary_quota_latch_limits_inflight_requests(monkeypatch, workers):
+    # Exercise per-repository fallback after an inconclusive optional preflight.
+    monkeypatch.setattr(
+        bureau_v2, "_batch_empty_open_pr_observation", lambda _: ({}, {}, False)
+    )
     repositories = [f"heimgewebe/fixture-{n}" for n in range(46)]
     calls = []
     lock = threading.Lock()
@@ -3391,6 +3395,10 @@ def test_primary_quota_latch_limits_inflight_requests(monkeypatch, workers):
 
 
 def test_primary_quota_latch_checked_by_delayed_workers_and_reset(monkeypatch):
+    # Exercise per-repository fallback after an inconclusive optional preflight.
+    monkeypatch.setattr(
+        bureau_v2, "_batch_empty_open_pr_observation", lambda _: ({}, {}, False)
+    )
     repositories = [f"heimgewebe/fixture-{n}" for n in range(46)]
     calls = []
     lock = threading.Lock()

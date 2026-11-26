@@ -1413,6 +1413,129 @@ def _github_open_pull_requests(
         return observed
 
 
+def _batch_empty_open_pr_observation(
+    repositories: tuple[str, ...],
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str], bool]:
+    """Observe empty repositories and exact scoped absence without a second request."""
+    aliases = {f"r{i}": repo for i, repo in enumerate(repositories)}
+    fields = []
+    for alias, repo in aliases.items():
+        if not legacy.GITHUB_REPOSITORY_SLUG_RE.fullmatch(repo):
+            return {}, {}, False
+        owner, name = repo.split("/", 1)
+        fields.append(
+            f"{alias}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})"
+            "{nameWithOwner pullRequests(states:OPEN,first:1){totalCount}}"
+        )
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        response = subprocess.run(
+            [binary, "api", "graphql", "-f", "query=query { " + " ".join(fields) + " }"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {}, {}, False
+
+    def global_failure(detail: str):
+        if response.returncode and _github_graphql_primary_exhausted("GraphQL: " + detail):
+            return {}, {}, True
+        if response.returncode and _github_secondary_throttle(detail):
+            return (
+                {},
+                {repo: f"open PR inventory throttled for {repo}" for repo in repositories},
+                False,
+            )
+        return {}, {}, False
+
+    # The CLI reports rc=1 for partial GraphQL errors. Structured per-alias
+    # data is authoritative for those aliases, not transport debug headers.
+    try:
+        payload = json.loads(response.stdout)
+    except (ValueError, TypeError):
+        # Never mistake verbose HTTP header inventories for an actual Retry-After.
+        diagnostic = "\n".join(
+            line
+            for line in response.stderr.splitlines()
+            if line.lstrip().startswith(("gh:", "GraphQL:"))
+        )
+        return global_failure(diagnostic)
+    if not isinstance(payload, dict):
+        return {}, {}, False
+    data = payload.get("data")
+    errors = payload.get("errors", [])
+    if not isinstance(errors, list) or any(not isinstance(err, dict) for err in errors):
+        return {}, {}, False
+    if response.returncode and not errors:
+        diagnostic = "\n".join(
+            line
+            for line in response.stderr.splitlines()
+            if line.lstrip().startswith(("gh:", "GraphQL:"))
+        )
+        return global_failure(diagnostic)
+
+    def error_detail(err: dict[str, Any]) -> str:
+        return " ".join(str(err.get(field) or "") for field in ("type", "message"))
+
+    if not isinstance(data, dict):
+        return global_failure("\n".join(error_detail(err) for err in errors))
+
+    by_alias: dict[str, list[dict[str, Any]]] = {}
+    for err in errors:
+        path = err.get("path")
+        if (
+            not isinstance(path, list)
+            or not path
+            or not isinstance(path[0], str)
+            or path[0] not in aliases
+        ):
+            return global_failure("\n".join(error_detail(err) for err in errors))
+        by_alias.setdefault(path[0], []).append(err)
+
+    empty: dict[str, list[dict[str, Any]]] = {}
+    failed: dict[str, str] = {}
+    primary = False
+    for alias, repo in aliases.items():
+        row = data.get(alias)
+        problems = by_alias.get(alias, [])
+        if problems:
+            if (
+                alias in data
+                and row is None
+                and len(problems) == 1
+                and problems[0].get("type") == "NOT_FOUND"
+                and problems[0].get("path") == [alias]
+                and problems[0].get("message")
+                == f"Could not resolve to a Repository with the name '{repo}'."
+            ):
+                failed[repo] = (
+                    f"gh pr list failed for {repo}: GraphQL: {problems[0]['message']} (repository)"
+                )
+            else:
+                detail = "\n".join(error_detail(err) for err in problems)
+                if _github_secondary_throttle(detail):
+                    failed[repo] = f"open PR inventory throttled for {repo}: {detail}"
+                elif _github_graphql_primary_exhausted("GraphQL: " + detail):
+                    primary = True
+            continue
+        if (
+            not isinstance(row, dict)
+            or not isinstance(row.get("nameWithOwner"), str)
+            or row["nameWithOwner"].casefold() != repo.casefold()
+        ):
+            continue
+        pull = row.get("pullRequests")
+        if (
+            isinstance(pull, dict)
+            and type(pull.get("totalCount")) is int
+            and pull["totalCount"] == 0
+        ):
+            empty[repo] = []
+    return empty, failed, primary
+
+
 def _observe_open_pull_requests(
     repositories: Iterable[str],
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
@@ -1425,6 +1548,19 @@ def _observe_open_pull_requests(
     # Share only a confirmed primary-quota observation within this pass.
     # Workers already in flight may finish; a new pass starts without the latch.
     graphql_primary_exhausted = Event()
+    if len(ordered) >= 12:
+        for offset in range(0, len(ordered), 24):
+            empty, failed, primary = _batch_empty_open_pr_observation(
+                ordered[offset:offset + 24]
+            )
+            observed.update(empty)
+            errors.update(failed)
+            if primary:
+                graphql_primary_exhausted.set()
+                break
+        ordered = tuple(r for r in ordered if r not in observed and r not in errors)
+        if not ordered:
+            return observed, errors
 
     def observe(repository: str) -> list[dict[str, Any]]:
         return _github_open_pull_requests(

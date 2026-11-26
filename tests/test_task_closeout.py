@@ -737,7 +737,10 @@ def test_failed_run_history_rejects_changed_failed_row_at_apply(registry_factory
     assert _current_spec(store, task_id)["spec"]["state"] == "ready"
 
 
-def test_failed_run_history_rejects_live_pickup_lease(registry_factory, tmp_path, monkeypatch):
+@pytest.mark.parametrize("repair_projection", [False, True])
+def test_failed_run_history_rejects_live_pickup_lease(
+    registry_factory, tmp_path, monkeypatch, repair_projection
+):
     from test_v2 import coordinated_lease_database, prepare_coordinated_registry, setup
 
     root = registry_factory(1, mode="write")
@@ -776,13 +779,35 @@ def test_failed_run_history_rejects_live_pickup_lease(registry_factory, tmp_path
     finally:
         unavailable.rename(database)
     before = _failed_run_rows(store, task_id)
+    append_projection = store.append_task_projection_delta
+    if repair_projection:
+        monkeypatch.setattr(store, "append_task_projection_delta", lambda *_a, **_kw: None)
     result = apply_task_no_run_closeout(
         registry, store, task_id, evidence, reviewer=REVIEWER,
         expected_preview_sha256=preview["preview_sha256"],
     )
     assert result["status"] == "verified"
     assert _failed_run_rows(store, task_id) == before
-    assert store.replay_projection()["matches_current"] is True
+    if repair_projection:
+        with pytest.raises(StateError, match="replayed state projection does not match"):
+            store.replay_projection()
+    else:
+        assert store.replay_projection()["matches_current"] is True
+    monkeypatch.setattr(store, "append_task_projection_delta", append_projection)
+    # A committed receipt must remain replayable after the historical external
+    # lease database is lost. No new closeout may be authorized in that state.
+    database.rename(unavailable)
+    try:
+        again = apply_task_no_run_closeout(
+            registry, store, task_id, evidence, reviewer=REVIEWER,
+            expected_preview_sha256=preview["preview_sha256"],
+        )
+        assert again["idempotent"] is True
+        assert again["receipt_sha256"] == result["receipt_sha256"]
+        assert store.replay_projection()["matches_current"] is True
+        assert _failed_run_rows(store, task_id) == before
+    finally:
+        unavailable.rename(database)
 
 
 def test_failed_run_history_requires_post_failure_acceptance(registry_factory, tmp_path):

@@ -246,9 +246,13 @@ def _manual_authentications(
 
 
 def _terminal_failed_history(
-    connection: Any, task_id: str, *, allow_failed: bool = False
+    connection: Any, task_id: str, *, allow_failed: bool = False, check_live_leases: bool = True
 ) -> tuple[list[dict[str, str]], datetime | None]:
-    """Bind all failed run rows; do not treat a failed run as acceptance."""
+    """Bind failed rows; live lease checks authorize new closeout only.
+
+    Historical receipt replay must depend on its committed StateStore facts,
+    not on the continued availability of the external resource database.
+    """
     rows = connection.execute(
         "SELECT * FROM runs WHERE task_id=? ORDER BY run_id", (task_id,)
     ).fetchall()
@@ -307,13 +311,14 @@ def _terminal_failed_history(
                 for key in ("run_id", "task_id", "worker_id", "task_sha256", "plan_sha256")
             ):
                 raise legacy.StateError(f"terminal failed run claim binding mismatch: {run_id}")
-            lease = _historical_pickup_lease_status(
-                intent, resource_db=runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB
-            )
-            if lease.get("status") not in {"not-required", "terminal-released-or-expired"}:
-                raise legacy.StateError(
-                    f"terminal failed run retains live or ambiguous pickup leases: {run_id}"
+            if check_live_leases:
+                lease = _historical_pickup_lease_status(
+                    intent, resource_db=runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB
                 )
+                if lease.get("status") not in {"not-required", "terminal-released-or-expired"}:
+                    raise legacy.StateError(
+                        f"terminal failed run retains live or ambiguous pickup leases: {run_id}"
+                    )
         elif envelope.get("lease_binding") is not None:
             raise legacy.StateError(f"terminal failed run has unbound pickup leases: {run_id}")
         latest = updated if latest is None else max(latest, updated)
@@ -355,7 +360,7 @@ def _preview_from_connection(
     if type(allow_failed) is not bool:
         raise legacy.StateError("terminal failed history opt-in must be a boolean")
     history, latest_failure = _terminal_failed_history(
-        connection, task_id, allow_failed=allow_failed
+        connection, task_id, allow_failed=allow_failed, check_live_leases=not replaying
     )
     status_row = connection.execute(
         "SELECT task_sha256,plan_sha256,state,receipt_sha256 FROM task_status WHERE task_id=?",
@@ -672,7 +677,10 @@ def _historical_no_run_task_projections(
             )
         try:
             history, _ = _terminal_failed_history(
-                connection, changed_task_id, allow_failed="terminal_failed_runs" in receipt
+                connection,
+                changed_task_id,
+                allow_failed="terminal_failed_runs" in receipt,
+                check_live_leases=False,
             )
             if history and (
                 receipt.get("no_run_proven") is not False

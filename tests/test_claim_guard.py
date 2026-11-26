@@ -21,7 +21,7 @@ def _observed_pr_dispatcher(registry, store, monkeypatch, pull_requests):
     monkeypatch.setattr(
         bureau_v2,
         "_github_open_pull_requests",
-        lambda _repository: pull_requests,
+        lambda _repository, **_kwargs: pull_requests,
     )
     return Dispatcher(registry, store)
 
@@ -54,7 +54,7 @@ def test_what_now_bounded_advisory_never_waits_for_blocking_github_observer(
     )
     called = []
 
-    def blocked_observer(repository):
+    def blocked_observer(repository, **_kwargs):
         called.append(repository)
         threading.Event().wait(4.0)
         raise bureau_v2.OpenPullRequestObservationError("observer unavailable")
@@ -102,7 +102,7 @@ def test_what_now_bounded_advisory_never_waits_for_blocking_github_observer(
     assert without_capability["selected"] is None
     assert without_capability["selected_advisory"]["claim_eligible"] is False
 
-    def live_fail_closed(repository):
+    def live_fail_closed(repository, **_kwargs):
         called.append(repository)
         raise bureau_v2.OpenPullRequestObservationError("live observer unavailable")
 
@@ -242,7 +242,7 @@ def test_configured_github_slug_does_not_require_local_checkout_for_observation(
     def repository_for_path(_path):
         raise AssertionError("configured github_slug must bypass local remote discovery")
 
-    def open_pull_requests(repository):
+    def open_pull_requests(repository, **_kwargs):
         observed.append(repository)
         return []
 
@@ -409,7 +409,7 @@ def test_open_pull_request_observation_failure_is_resource_scoped(
     def repository_for_path(path):
         return "heimgewebe/healthy" if path == repo2_path else "heimgewebe/broken"
 
-    def open_pull_requests(repository):
+    def open_pull_requests(repository, **_kwargs):
         if repository == "heimgewebe/broken":
             raise bureau_v2.OpenPullRequestObservationError("broken gh observation")
         return []
@@ -612,7 +612,7 @@ def test_open_pr_observation_parallelizes_distinct_repositories(monkeypatch):
     calls: list[str] = []
     lock = threading.Lock()
 
-    def observe(repository):
+    def observe(repository, **_kwargs):
         with lock:
             calls.append(repository)
         barrier.wait(timeout=2)
@@ -631,7 +631,7 @@ def test_open_pr_observation_parallelizes_distinct_repositories(monkeypatch):
 
 
 def test_open_pr_observation_keeps_failures_repository_scoped(monkeypatch):
-    def observe(repository):
+    def observe(repository, **_kwargs):
         if repository == "heimgewebe/broken":
             raise bureau_v2.OpenPullRequestObservationError("unavailable")
         return []
@@ -1285,7 +1285,7 @@ def test_valid_bound_pr_disjoint_source_scope_preserves_read_only_extra_claims(
             return "heimgewebe/beta"
         return None
 
-    def pull_requests(repository):
+    def pull_requests(repository, **_kwargs):
         if repository == "heimgewebe/alpha":
             return [
                 {
@@ -2566,7 +2566,7 @@ def _redirect_registry(registry_factory, monkeypatch, resolver):
     return root
 
 
-def _redirected_pull_requests(repository):
+def _redirected_pull_requests(repository, **_kwargs):
     """Both slugs resolve server-side to the same canonical repository."""
     if repository not in {"heimgewebe/lenskit", "heimgewebe/repoground"}:
         return []
@@ -2630,7 +2630,7 @@ def test_github_redirect_missing_task_binding_still_blocks_absorbed_alias_claim(
     }
     task_path.write_text(json.dumps(task), encoding="utf-8")
 
-    def missing_binding(repository):
+    def missing_binding(repository, **_kwargs):
         if repository not in {"heimgewebe/lenskit", "heimgewebe/repoground"}:
             return []
         return [
@@ -2699,7 +2699,7 @@ def test_pull_requests_contradicting_the_observed_identity_block(registry_factor
         lambda slug: "heimgewebe/repoground",
     )
 
-    def contradictory(repository):
+    def contradictory(repository, **_kwargs):
         if repository != "heimgewebe/repoground":
             return []
         return [
@@ -3083,7 +3083,7 @@ def test_bound_pr_cross_repo_claims_use_independent_observation(
             )
         return result
 
-    def pull_requests(slug):
+    def pull_requests(slug, **_kwargs):
         if slug == "heimgewebe/alpha":
             return [pr(slug, 10, ("docs/other.md",), complete=source_complete)]
         if target_status == "unknown":
@@ -3287,7 +3287,7 @@ def test_native_claim_observes_prs_only_if_claim_can_conflict(
     )
     calls = []
 
-    def unavailable(repository):
+    def unavailable(repository, **_kwargs):
         calls.append(repository)
         raise bureau_v2.OpenPullRequestObservationError("fixture PR provider unavailable")
 
@@ -3330,7 +3330,7 @@ def test_coordinated_read_claim_keeps_reservation_without_native_pr_observation(
     )
     calls = []
 
-    def unavailable(repository):
+    def unavailable(repository, **_kwargs):
         calls.append(repository)
         raise bureau_v2.OpenPullRequestObservationError("fixture provider unavailable")
 
@@ -3358,3 +3358,147 @@ def test_coordinated_read_claim_keeps_reservation_without_native_pr_observation(
     assert reservations[0].resource == "repo"
     assert reservations[0].mode == "read"
     assert calls == (["explicit", "explicit"] if custom_provider else [])
+
+
+
+@pytest.mark.parametrize("workers", [1, 16])
+def test_primary_quota_latch_limits_inflight_requests(monkeypatch, workers):
+    repositories = [f"heimgewebe/fixture-{n}" for n in range(46)]
+    calls = []
+    lock = threading.Lock()
+    barrier = threading.Barrier(workers)
+
+    def run(argv, **kwargs):
+        with lock:
+            calls.append(tuple(argv))
+            graphql = sum(call[1] == "pr" for call in calls)
+        if argv[1] == "pr":
+            if graphql <= workers:
+                barrier.wait(timeout=5)
+            return subprocess.CompletedProcess(
+                argv, 1, "", "GraphQL: API rate limit already exceeded for user ID 123."
+            )
+        assert argv[-1].endswith("/pulls?state=open&per_page=100")
+        return subprocess.CompletedProcess(argv, 0, "[[]]", "")
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", str(workers))
+    monkeypatch.setattr(bureau_v2.subprocess, "run", run)
+    seen, errors = bureau_v2._observe_open_pull_requests(repositories)
+    assert seen == {repository: [] for repository in repositories}
+    assert errors == {}
+    assert sum(call[1] == "pr" for call in calls) == workers
+    assert sum(call[1] != "pr" for call in calls) == 46
+
+
+def test_primary_quota_latch_checked_by_delayed_workers_and_reset(monkeypatch):
+    repositories = [f"heimgewebe/fixture-{n}" for n in range(46)]
+    calls = []
+    lock = threading.Lock()
+    ready = threading.Event()
+    original = bureau_v2._github_open_pull_requests
+
+    def staged(repository, **kwargs):
+        if repository != repositories[0]:
+            assert ready.wait(5)
+        return original(repository, **kwargs)
+
+    def run(argv, **kwargs):
+        with lock:
+            calls.append(tuple(argv))
+        if argv[1] == "pr":
+            assert argv[argv.index("--repo") + 1] == repositories[0]
+            return subprocess.CompletedProcess(
+                argv, 1, "", "GraphQL: API rate limit exceeded"
+            )
+        assert argv[-1].endswith("/pulls?state=open&per_page=100")
+        ready.set()
+        return subprocess.CompletedProcess(argv, 0, "[[]]", "")
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "16")
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", staged)
+    monkeypatch.setattr(bureau_v2.subprocess, "run", run)
+    for _ in range(2):
+        calls.clear()
+        ready.clear()
+        seen, errors = bureau_v2._observe_open_pull_requests(repositories)
+        assert seen == {repository: [] for repository in repositories}
+        assert errors == {}
+        assert sum(call[1] == "pr" for call in calls) == 1
+        assert sum(call[1] != "pr" for call in calls) == 46
+
+
+@pytest.mark.parametrize(
+    "diagnostic,expected",
+    [
+        ("GraphQL: API rate limit exceeded", True),
+        ("GraphQL: API rate limit already exceeded for user ID 123.", True),
+        ("graphql_rate_limit", True),
+        ("GraphQL: secondary rate limit exceeded", False),
+        ("GraphQL: API rate limit exceeded (HTTP 429)", False),
+        ("GraphQL: API rate limit exceeded; Retry-After: 2", False),
+        ("GraphQL: Resource not accessible by integration", False),
+        ("GraphQL: temporary upstream failure", False),
+        ("GraphQL: rate limit unavailable", False),
+        ("API rate limit exceeded", False),
+        ("connection refused", False),
+    ],
+)
+def test_primary_quota_latch_requires_unambiguous_diagnostic(diagnostic, expected):
+    assert bureau_v2._github_graphql_primary_exhausted(diagnostic) is expected
+
+
+@pytest.mark.parametrize("mode", ["primary", "secondary", "other"])
+def test_primary_quota_latch_set_during_batch_revalidation(monkeypatch, mode):
+    rows = [
+        {
+            "number": n, "baseRefOid": "a" * 40, "headRefOid": "b" * 40,
+            "changedFiles": 1,
+            "files": [{"path": f"src/{n}.py", "changeType": "MODIFIED"}],
+        }
+        for n in (17, 18)
+    ]
+    calls = []
+
+    def run(argv, **kwargs):
+        if argv[1] == "pr":
+            repository = argv[argv.index("--repo") + 1]
+            fields = argv[argv.index("--json") + 1].split(",")
+            calls.append(("inventory" if "files" in fields else "batch", repository))
+            if repository.endswith("/a"):
+                if "files" in fields:
+                    return subprocess.CompletedProcess(argv, 0, json.dumps(rows), "")
+                detail = {
+                    "primary": "GraphQL: API rate limit exceeded",
+                    "secondary": "HTTP 429 secondary rate limit",
+                    "other": "GraphQL: temporary upstream failure",
+                }[mode]
+                return subprocess.CompletedProcess(argv, 1, "", detail)
+            assert repository.endswith("/b")
+            assert mode != "primary", "known exhausted GraphQL must not be called"
+            return subprocess.CompletedProcess(argv, 0, "[]", "")
+        endpoint = argv[-1]
+        if endpoint.endswith("/pulls?state=open&per_page=100"):
+            calls.append(("rest-inventory", endpoint))
+            return subprocess.CompletedProcess(argv, 0, "[[]]", "")
+        calls.append(("rest-identity", endpoint))
+        return subprocess.CompletedProcess(
+            argv, 0, json.dumps({
+                "state": "open", "base": {"sha": "a" * 40},
+                "head": {"sha": "b" * 40}, "changed_files": 1,
+            }), ""
+        )
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "1")
+    monkeypatch.setattr(bureau_v2.subprocess, "run", run)
+    seen, errors = bureau_v2._observe_open_pull_requests(["heimgewebe/a", "heimgewebe/b"])
+    graphql = sum(kind in ("inventory", "batch") for kind, _ in calls)
+    rest = len(calls) - graphql
+    assert (graphql, rest, len(errors)) == {
+        "primary": (2, 3, 0), "secondary": (3, 0, 1), "other": (3, 2, 0)
+    }[mode]
+    assert seen["heimgewebe/b"] == []
+    if mode == "secondary":
+        assert set(errors) == {"heimgewebe/a"}
+    else:
+        assert [item["number"] for item in seen["heimgewebe/a"]] == [17, 18]
+        assert all(item["fileScope"]["changed_files"] == 1 for item in seen["heimgewebe/a"])

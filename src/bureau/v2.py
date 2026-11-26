@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from itertools import pairwise
 from pathlib import Path, PurePosixPath
+from threading import Event
 from typing import Any
 
 from . import (
@@ -1149,8 +1150,21 @@ def _github_secondary_throttle(detail: str) -> bool:
     )
 
 
+def _github_graphql_primary_exhausted(detail: str) -> bool:
+    """Recognize primary exhaustion, not ambiguous provider or secondary errors."""
+    diagnostic = detail.lower()
+    return not _github_secondary_throttle(detail) and (
+        "graphql_rate_limit" in diagnostic
+        or ("graphql" in diagnostic and (
+            "api rate limit exceeded" in diagnostic
+            or "api rate limit already exceeded" in diagnostic
+        ))
+    )
+
+
 def _revalidate_open_pull_request_batch(
-    repository: str, observed: list[dict[str, Any]]
+    repository: str, observed: list[dict[str, Any]], *,
+    graphql_primary_exhausted: Event | None = None,
 ) -> bool:
     """Re-read exact identities together after file observation.
 
@@ -1158,6 +1172,8 @@ def _revalidate_open_pull_request_batch(
     A contradictory successful response is evidence of drift, not a fallback
     opportunity. Secondary throttling must not trigger a burst of REST reads.
     """
+    if graphql_primary_exhausted is not None and graphql_primary_exhausted.is_set():
+        return False
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     try:
         result = subprocess.run(
@@ -1178,6 +1194,8 @@ def _revalidate_open_pull_request_batch(
             raise OpenPullRequestObservationError(
                 f"open PR identity batch throttled for {repository}: {detail}"
             )
+        if graphql_primary_exhausted is not None and _github_graphql_primary_exhausted(detail):
+            graphql_primary_exhausted.set()
         return False
     try:
         rows = json.loads(result.stdout)
@@ -1220,57 +1238,68 @@ def _revalidate_open_pull_request_batch(
     return True
 
 
-def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
-    binary = os.environ.get("BUREAU_GH_BIN", "gh")
-    limit = str(_open_pr_claim_guard_limit())
-    try:
-        result = subprocess.run(
-            [
-                binary,
-                "pr",
-                "list",
-                "--repo",
-                repository,
-                "--state",
-                "open",
-                "--limit",
-                limit,
-                "--json",
-                "number,title,headRefName,headRefOid,baseRefName,baseRefOid,"
-                "changedFiles,url,body,labels,files",
-            ],
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=30,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise OpenPullRequestObservationError(
-            f"cannot observe open pull requests for {repository}: {exc}"
-        ) from exc
-    rest_inventory = False
-    if result.returncode != 0:
-        detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
-        diagnostic = detail.lower()
-        if _github_secondary_throttle(detail):
-            raise OpenPullRequestObservationError(
-                f"open PR inventory throttled for {repository}: {detail}"
-            )
-        if "graphql_rate_limit" not in diagnostic and not (
-            "graphql" in diagnostic and "rate limit" in diagnostic
-        ):
-            raise OpenPullRequestObservationError(
-                f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
-            )
+def _github_open_pull_requests(
+    repository: str, *, graphql_primary_exhausted: Event | None = None
+) -> list[dict[str, Any]]:
+    rest_inventory = (
+        graphql_primary_exhausted is not None and graphql_primary_exhausted.is_set()
+    )
+    if rest_inventory:
         value = _github_open_pull_requests_rest(repository)
-        rest_inventory = True
     else:
+        binary = os.environ.get("BUREAU_GH_BIN", "gh")
+        limit = str(_open_pr_claim_guard_limit())
         try:
-            value = json.loads(result.stdout or "[]")
-        except json.JSONDecodeError as exc:
+            result = subprocess.run(
+                [
+                    binary,
+                    "pr",
+                    "list",
+                    "--repo",
+                    repository,
+                    "--state",
+                    "open",
+                    "--limit",
+                    limit,
+                    "--json",
+                    "number,title,headRefName,headRefOid,baseRefName,baseRefOid,"
+                    "changedFiles,url,body,labels,files",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
             raise OpenPullRequestObservationError(
-                f"gh pr list returned invalid JSON for {repository}: {exc}"
+                f"cannot observe open pull requests for {repository}: {exc}"
             ) from exc
+        if result.returncode != 0:
+            detail = "\n".join(
+                part for part in (result.stdout.strip(), result.stderr.strip()) if part
+            )
+            diagnostic = detail.lower()
+            if _github_secondary_throttle(detail):
+                raise OpenPullRequestObservationError(
+                    f"open PR inventory throttled for {repository}: {detail}"
+                )
+            if "graphql_rate_limit" not in diagnostic and not (
+                "graphql" in diagnostic and "rate limit" in diagnostic
+            ):
+                raise OpenPullRequestObservationError(
+                    f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
+                )
+            if graphql_primary_exhausted is not None and _github_graphql_primary_exhausted(detail):
+                graphql_primary_exhausted.set()
+            value = _github_open_pull_requests_rest(repository)
+            rest_inventory = True
+        else:
+            try:
+                value = json.loads(result.stdout or "[]")
+            except json.JSONDecodeError as exc:
+                raise OpenPullRequestObservationError(
+                    f"gh pr list returned invalid JSON for {repository}: {exc}"
+                ) from exc
     if not isinstance(value, list):
         raise OpenPullRequestObservationError(f"gh pr list returned non-list JSON for {repository}")
     if len(value) >= _open_pr_claim_guard_limit():
@@ -1377,7 +1406,9 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
         max_workers=min(4, len(value)), thread_name_prefix="bureau-pr-detail"
     ) as pool:
         observed = list(pool.map(observe_one, enumerate(value)))
-        if batch_readback and not _revalidate_open_pull_request_batch(repository, observed):
+        if batch_readback and not _revalidate_open_pull_request_batch(
+            repository, observed, graphql_primary_exhausted=graphql_primary_exhausted
+        ):
             list(pool.map(revalidate_one, observed))
         return observed
 
@@ -1391,11 +1422,20 @@ def _observe_open_pull_requests(
     if not ordered:
         return observed, errors
 
+    # Share only a confirmed primary-quota observation within this pass.
+    # Workers already in flight may finish; a new pass starts without the latch.
+    graphql_primary_exhausted = Event()
+
+    def observe(repository: str) -> list[dict[str, Any]]:
+        return _github_open_pull_requests(
+            repository, graphql_primary_exhausted=graphql_primary_exhausted
+        )
+
     workers = _open_pr_claim_guard_workers(len(ordered))
     if workers == 1:
         for repository in ordered:
             try:
-                observed[repository] = _github_open_pull_requests(repository)
+                observed[repository] = observe(repository)
             except OpenPullRequestObservationError as exc:
                 errors[repository] = str(exc)
         return observed, errors
@@ -1404,7 +1444,7 @@ def _observe_open_pull_requests(
         max_workers=workers, thread_name_prefix="bureau-open-pr"
     ) as executor:
         futures = {
-            executor.submit(_github_open_pull_requests, repository): repository
+            executor.submit(observe, repository): repository
             for repository in ordered
         }
         for future in as_completed(futures):

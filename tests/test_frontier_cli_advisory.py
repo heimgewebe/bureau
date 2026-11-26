@@ -21,7 +21,7 @@ def test_frontier_cli_pr_observation_is_explicit(
     )
     calls = []
 
-    def observe(repository):
+    def observe(repository, **_kwargs):
         calls.append(repository)
         return []
 

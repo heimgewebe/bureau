@@ -2216,6 +2216,45 @@ def _task_open_pr_scope_assessment(
 
 
 
+def _open_pr_scope_commit_compatible(
+    issued: dict[str, Any], fresh: dict[str, Any],
+) -> bool:
+    """Allow freshly proven disjoint revision progress, not authority drift."""
+    if issued == fresh:
+        return True
+    # The requested task scope and reservation/authority classifications are
+    # part of the immutable intent. Only observation fields of the same
+    # disjoint PR may advance; exact merge adoption is not a nonconflict proof.
+    metadata = {"assessment_sha256", "reservations"}
+    if ({k: v for k, v in issued.items() if k not in metadata}
+            != {k: v for k, v in fresh.items() if k not in metadata}):
+        return False
+    old_items = issued.get("reservations")
+    new_items = fresh.get("reservations")
+    if (not isinstance(old_items, list) or not isinstance(new_items, list)
+            or len(old_items) != len(new_items)):
+        return False
+    revision_fields = {
+        "base_oid", "head_oid", "changed_paths_sha256",
+        "changed_file_count", "file_scope_sha256",
+    }
+    for old, new in zip(old_items, new_items):
+        if old == new:
+            continue
+        if (old.get("classification") != "scope-proven-disjoint"
+                or new.get("classification") != "scope-proven-disjoint"):
+            return False
+        if ({k: v for k, v in old.items() if k not in revision_fields}
+                != {k: v for k, v in new.items() if k not in revision_fields}):
+            return False
+        if (old.get("base_oid"), old.get("head_oid")) == (
+            new.get("base_oid"), new.get("head_oid")
+        ):
+            # Changed file evidence for identical Git revisions is inconsistent.
+            return False
+    return True
+
+
 def _repo_write_guard_failure_reservation(
     resource: legacy.Resource, diagnostic: str
 ) -> legacy.Reservation:
@@ -5786,10 +5825,19 @@ class Dispatcher(legacy.Dispatcher):
                 raise legacy.StateError(
                     "coordinated claim has unexpected open PR nonconflict evidence"
                 )
-            if supplied_open_pr_scope != fresh_open_pr_scope:
+            if not _open_pr_scope_commit_compatible(
+                supplied_open_pr_scope, fresh_open_pr_scope
+            ):
                 raise legacy.StateError(
                     "coordinated claim open PR nonconflict evidence changed after intent"
                 )
+            if supplied_open_pr_scope != fresh_open_pr_scope:
+                # Keep the issued intent immutable; the existing envelope
+                # records the actual complete observation at commit.
+                approval_decision = {
+                    **approval_decision,
+                    "open_pr_nonconflict_at_commit": fresh_open_pr_scope,
+                }
         elif fresh_open_pr_scope["requires_evidence"]:
             raise legacy.StateError("coordinated claim open PR nonconflict evidence is missing")
         if task.sha256 != intent["task_sha256"]:

@@ -1797,6 +1797,7 @@ def test_claim_commit_revalidates_disjoint_pr_revision_progress(
     registry_factory, tmp_path, case
 ):
     from dataclasses import replace
+
     from test_v2 import coordinated_lease_database
 
     root = registry_factory(3, mode="write")

@@ -2238,7 +2238,7 @@ def _open_pr_scope_commit_compatible(
         "base_oid", "head_oid", "changed_paths_sha256",
         "changed_file_count", "file_scope_sha256",
     }
-    for old, new in zip(old_items, new_items):
+    for old, new in zip(old_items, new_items, strict=True):
         if old == new:
             continue
         if (old.get("classification") != "scope-proven-disjoint"

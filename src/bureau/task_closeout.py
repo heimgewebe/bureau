@@ -1,11 +1,12 @@
-"""Typed task closeout for completed direct work that never had a Bureau run.
+"""Typed task closeout for completed direct work, not Bureau run completion.
 
-This path is deliberately narrower than normal run completion. It accepts only
-current StateStore-backed ``ready`` TaskSpecs whose complete acceptance contract
-uses ``manual_observation`` verifiers, proves that no run exists for the task,
-and requires a reviewer distinct from every evidence producer. Preview is
-read-only; apply is CAS-bound to the exact preview and stores the full typed
-acceptance receipt in ``metadata.verification`` without fabricating a run.
+The default path proves that no run exists. An evidence bundle may opt in
+with ``allow_terminal_failed_runs: true``. Preview and receipt then bind every
+authoritative run row by run id and SHA-256, in run-id order. Those failures
+are not successes: only fresh direct manual acceptance can verify a ready
+TaskSpec. No historical
+run, workspace or reservation is mutated. Preview is read-only and apply is
+CAS-bound to the exact preview; the original no-run receipt remains unchanged.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import legacy, state_events, task_specs
+from . import legacy, runtime_refresh, state_events, task_specs
 from .acceptance import (
     PASSED,
     AcceptanceContractError,
@@ -30,6 +31,8 @@ from .acceptance import (
 from .v2 import (
     StateStore,
     _authoritative_task_registry_from_connection,
+    _historical_pickup_lease_status,
+    _validate_coordinated_claim_intent,
     authoritative_task_registry,
     plan_sha256,
     task_revision_sha256,
@@ -242,6 +245,81 @@ def _manual_authentications(
     return authenticated
 
 
+def _terminal_failed_history(
+    connection: Any, task_id: str, *, allow_failed: bool = False
+) -> tuple[list[dict[str, str]], datetime | None]:
+    """Bind all failed run rows; do not treat a failed run as acceptance."""
+    rows = connection.execute(
+        "SELECT * FROM runs WHERE task_id=? ORDER BY run_id", (task_id,)
+    ).fetchall()
+    if not allow_failed:
+        if rows:
+            raise legacy.StateError(
+                f"task no-run closeout refuses task {task_id} because "
+                f"{len(rows)} Bureau run(s) exist"
+            )
+        return [], None
+    if not rows:
+        raise legacy.StateError("terminal failed history requires at least one failed run")
+    observed = [
+        {"run_id": row["run_id"], "run_sha256": legacy.sha256_json(dict(row))}
+        for row in rows
+    ]
+    latest = None
+    for row in rows:
+        run_id = row["run_id"]
+        if (
+            row["state"] != "failed"
+            or not isinstance(row["error"], str)
+            or not row["error"].strip()
+        ):
+            raise legacy.StateError(f"terminal failed run required: {run_id}")
+        if any(
+            row[key] is not None
+            for key in ("external_system", "external_id", "external_state", "external_observed_at")
+        ):
+            raise legacy.StateError(f"terminal failed run has external execution binding: {run_id}")
+        if connection.execute(
+            "SELECT 1 FROM reservations WHERE run_id=? LIMIT 1", (run_id,)
+        ).fetchone() is not None:
+            raise legacy.StateError(f"terminal failed run retains reservations: {run_id}")
+        if connection.execute(
+            "SELECT 1 FROM receipts WHERE run_id=? LIMIT 1", (run_id,)
+        ).fetchone() is not None:
+            raise legacy.StateError(f"terminal failed run has a conflicting receipt: {run_id}")
+        try:
+            envelope = json.loads(row["envelope_json"])
+            updated = datetime.fromisoformat(_utc_now(row["updated_at"]).replace("Z", "+00:00"))
+        except (ValueError, TypeError, legacy.StateError) as exc:
+            raise legacy.StateError(f"terminal failed run history is invalid: {run_id}") from exc
+        if not isinstance(envelope, dict) or legacy.sha256_json(envelope) != row["envelope_sha256"]:
+            raise legacy.StateError(f"terminal failed run envelope binding mismatch: {run_id}")
+        intent = envelope.get("claim_intent")
+        if intent is not None:
+            try:
+                _validate_coordinated_claim_intent(intent)
+            except legacy.StateError as exc:
+                raise legacy.StateError(
+                    f"terminal failed run claim binding invalid: {run_id}"
+                ) from exc
+            if any(
+                intent[key] != row[key]
+                for key in ("run_id", "task_id", "worker_id", "task_sha256", "plan_sha256")
+            ):
+                raise legacy.StateError(f"terminal failed run claim binding mismatch: {run_id}")
+            lease = _historical_pickup_lease_status(
+                intent, resource_db=runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB
+            )
+            if lease.get("status") not in {"not-required", "terminal-released-or-expired"}:
+                raise legacy.StateError(
+                    f"terminal failed run retains live or ambiguous pickup leases: {run_id}"
+                )
+        elif envelope.get("lease_binding") is not None:
+            raise legacy.StateError(f"terminal failed run has unbound pickup leases: {run_id}")
+        latest = updated if latest is None else max(latest, updated)
+    return observed, latest
+
+
 def _preview_from_connection(
     registry: Any,
     connection: Any,
@@ -272,13 +350,13 @@ def _preview_from_connection(
         raise legacy.StateError(
             f"task no-run closeout requires ready state; observed {task.state!r}"
         )
-    runs = connection.execute(
-        "SELECT run_id,state FROM runs WHERE task_id=? ORDER BY run_id", (task_id,)
-    ).fetchall()
-    if runs:
-        raise legacy.StateError(
-            f"task no-run closeout refuses task {task_id} because {len(runs)} Bureau run(s) exist"
-        )
+    bundle, bundle_sha256 = _load_bundle(evidence_path)
+    allow_failed = bundle.get("allow_terminal_failed_runs", False)
+    if type(allow_failed) is not bool:
+        raise legacy.StateError("terminal failed history opt-in must be a boolean")
+    history, latest_failure = _terminal_failed_history(
+        connection, task_id, allow_failed=allow_failed
+    )
     status_row = connection.execute(
         "SELECT task_sha256,plan_sha256,state,receipt_sha256 FROM task_status WHERE task_id=?",
         (task_id,),
@@ -299,7 +377,6 @@ def _preview_from_connection(
     criterion_ids = [str(item["id"]) for item in criteria]
     stable_task_sha256 = task_revision_sha256(task.raw)
     current_plan_sha256 = plan_sha256(effective, task.initiative)
-    bundle, bundle_sha256 = _load_bundle(evidence_path)
     evidence = _validate_bundle_binding(
         bundle,
         task_id=task_id,
@@ -328,6 +405,15 @@ def _preview_from_connection(
         raise legacy.StateError(
             "task no-run closeout acceptance is not fully passed: " + ", ".join(reasons)
         )
+    if latest_failure is not None:
+        for item in evaluation["criteria"]:
+            observed_at = datetime.fromisoformat(
+                _utc_now(item["observed_at"]).replace("Z", "+00:00")
+            )
+            if observed_at < latest_failure:
+                raise legacy.StateError(
+                    "terminal failed history requires acceptance observed after the last failure"
+                )
     basis_revision = revision["revision"]
     basis_spec_sha256 = revision["spec_sha256"]
     if replaying:
@@ -374,10 +460,12 @@ def _preview_from_connection(
         "criterion_ids": criterion_ids,
         "reviewer": reviewer,
         "target_state": "verified",
-        "no_run_proven": True,
+        "no_run_proven": not history,
         "authority_kind": authority.get("kind"),
         "does_not_establish": list(_DOES_NOT_ESTABLISH),
     }
+    if history:
+        preview_basis["terminal_failed_runs"] = history
     preview_sha256 = legacy.sha256_json(preview_basis)
     return {
         **preview_basis,
@@ -441,6 +529,9 @@ def _receipt(
         "authentications": authentications,
         "does_not_establish": list(_DOES_NOT_ESTABLISH),
     }
+    if "terminal_failed_runs" in preview:
+        receipt["no_run_proven"] = False
+        receipt["terminal_failed_runs"] = copy.deepcopy(preview["terminal_failed_runs"])
     receipt_sha256 = legacy.sha256_json(receipt)
     verification = {
         "schema_version": SCHEMA_VERSION,
@@ -485,6 +576,11 @@ def _validated_replay(
         "idempotent": True,
         "receipt_sha256": stored_sha256,
         "verification": dict(existing),
+        **(
+            {"no_run_proven": False, "terminal_failed_runs": receipt["terminal_failed_runs"]}
+            if "terminal_failed_runs" in receipt
+            else {}
+        ),
         "preview_sha256": expected_preview_sha256,
         "does_not_establish": list(_DOES_NOT_ESTABLISH),
     }
@@ -570,14 +666,23 @@ def _historical_no_run_task_projections(
             or receipt.get("task_sha256") != stable_task_sha256
             or receipt.get("plan_sha256") != current_plan_sha256
             or dict(change["current"]) != expected_projection
-            or connection.execute(
-                "SELECT 1 FROM runs WHERE task_id=? LIMIT 1", (changed_task_id,)
-            ).fetchone()
-            is not None
         ):
             raise legacy.StateError(
                 "task no-run closeout replay refuses unrelated StateStore drift"
             )
+        try:
+            history, _ = _terminal_failed_history(
+                connection, changed_task_id, allow_failed="terminal_failed_runs" in receipt
+            )
+            if history and (
+                receipt.get("no_run_proven") is not False
+                or receipt.get("terminal_failed_runs") != history
+            ):
+                raise legacy.StateError("terminal failed history receipt binding mismatch")
+        except legacy.StateError as exc:
+            raise legacy.StateError(
+                "task no-run closeout replay refuses unrelated StateStore drift"
+            ) from exc
         projections[changed_task_id] = expected_projection
     return projections
 

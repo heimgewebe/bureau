@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau import task_specs
+from bureau import legacy, runtime_refresh, task_specs
 from bureau.core import Dispatcher, Registry, StateError, StateStore, verification_stamp
 from bureau.legacy import NoEligibleTask
 from bureau.task_closeout import (
@@ -15,7 +16,7 @@ from bureau.task_closeout import (
     apply_task_no_run_closeout,
     preview_task_no_run_closeout,
 )
-from bureau.v2 import authoritative_task_registry, plan_sha256, task_revision_sha256
+from bureau.v2 import authoritative_task_registry, fail_run, plan_sha256, task_revision_sha256
 
 NOW = "2026-08-24T04:00:00Z"
 OBSERVED_AT = "2026-08-24T03:59:00Z"
@@ -581,6 +582,225 @@ def test_preview_rejects_any_existing_bureau_run(registry_factory, tmp_path: Pat
 
     with pytest.raises(StateError, match="Bureau run"):
         preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER, now=NOW)
+
+
+def _failed_run_rows(store, task_id):
+    with store.connect() as connection:
+        return [
+            dict(row)
+            for row in connection.execute(
+                "SELECT * FROM runs WHERE task_id=? ORDER BY run_id", (task_id,)
+            )
+        ]
+
+
+def _bind_failed_history(evidence, store, task_id):
+    bundle = json.loads(evidence.read_text())
+    bundle["allow_terminal_failed_runs"] = True
+    for item in bundle["evidence"].values():
+        item["observed_at"] = legacy.utc_now()
+    evidence.write_text(json.dumps(bundle))
+    return [
+        {"run_id": row["run_id"], "run_sha256": legacy.sha256_json(row)}
+        for row in _failed_run_rows(store, task_id)
+    ]
+
+
+@pytest.mark.parametrize("repair_projection", [False, True])
+def test_failed_run_history_explicit_closeout(
+    registry_factory, tmp_path, monkeypatch, repair_projection
+):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    dispatcher = Dispatcher(registry, store)
+    run_id = dispatcher.claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, run_id, "historical execution failed")
+    if repair_projection:
+        second = dispatcher.claim_next("worker", ("repository",))["run"]["run_id"]
+        fail_run(store, second, "another historical execution failed")
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    with pytest.raises(StateError, match="Bureau run"):
+        preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    history = _bind_failed_history(evidence, store, task_id)
+    before = _failed_run_rows(store, task_id)
+    preview = preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    assert preview["no_run_proven"] is False
+    assert preview["terminal_failed_runs"] == history
+    append_projection = store.append_task_projection_delta
+    if repair_projection:
+        monkeypatch.setattr(store, "append_task_projection_delta", lambda *_a, **_kw: None)
+    result = apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    assert result["no_run_proven"] is False
+    assert result["terminal_failed_runs"] == history
+    assert _current_spec(store, task_id)["spec"]["state"] == "verified"
+    assert _failed_run_rows(store, task_id) == before
+    assert store.run(run_id)["reservations"] == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM receipts").fetchone()[0] == 0
+    if repair_projection:
+        with pytest.raises(StateError, match="replayed state projection does not match"):
+            store.replay_projection()
+    else:
+        assert store.replay_projection()["matches_current"] is True
+    monkeypatch.setattr(store, "append_task_projection_delta", append_projection)
+    again = apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    assert again["idempotent"] is True
+    assert again["receipt_sha256"] == result["receipt_sha256"]
+    assert store.replay_projection()["matches_current"] is True
+    assert _failed_run_rows(store, task_id) == before
+
+
+@pytest.mark.parametrize("state", ["claimed", "cancelled", "orphaned", "succeeded"])
+def test_failed_run_history_rejects_other_states(registry_factory, tmp_path, state):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
+    if state != "claimed":
+        # Deliberately model corrupt/unsupported history in this isolated test DB.
+        with store.immediate() as connection:
+            connection.execute("UPDATE runs SET state=? WHERE run_id=?", (state, run_id))
+            connection.execute("DELETE FROM reservations WHERE run_id=?", (run_id,))
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    with pytest.raises(StateError, match="terminal failed"):
+        preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+
+
+@pytest.mark.parametrize("condition", ["reservation", "external", "receipt", "envelope", "opt-in"])
+def test_failed_run_history_rejects_ambiguous_evidence(registry_factory, tmp_path, condition):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, run_id, "historical failure")
+    with store.immediate() as connection:
+        if condition == "reservation":
+            connection.execute(
+                "INSERT INTO reservations VALUES(?,?,?,?,?)",
+                (run_id, "repo.test", "write", 1, legacy.utc_now()),
+            )
+        elif condition == "external":
+            connection.execute("UPDATE runs SET external_id=? WHERE run_id=?", ("unknown", run_id))
+        elif condition == "receipt":
+            connection.execute(
+                "INSERT INTO receipts VALUES(?,?,?,?)", (run_id, "{}", "0" * 64, legacy.utc_now())
+            )
+        elif condition == "envelope":
+            connection.execute(
+                "UPDATE runs SET envelope_sha256=? WHERE run_id=?", ("0" * 64, run_id)
+            )
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    if condition == "opt-in":
+        bundle = json.loads(evidence.read_text())
+        bundle["allow_terminal_failed_runs"] = "true"
+        evidence.write_text(json.dumps(bundle))
+    with pytest.raises(StateError, match="terminal failed"):
+        preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    assert _current_spec(store, task_id)["spec"]["state"] == "ready"
+
+
+def test_failed_run_history_blocks_concurrent_pickup(registry_factory, tmp_path):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    dispatcher = Dispatcher(registry, store)
+    first = dispatcher.claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, first, "historical failure")
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    preview = preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    second = dispatcher.claim_next("worker", ("repository",))["run"]["run_id"]
+    assert second != first
+    with pytest.raises(StateError, match="terminal failed"):
+        apply_task_no_run_closeout(
+            registry, store, task_id, evidence, reviewer=REVIEWER,
+            expected_preview_sha256=preview["preview_sha256"],
+        )
+    assert _current_spec(store, task_id)["spec"]["state"] == "ready"
+
+
+def test_failed_run_history_rejects_changed_failed_row_at_apply(registry_factory, tmp_path):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, run_id, "historical failure")
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    preview = preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    with store.immediate() as connection:
+        connection.execute("UPDATE runs SET error=? WHERE run_id=?", ("changed error", run_id))
+    with pytest.raises(StateError, match="preview changed before apply"):
+        apply_task_no_run_closeout(
+            registry, store, task_id, evidence, reviewer=REVIEWER,
+            expected_preview_sha256=preview["preview_sha256"],
+        )
+    assert _current_spec(store, task_id)["spec"]["state"] == "ready"
+
+
+def test_failed_run_history_rejects_live_pickup_lease(registry_factory, tmp_path, monkeypatch):
+    from test_v2 import coordinated_lease_database, prepare_coordinated_registry, setup
+
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    with store.immediate() as connection:
+        task_specs.put(
+            connection, registry.tasks[task_id].raw,
+            idempotency_key="seed-failed-history-coordinated",
+            expected_revision=None, source="test-seed",
+        )
+    dispatcher = Dispatcher(registry, store)
+    intent = dispatcher.claim_intent(
+        "operator", ("repository",), task_id=task_id,
+        base_dir=tmp_path / "worktrees", approved=True,
+    )["intent"]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    fail_run(store, intent["run_id"], "historical failed execution")
+    monkeypatch.setattr(runtime_refresh, "DEFAULT_GRABOWSKI_RESOURCE_DB", database)
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    with pytest.raises(StateError, match="live or ambiguous pickup leases"):
+        preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    with sqlite3.connect(database) as connection:
+        connection.execute("DELETE FROM leases")
+    preview = preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    unavailable = database.with_suffix(".unavailable")
+    database.rename(unavailable)
+    try:
+        with pytest.raises(StateError, match="live or ambiguous pickup leases"):
+            apply_task_no_run_closeout(
+                registry, store, task_id, evidence, reviewer=REVIEWER,
+                expected_preview_sha256=preview["preview_sha256"],
+            )
+    finally:
+        unavailable.rename(database)
+    before = _failed_run_rows(store, task_id)
+    result = apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    assert result["status"] == "verified"
+    assert _failed_run_rows(store, task_id) == before
+    assert store.replay_projection()["matches_current"] is True
+
+
+def test_failed_run_history_requires_post_failure_acceptance(registry_factory, tmp_path):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, run_id, "historical failure")
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    bundle = json.loads(evidence.read_text())
+    from datetime import datetime, timedelta, timezone
+    before_failure = datetime.fromisoformat(
+        _failed_run_rows(store, task_id)[0]["updated_at"]
+    ) - timedelta(seconds=1)
+    for item in bundle["evidence"].values():
+        item["observed_at"] = before_failure.astimezone(timezone.utc).isoformat()
+    evidence.write_text(json.dumps(bundle))
+    with pytest.raises(StateError, match="observed after the last failure"):
+        preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
 
 
 def test_preview_rejects_reviewer_equal_to_evidence_producer(

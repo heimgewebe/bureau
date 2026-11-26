@@ -6166,6 +6166,36 @@ def test_state_store_publication_does_not_materialize_git_task_or_queue(registry
     assert store.task_spec(task_id) is not None
 
 
+def test_assessment_detects_published_state_store_only_candidate(registry_factory, tmp_path):
+    registry, store, _, published = _state_store_publication_fixture(
+        registry_factory, tmp_path
+    )
+    task_id = published["task_id"]
+    assert task_id not in registry.tasks
+    binding = store.task_spec(task_id)["spec"]["metadata"]["operator_intake"]
+    assessed = candidate_assess(registry, store, candidate_id=binding["candidate_id"])
+    assert assessed["decision"] == "merge"
+    assert {
+        "kind": "task-candidate-binding",
+        "task_id": task_id,
+        "reason": "same candidate_id",
+    } in assessed["exact_duplicates"]
+    assert any(
+        item["kind"] == "task-source-digest"
+        and item["task_id"] == task_id
+        and item["identity_equivalent"] is True
+        for item in assessed["source_relationships"]
+    )
+    explicit = candidate_assess(
+        registry, store, candidate_id=binding["candidate_id"], task_id=task_id
+    )
+    assert {
+        "kind": "task-id",
+        "task_id": task_id,
+        "reason": "task_id exists",
+    } in explicit["exact_duplicates"]
+
+
 def test_state_store_task_ready_preview_apply_readback_and_replay(registry_factory, tmp_path):
     registry, store, receipt_path, published = _state_store_publication_fixture(
         registry_factory, tmp_path

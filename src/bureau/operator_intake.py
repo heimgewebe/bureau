@@ -89,6 +89,24 @@ def _task_publication_review_contract() -> dict[str, Any]:
     }
 
 
+def _publication_approval_projection(
+    action_class: str,
+    *,
+    expected_reference: str | None = None,
+    task_id: str | None = None,
+) -> dict[str, Any]:
+    """Describe the remaining authority step without granting authority."""
+    decision = approval_decision(
+        action_class, None, expected_reference=expected_reference, task_id=task_id
+    )
+    if action_class == TASK_PUBLICATION_ACTION_CLASS and not decision["allowed"]:
+        # Native publication acquires and validates this exact lease itself.
+        # The absent pre-effect approval is not a request for user intervention.
+        decision["reason"] = "server-owned publication authority required at publish"
+        decision["authority_resolution"] = "server_owned_lease_at_publish"
+    return decision
+
+
 def _legacy_registry_publication_contract() -> dict[str, Any]:
     return {
         "action_class": "registry_mutation",
@@ -1527,7 +1545,7 @@ def _candidate_assess(
             "cannot observe authoritative TaskSpec state for publication approval",
             retryable=True,
         ) from exc
-    requires_first_task_review = bool(requested_task_id) and not authoritative_tasks_present
+    requires_first_task_review = not authoritative_tasks_present
     publication_action_class = (
         "registry_mutation"
         if authoritative_target is not None or requires_first_task_review
@@ -1711,7 +1729,7 @@ def _candidate_assess(
                 if requested_task_id
                 else None
             ),
-            "publication_approval": approval_decision(publication_action_class, None),
+            "publication_approval": _publication_approval_projection(publication_action_class),
         },
         "exact_duplicates": deduped_exact,
         "source_relationships": deduped_source_relationships[:MAX_SOURCE_RELATIONSHIPS],
@@ -3673,9 +3691,8 @@ def _validated_proposal(
                 "typed task publication must remain review-free until publish authority is checked",
                 details={"review": review},
             )
-        approval_result = approval_decision(
+        approval_result = _publication_approval_projection(
             TASK_PUBLICATION_ACTION_CLASS,
-            None,
             expected_reference=expected_proposal_sha,
             task_id=str(plan.get("task_id")),
         )

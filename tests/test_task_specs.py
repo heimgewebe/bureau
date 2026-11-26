@@ -254,6 +254,49 @@ def test_replay_after_multiple_revisions_matches_projection(tmp_path: Path) -> N
     assert replay["authoritative_root_sha256"] == replay["current_authoritative_root_sha256"]
 
 
+@pytest.mark.parametrize("read_only", [False, True])
+@pytest.mark.parametrize("operation", ["replay", "repair_candidate"])
+def test_replay_uses_one_read_snapshot_during_concurrent_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_only: bool, operation: str
+) -> None:
+    from bureau.read_only_state import ReadOnlyStateStore
+
+    store = _store(tmp_path)
+    store.put_task_spec(_spec(), idempotency_key="r1", expected_revision=None, source="test")
+    reader = ReadOnlyStateStore(store.path, tmp_path) if read_only else store
+    original = task_specs.split_event_rows
+    committed = False
+
+    def commit_after_event_read(rows):
+        nonlocal committed
+        result = original(rows)
+        if not committed:
+            committed = True
+            store.put_task_spec(
+                _spec(title="two"), idempotency_key="r2", expected_revision=1, source="test"
+            )
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(task_specs, "split_event_rows", commit_after_event_read)
+        if operation == "replay":
+            replay = reader.replay_projection()
+            assert replay["matches_current"] is True
+            assert replay["task_specs"]["projection"]["tasks"]["TEST-T001"]["revision"] == 1
+        else:
+            # There is no actual corruption, so no repair candidate is warranted.
+            with pytest.raises(
+                StateError, match="state projection has no unrepaired root mismatch"
+            ):
+                reader.projection_repair_candidate()
+
+    assert committed
+    assert (
+        reader.replay_projection()["task_specs"]["projection"]["tasks"]["TEST-T001"]["revision"]
+        == 2
+    )
+
+
 def test_unknown_task_spec_event_version_is_rejected(tmp_path: Path) -> None:
     store = _store(tmp_path)
     store.put_task_spec(_spec(), idempotency_key="v1", expected_revision=None, source="test")

@@ -1491,11 +1491,6 @@ def _candidate_text(event: dict[str, Any]) -> str:
     )
 
 
-def _task_text(task: Any) -> str:
-    raw = task.raw
-    return " ".join(str(value) for value in (task.title, raw.get("goal")) if value)
-
-
 def _candidate_assess(
     registry: Registry,
     store: StateStore,
@@ -1531,28 +1526,31 @@ def _candidate_assess(
     candidate_event = record.get("candidate_event")
     candidate_event = candidate_event if isinstance(candidate_event, dict) else {}
     requested_task_id = task_id or record.get("task_id")
-    authoritative_target = (
-        store.task_spec(str(requested_task_id)) if requested_task_id else None
-    )
     try:
         with store.connect() as connection:
-            authoritative_tasks_present = bool(
-                task_specs.current_projection(connection)["tasks"]
-            )
+            authoritative_tasks = task_specs.current_projection(connection)["tasks"]
     except (sqlite3.Error, StateError, task_specs.TaskSpecError) as exc:
         raise OperatorIntakeError(
             "candidate-assessment-state-invalid",
             "cannot observe authoritative TaskSpec state for publication approval",
             retryable=True,
         ) from exc
-    requires_first_task_review = not authoritative_tasks_present
+    # StateStore-only tasks have no Git task file. Reuse the already loaded
+    # authoritative projection for identity and provenance; a legacy registry
+    # entry is only a fallback where no current TaskSpec exists.
+    task_documents = {existing.id: existing.raw for existing in registry.tasks.values()}
+    task_documents.update(
+        {task_id: item["spec"] for task_id, item in authoritative_tasks.items()}
+    )
+    authoritative_target = authoritative_tasks.get(requested_task_id)
+    requires_first_task_review = not authoritative_tasks
     publication_action_class = (
         "registry_mutation"
         if authoritative_target is not None or requires_first_task_review
         else TASK_PUBLICATION_ACTION_CLASS
     )
-    for existing in registry.tasks.values():
-        metadata = existing.raw.get("metadata")
+    for existing_id, raw in task_documents.items():
+        metadata = raw.get("metadata")
         metadata = metadata if isinstance(metadata, dict) else {}
         binding = metadata.get("operator_intake")
         binding = binding if isinstance(binding, dict) else {}
@@ -1560,7 +1558,7 @@ def _candidate_assess(
             exact.append(
                 {
                     "kind": "task-candidate-binding",
-                    "task_id": existing.id,
+                    "task_id": existing_id,
                     "reason": "same candidate_id",
                 }
             )
@@ -1573,12 +1571,12 @@ def _candidate_assess(
             source_relationships.append(
                 {
                     "kind": "task-source-digest",
-                    "task_id": existing.id,
+                    "task_id": existing_id,
                     "reason": "same source_sha256",
                     "identity_equivalent": binding.get("candidate_id") == identity,
                 }
             )
-    if requested_task_id and requested_task_id in registry.tasks:
+    if requested_task_id and requested_task_id in task_documents:
         exact.append(
             {
                 "kind": "task-id",
@@ -1640,14 +1638,15 @@ def _candidate_assess(
     )
     candidate_text = _candidate_text(event)
     similar: list[dict[str, Any]] = []
-    for existing in registry.tasks.values():
-        score = _similarity(candidate_text, _task_text(existing))
+    for existing_id, raw in task_documents.items():
+        task_text = " ".join(str(value) for value in (raw.get("title"), raw.get("goal")) if value)
+        score = _similarity(candidate_text, task_text)
         if score >= 0.2:
             similar.append(
                 {
                     "kind": "task",
-                    "id": existing.id,
-                    "title": existing.title,
+                    "id": existing_id,
+                    "title": raw.get("title"),
                     "score": round(score, 6),
                 }
             )

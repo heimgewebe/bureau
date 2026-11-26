@@ -4068,6 +4068,8 @@ class StateStore:
 
     def replay_projection(self) -> dict[str, Any]:
         with self.connect() as connection:
+            # Keep the journal and materialized projections on the same WAL snapshot.
+            connection.execute("BEGIN")
             rows = [
                 dict(row)
                 for row in connection.execute(
@@ -4114,6 +4116,8 @@ class StateStore:
 
     def projection_repair_candidate(self) -> dict[str, Any]:
         with self.connect() as connection:
+            # Keep the journal and materialized projections on the same WAL snapshot.
+            connection.execute("BEGIN")
             rows = [
                 dict(row)
                 for row in connection.execute(

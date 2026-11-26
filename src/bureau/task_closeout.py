@@ -245,16 +245,25 @@ def _manual_authentications(
     return authenticated
 
 
+# Version 1 intentionally binds the existing run columns, not future schema additions.
+_FAILED_RUN_COLUMNS_V1 = (
+    "run_id,task_id,worker_id,attempt,state,task_sha256,envelope_json,envelope_sha256,"
+    "external_system,external_id,workspace_path,workspace_branch,error,created_at,"
+    "updated_at,heartbeat_at,plan_sha256,dispatch_request_id,external_state,external_observed_at"
+)
+
+
 def _terminal_failed_history(
     connection: Any, task_id: str, *, allow_failed: bool = False, check_live_leases: bool = True
-) -> tuple[list[dict[str, str]], datetime | None]:
+) -> tuple[list[dict[str, Any]], datetime | None]:
     """Bind failed rows; live lease checks authorize new closeout only.
 
     Historical receipt replay must depend on its committed StateStore facts,
     not on the continued availability of the external resource database.
     """
     rows = connection.execute(
-        "SELECT * FROM runs WHERE task_id=? ORDER BY run_id", (task_id,)
+        f"SELECT {_FAILED_RUN_COLUMNS_V1} FROM runs WHERE task_id=? ORDER BY run_id",
+        (task_id,),
     ).fetchall()
     if not allow_failed:
         if rows:
@@ -266,7 +275,11 @@ def _terminal_failed_history(
     if not rows:
         raise legacy.StateError("terminal failed history requires at least one failed run")
     observed = [
-        {"run_id": row["run_id"], "run_sha256": legacy.sha256_json(dict(row))}
+        {
+            "run_id": row["run_id"],
+            "run_sha256": legacy.sha256_json(dict(row)),
+            "run_hash_schema_version": 1,
+        }
         for row in rows
     ]
     latest = None
@@ -299,6 +312,7 @@ def _terminal_failed_history(
         if not isinstance(envelope, dict) or legacy.sha256_json(envelope) != row["envelope_sha256"]:
             raise legacy.StateError(f"terminal failed run envelope binding mismatch: {run_id}")
         intent = envelope.get("claim_intent")
+        binding = envelope.get("lease_binding")
         if intent is not None:
             try:
                 _validate_coordinated_claim_intent(intent)
@@ -311,15 +325,35 @@ def _terminal_failed_history(
                 for key in ("run_id", "task_id", "worker_id", "task_sha256", "plan_sha256")
             ):
                 raise legacy.StateError(f"terminal failed run claim binding mismatch: {run_id}")
-            if check_live_leases:
-                lease = _historical_pickup_lease_status(
-                    intent, resource_db=runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB
-                )
-                if lease.get("status") not in {"not-required", "terminal-released-or-expired"}:
+            required_keys = intent["required_resource_keys"]
+            if required_keys:
+                if not isinstance(binding, dict):
+                    raise legacy.StateError(f"terminal failed run lease binding missing: {run_id}")
+                unsigned = {k: v for k, v in binding.items() if k != "lease_binding_sha256"}
+                resource_db = binding.get("resource_db")
+                if (
+                    binding.get("lease_binding_sha256")
+                    != runtime_refresh.sha256_bytes(runtime_refresh.canonical_bytes(unsigned))
+                    or binding.get("owner_id") != intent["lease_owner_id"]
+                    or binding.get("task_id") != row["task_id"]
+                    or binding.get("resource_keys") != required_keys
+                    or not isinstance(resource_db, str)
+                    or not Path(resource_db).is_absolute()
+                ):
                     raise legacy.StateError(
-                        f"terminal failed run retains live or ambiguous pickup leases: {run_id}"
+                        f"terminal failed run lease binding mismatch: {run_id}"
                     )
-        elif envelope.get("lease_binding") is not None:
+                if check_live_leases:
+                    lease = _historical_pickup_lease_status(intent, resource_db=Path(resource_db))
+                    if lease.get("status") != "terminal-released-or-expired":
+                        raise legacy.StateError(
+                            f"terminal failed run retains live or ambiguous pickup leases: {run_id}"
+                        )
+            elif binding is not None:
+                raise legacy.StateError(
+                    f"terminal failed run has unexpected pickup leases: {run_id}"
+                )
+        elif binding is not None:
             raise legacy.StateError(f"terminal failed run has unbound pickup leases: {run_id}")
         latest = updated if latest is None else max(latest, updated)
     return observed, latest

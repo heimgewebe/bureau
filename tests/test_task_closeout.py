@@ -601,7 +601,11 @@ def _bind_failed_history(evidence, store, task_id):
         item["observed_at"] = legacy.utc_now()
     evidence.write_text(json.dumps(bundle))
     return [
-        {"run_id": row["run_id"], "run_sha256": legacy.sha256_json(row)}
+        {
+            "run_id": row["run_id"],
+            "run_sha256": legacy.sha256_json(row),
+            "run_hash_schema_version": 1,
+        }
         for row in _failed_run_rows(store, task_id)
     ]
 
@@ -670,7 +674,9 @@ def test_failed_run_history_rejects_other_states(registry_factory, tmp_path, sta
         preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
 
 
-@pytest.mark.parametrize("condition", ["reservation", "external", "receipt", "envelope", "opt-in"])
+@pytest.mark.parametrize(
+    "condition", ["reservation", "external", "receipt", "envelope", "opt-in", "unbound-lease"]
+)
 def test_failed_run_history_rejects_ambiguous_evidence(registry_factory, tmp_path, condition):
     _, registry, store, task_id = _setup(registry_factory, tmp_path)
     run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
@@ -690,6 +696,16 @@ def test_failed_run_history_rejects_ambiguous_evidence(registry_factory, tmp_pat
         elif condition == "envelope":
             connection.execute(
                 "UPDATE runs SET envelope_sha256=? WHERE run_id=?", ("0" * 64, run_id)
+            )
+        elif condition == "unbound-lease":
+            envelope = json.loads(connection.execute(
+                "SELECT envelope_json FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()[0])
+            assert envelope.get("claim_intent") is None
+            envelope["lease_binding"] = {"owner_id": "unbound"}
+            connection.execute(
+                "UPDATE runs SET envelope_json=?, envelope_sha256=? WHERE run_id=?",
+                (json.dumps(envelope), legacy.sha256_json(envelope), run_id),
             )
     evidence = _evidence_path(tmp_path, registry, store, task_id)
     _bind_failed_history(evidence, store, task_id)
@@ -760,7 +776,25 @@ def test_failed_run_history_rejects_live_pickup_lease(
     binding, database = coordinated_lease_database(tmp_path / "leases", intent)
     dispatcher.commit_claim_intent(intent, binding, resource_db=database)
     fail_run(store, intent["run_id"], "historical failed execution")
-    monkeypatch.setattr(runtime_refresh, "DEFAULT_GRABOWSKI_RESOURCE_DB", database)
+    from bureau.task_closeout import _terminal_failed_history
+
+    # A valid intent/envelope must also bind the current historical run row.
+    # Restore the fixture within the same transaction so replay history is unchanged.
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET plan_sha256=? WHERE run_id=?", ("0" * 64, intent["run_id"])
+        )
+        with pytest.raises(StateError, match="claim binding mismatch"):
+            _terminal_failed_history(connection, task_id, allow_failed=True)
+        connection.execute(
+            "UPDATE runs SET plan_sha256=? WHERE run_id=?",
+            (intent["plan_sha256"], intent["run_id"]),
+        )
+    # The committed lease binding selects the authoritative DB, not a process default.
+    _, wrong_default = coordinated_lease_database(
+        tmp_path / "other-store", intent, omit=set(intent["required_resource_keys"])
+    )
+    monkeypatch.setattr(runtime_refresh, "DEFAULT_GRABOWSKI_RESOURCE_DB", wrong_default)
     evidence = _evidence_path(tmp_path, registry, store, task_id)
     _bind_failed_history(evidence, store, task_id)
     with pytest.raises(StateError, match="live or ambiguous pickup leases"):
@@ -808,6 +842,32 @@ def test_failed_run_history_rejects_live_pickup_lease(
         assert _failed_run_rows(store, task_id) == before
     finally:
         unavailable.rename(database)
+
+
+def test_failed_run_history_schema_extension_preserves_receipt(registry_factory, tmp_path):
+    _, registry, store, task_id = _setup(registry_factory, tmp_path)
+    run_id = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]["run_id"]
+    fail_run(store, run_id, "historical failure")
+    evidence = _evidence_path(tmp_path, registry, store, task_id)
+    _bind_failed_history(evidence, store, task_id)
+    before = _failed_run_rows(store, task_id)
+    preview = preview_task_no_run_closeout(registry, store, task_id, evidence, reviewer=REVIEWER)
+    first = apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    with store.immediate() as connection:
+        connection.execute("ALTER TABLE runs ADD COLUMN later_optional TEXT")
+    second = apply_task_no_run_closeout(
+        registry, store, task_id, evidence, reviewer=REVIEWER,
+        expected_preview_sha256=preview["preview_sha256"],
+    )
+    assert second["idempotent"] is True
+    assert second["receipt_sha256"] == first["receipt_sha256"]
+    assert store.replay_projection()["matches_current"] is True
+    assert _failed_run_rows(store, task_id) == [
+        dict(row, later_optional=None) for row in before
+    ]
 
 
 def test_failed_run_history_requires_post_failure_acceptance(registry_factory, tmp_path):

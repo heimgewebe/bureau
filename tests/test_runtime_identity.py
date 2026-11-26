@@ -845,6 +845,56 @@ def test_command_classification_fails_closed_for_unknown_commands() -> None:
     )
 
 
+def test_canonical_registry_handoff_reads_claim_bound_run_without_mutation(
+    registry_factory, tmp_path, monkeypatch, capsys
+) -> None:
+    from bureau.read_only_state import ReadOnlyStateStore
+    from bureau.v2 import Dispatcher, Registry
+
+    root = registry_factory(1)
+    state_root = tmp_path / "state"
+    state_path = state_root / "bureau.sqlite3"
+    store = StateStore(state_path, state_root)
+    dispatcher = Dispatcher(Registry.load(root), store)
+    run = dispatcher.claim_next("handoff-reader", ("repository",))["run"]
+    reader = ReadOnlyStateStore(state_path, state_root)
+    before = reader.run(run["run_id"])
+    state_root.chmod(0o750)
+    state_path.chmod(0o640)
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(root))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT_MODE", "canonical-runtime-default")
+    monkeypatch.setattr(
+        bureau_cli,
+        "bureau_runtime_identity",
+        lambda *a, **k: {
+            "registry": {"role": "canonical-runtime-snapshot", "bureau_project": True},
+            "manifest": {"canonical_registry": {"valid": True}},
+            "compatibility": {
+                "status": "canonical-read-only",
+                "mutation_allowed": False,
+                "reason_codes": ["canonical-registry-read-only"],
+            },
+        },
+    )
+    args = ["--state-root", str(state_root), "--json"]
+    assert bureau_cli.main([*args, "handoff", run["run_id"]]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["runtime_identity"]["command_effect_scope"] == "read_only"
+    handoff = payload["result"]
+    for field in ("run_id", "task_id", "task_sha256", "plan_sha256", "envelope_sha256"):
+        assert handoff[field] == run[field]
+    assert reader.run(run["run_id"]) == before
+    assert state_root.stat().st_mode & 0o777 == 0o750
+    assert state_path.stat().st_mode & 0o777 == 0o640
+
+    assert bureau_cli.main([*args, "handoff", "missing-run"]) != 0
+    capsys.readouterr()
+    assert bureau_cli.main([*args, "close-ready"]) == 2
+    blocked = json.loads(capsys.readouterr().out)
+    assert blocked["result"]["status"] == "explicit-registry-root-required"
+    assert reader.run(run["run_id"]) == before
+
+
 def test_mutation_gate_blocks_incompatible_runtime(registry_factory, monkeypatch, capsys) -> None:
     root = registry_factory()
     blocked_identity = {

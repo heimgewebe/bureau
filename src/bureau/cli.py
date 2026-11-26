@@ -877,6 +877,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "cycle-deployment",
         "explain-next",
         "frontier",
+        "handoff",
         "runtime-identity",
         "runtime-closeout-prepare",
         "runtime-drift-check",

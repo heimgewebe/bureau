@@ -1611,6 +1611,25 @@ def test_candidate_assessment_reports_operator_publication_when_publisher_exists
     assert publication_approval["allowed"] is False
     assert publication_approval["action_class"] == "task_creation_from_external_evidence"
     assert publication_approval["required_level"] == "operator"
+    assert publication_approval["evidence"] is None
+    assert publication_approval["authority_resolution"] == "server_owned_lease_at_publish"
+    assert publication_approval["reason"] == (
+        "server-owned publication authority required at publish"
+    )
+
+
+def test_candidate_assessment_without_target_preserves_first_task_review(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    result = candidate_assess(registry, store, candidate_id=recorded["candidate_id"])
+    approval = result["target"]["publication_approval"]
+    assert approval["action_class"] == "registry_mutation"
+    assert approval["required_level"] == "reviewed_plan"
+    assert approval["allowed"] is False
+    assert "authority_resolution" not in approval
 
 
 def test_candidate_assessment_reports_reviewed_plan_for_authoritative_revision(
@@ -1640,6 +1659,7 @@ def test_candidate_assessment_reports_reviewed_plan_for_authoritative_revision(
     assert publication_approval["allowed"] is False
     assert publication_approval["action_class"] == "registry_mutation"
     assert publication_approval["required_level"] == "reviewed_plan"
+    assert "authority_resolution" not in publication_approval
 
 
 def test_candidate_assessment_reports_shared_source_as_advisory(registry_factory, tmp_path):
@@ -3377,6 +3397,9 @@ def test_publication_preview_is_review_free_and_returns_exact_authority_lease(
     plan = json.loads(plan_path.read_text())
     assert result["status"] == "ready"
     assert result["approval"]["allowed"] is False
+    assert result["approval"]["evidence"] is None
+    assert result["approval"]["authority_resolution"] == "server_owned_lease_at_publish"
+    assert result["approval"]["reason"] == "server-owned publication authority required at publish"
     assert result["publication_mode"] == "state_store"
     assert result["coordination_state_root"] == str(store.state_root.resolve())
     assert result["required_resource_keys"] == [f"path:{store.state_root.resolve()}"]

@@ -9292,9 +9292,14 @@ def test_followup_remote_baseline_probe(registry_factory, tmp_path, monkeypatch,
         expected_revision=1,
         source="operator-intake-authorized-proposal",
     )
-    # Isolate runtime drift; canonical Git plan, fetch and leases are real.
-    monkeypatch.setattr(fetch, "_runtime_gate", lambda *a, **k: {"execution_blocked": False})
-    dispatcher = Dispatcher(registry, store)
+    # Canonical Registry snapshots require the dispatcher's bound runtime identity.
+    # Isolate the gate's environment, not the forwarding contract.
+    identity = {"test_runtime_identity": True}
+    def runtime_gate(*args, **kwargs):
+        assert kwargs["runtime_identity"] is identity
+        return {"execution_blocked": False}
+    monkeypatch.setattr(fetch, "_runtime_gate", runtime_gate)
+    dispatcher = Dispatcher(registry, store, runtime_identity=identity)
     if scenario == "remote-unavailable":
         git_output(root, "remote", "set-url", "origin", str(tmp_path / "missing.git"))
         with pytest.raises(bureau_v2.legacy.StateError, match="current baseline"):

@@ -671,7 +671,11 @@ def _uses_current_followup_baseline(task: legacy.Task, initial_source: str | Non
 
 
 def _current_followup_baseline_plan(
-    registry: Registry, store: StateStore, task: legacy.Task
+    registry: Registry,
+    store: StateStore,
+    task: legacy.Task,
+    *,
+    runtime_identity: dict[str, Any] | None,
 ) -> dict[str, Any]:
     # Reuse canonical repository/remote resolution; no remote-tracking ref fallback.
     from . import fetch_orchestration, repo_scan
@@ -694,6 +698,7 @@ def _current_followup_baseline_plan(
         task_id=task.id,
         state_db=store.path,
         discovery_registry_path=repo_scan.DEFAULT_DISCOVERY_REGISTRY,
+        runtime_identity=runtime_identity,
     )
     if not plan["allowed"] or not plan["source"]["commit_sha"]:
         raise legacy.StateError("current baseline remote unavailable")
@@ -721,6 +726,8 @@ def _materialize_current_followup_baseline(
     intent: dict[str, Any],
     lease_binding: dict[str, Any] | None,
     resource_db: Path,
+    *,
+    runtime_identity: dict[str, Any] | None,
 ) -> str:
     from . import fetch_orchestration
 
@@ -731,7 +738,9 @@ def _materialize_current_followup_baseline(
     identity = intent["operator_approval"].get("current_baseline_identity_sha256")
     if identity != _current_followup_identity(Path(workspace["repository"])):
         raise legacy.StateError("current baseline repository identity changed after intent")
-    plan = _current_followup_baseline_plan(registry, store, task)
+    plan = _current_followup_baseline_plan(
+        registry, store, task, runtime_identity=runtime_identity
+    )
     if (
         plan["source"]["commit_sha"] != expected
         or plan["repo"]["path"] != workspace["repository"]
@@ -772,7 +781,9 @@ def _materialize_current_followup_baseline(
         )
         if result.returncode:
             raise legacy.StateError("current baseline object import failed")
-        after = _current_followup_baseline_plan(registry, store, task)
+        after = _current_followup_baseline_plan(
+            registry, store, task, runtime_identity=runtime_identity
+        )
         if after["source"] != plan["source"] or after["repo"] != plan["repo"]:
             raise legacy.StateError("current baseline changed during object import")
     if _git(repo, "cat-file", "-t", expected, check=False).stdout.strip() != "commit":
@@ -5986,7 +5997,8 @@ class Dispatcher(legacy.Dispatcher):
             repo = Path(selected.execution["working_repository"]).expanduser().resolve()
             identity = _current_followup_identity(repo)
             baseline = _current_followup_baseline_plan(
-                fresh_initiative_registry, self.store, selected
+                fresh_initiative_registry, self.store, selected,
+                runtime_identity=self.runtime_identity,
             )["source"]["commit_sha"]
             if _current_followup_identity(repo) != identity:
                 raise legacy.StateError("current baseline repository changed during observation")
@@ -6181,6 +6193,7 @@ class Dispatcher(legacy.Dispatcher):
         if _uses_current_followup_baseline(task, initial_source):
             current_baseline = _materialize_current_followup_baseline(
                 self.registry, self.store, task, intent, lease_binding, resource_db,
+                runtime_identity=self.runtime_identity,
             )
         envelope: dict[str, Any]
         run: dict[str, Any]

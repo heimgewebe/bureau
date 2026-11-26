@@ -9214,3 +9214,222 @@ def test_runtime_closeout_cli_contract_parses_exact_runtime_options():
                 "/tmp/fake-resources.sqlite3",
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "current-missing",
+        "explicit-pin",
+        "legacy",
+        "remote-drift",
+        "no-lease",
+        "remote-unavailable",
+        "object-disappears",
+        "wrong-branch",
+        "wrong-worktree",
+        "remote-replaced",
+    ],
+)
+def test_followup_remote_baseline_probe(registry_factory, tmp_path, monkeypatch, scenario):
+    from bureau import fetch_orchestration as fetch
+    from bureau import repo_scan
+
+    monkeypatch.setattr(
+        repo_scan, "DEFAULT_DISCOVERY_REGISTRY", tmp_path / "nonexistent-discovery.json"
+    )
+    root = registry_factory(1, mode="write")
+    tid = prepare_coordinated_registry(root)
+    historical = git_output(root, "rev-parse", "HEAD")
+    plan = root / "registry/initiatives/main.json"
+    v = json.loads(plan.read_text())
+    v["current_plan"] = {
+        "repository": root.name,
+        "path": "docs/plan.md",
+        "commit": historical,
+        "document_sha256": "3" * 64,
+    }
+    plan.write_text(json.dumps(v))
+    # A real independent remote with a commit that does not exist in the source.
+    remote = tmp_path / "remote.git"
+    git_output(root, "clone", "--bare", str(root), str(remote))
+    git_output(root, "remote", "add", "origin", str(remote))
+    writer = tmp_path / "writer"
+    git_output(root, "clone", str(remote), str(writer))
+    git_output(writer, "config", "user.email", "test@example.invalid")
+    git_output(writer, "config", "user.name", "Test")
+
+    def advance(message):
+        (writer / "new-module.txt").write_text(message)
+        git_output(writer, "add", "new-module.txt")
+        git_output(writer, "commit", "-m", message)
+        git_output(writer, "push", "origin", "main")
+        return git_output(writer, "rev-parse", "HEAD")
+
+    current = advance("current")
+    assert (
+        subprocess.run(
+            ["git", "-C", str(root), "cat-file", "-e", current], capture_output=True
+        ).returncode
+        != 0
+    )
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    spec = json.loads(json.dumps(registry.tasks[tid].raw))
+    if scenario == "explicit-pin":
+        spec["execution"]["baseline_commit"] = historical
+    store.put_task_spec(
+        spec,
+        idempotency_key="probe-initial",
+        expected_revision=None,
+        source="legacy-git-import"
+        if scenario == "legacy"
+        else "operator-intake-authorized-proposal",
+    )
+    spec["title"] = "Later revision"
+    store.put_task_spec(
+        spec,
+        idempotency_key="probe-second",
+        expected_revision=1,
+        source="operator-intake-authorized-proposal",
+    )
+    # Isolate runtime drift; canonical Git plan, fetch and leases are real.
+    monkeypatch.setattr(fetch, "_runtime_gate", lambda *a, **k: {"execution_blocked": False})
+    dispatcher = Dispatcher(registry, store)
+    if scenario == "remote-unavailable":
+        git_output(root, "remote", "set-url", "origin", str(tmp_path / "missing.git"))
+        with pytest.raises(bureau_v2.legacy.StateError, match="current baseline"):
+            dispatcher.claim_intent(
+                "operator",
+                ("repository",),
+                task_id=tid,
+                base_dir=tmp_path / "worktrees",
+                approved=True,
+            )
+        return
+    intent = dispatcher.claim_intent(
+        "operator", ("repository",), task_id=tid, base_dir=tmp_path / "worktrees", approved=True
+    )["intent"]
+    expected = historical if scenario in {"explicit-pin", "legacy"} else current
+    assert intent["workspace"]["baseline_commit"] == expected
+    assert (
+        subprocess.run(
+            ["git", "-C", str(root), "cat-file", "-e", current], capture_output=True
+        ).returncode
+        != 0
+    )
+    if scenario == "remote-drift":
+        advance("newer")
+    if scenario == "remote-replaced":
+        other = tmp_path / "replacement.git"
+        git_output(root, "clone", "--bare", str(remote), str(other))
+        git_output(root, "remote", "set-url", "origin", str(other))
+    if scenario == "object-disappears":
+        from contextlib import contextmanager
+
+        original_immediate = store.immediate
+
+        @contextmanager
+        def lose_object():
+            with original_immediate() as connection:
+                # Model an object lost between the out-of-lock import and claim CAS.
+                original_git = bureau_v2._git
+
+                def unavailable(repo, *args, **kwargs):
+                    if args[:2] == ("cat-file", "-t") and args[2] == current:
+                        return subprocess.CompletedProcess(args, 1, "", "missing object")
+                    return original_git(repo, *args, **kwargs)
+
+                with monkeypatch.context() as patch:
+                    patch.setattr(bureau_v2, "_git", unavailable)
+                    yield connection
+
+        monkeypatch.setattr(store, "immediate", lose_object)
+    binding, database = coordinated_lease_database(
+        tmp_path / "leases",
+        intent,
+        omit=set(intent["required_resource_keys"]) if scenario == "no-lease" else None,
+    )
+    if scenario in {"remote-drift", "no-lease", "object-disappears", "remote-replaced"}:
+        with pytest.raises(bureau_v2.legacy.StateError, match=r"current baseline|lease"):
+            dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+        if scenario != "object-disappears":
+            assert (
+                subprocess.run(
+                    ["git", "-C", str(root), "cat-file", "-e", current], capture_output=True
+                ).returncode
+                != 0
+            )
+        with store.connect() as c:
+            assert (
+                c.execute(
+                    "SELECT COUNT(*) FROM runs WHERE run_id=?", (intent["run_id"],)
+                ).fetchone()[0]
+                == 0
+            )
+        return
+    claimed = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert claimed["status"] == "claimed"
+    assert claimed["envelope"]["baseline_commit"] == expected
+    if scenario in {"wrong-branch", "wrong-worktree"}:
+        branch = intent["workspace"]["workspace_branch"]
+        destination = Path(intent["workspace"]["workspace_path"])
+        if scenario == "wrong-branch":
+            git_output(root, "branch", branch, historical)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            git_output(root, "worktree", "add", "-b", branch, str(destination), historical)
+        with pytest.raises(bureau_v2.legacy.StateError, match="baseline"):
+            bureau_v2.create_workspace(registry, store, intent["run_id"], tmp_path / "worktrees")
+        assert git_output(root, "rev-parse", branch) == historical
+        assert not store.run(intent["run_id"])["workspace_path"]
+        return
+    run = bureau_v2.create_workspace(registry, store, intent["run_id"], tmp_path / "worktrees")
+    worktree = Path(run["workspace_path"])
+    assert git_output(worktree, "rev-parse", "HEAD") == expected
+    assert (worktree / "new-module.txt").exists() == (scenario == "current-missing")
+    assert git_output(root, "rev-parse", "HEAD") == historical
+    assert git_output(root, "rev-parse", "refs/remotes/origin/main") == historical
+    assert not (root / ".git/FETCH_HEAD").exists()
+
+
+@pytest.mark.parametrize(
+    "source,pinned",
+    [
+        ("operator-intake-authorized-proposal", False),
+        ("operator-intake-authorized-proposal", True),
+        ("legacy-git-import", False),
+    ],
+)
+def test_claim_next_followup_baseline_requires_native_pickup(
+    registry_factory, tmp_path, monkeypatch, source, pinned
+):
+    root = registry_factory(1, mode="write")
+    historical = init_clean_origin_main(root)
+    plan_path = root / "registry/initiatives/main.json"
+    plan = json.loads(plan_path.read_text())
+    plan["current_plan"] = {
+        "repository": root.name,
+        "path": "docs/plan.md",
+        "commit": historical,
+        "document_sha256": "3" * 64,
+    }
+    plan_path.write_text(json.dumps(plan))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    tid = next(iter(registry.tasks))
+    spec = json.loads(json.dumps(registry.tasks[tid].raw))
+    if pinned:
+        spec["execution"]["baseline_commit"] = historical
+    store.put_task_spec(
+        spec,
+        idempotency_key="claim-next-provenance",
+        expected_revision=None,
+        source=source,
+    )
+    dispatcher = Dispatcher(registry, store)
+    if source == "operator-intake-authorized-proposal" and not pinned:
+        with pytest.raises(NoEligibleTask, match="requires coordinated pickup"):
+            dispatcher.claim_next("worker", ("repository",), reconcile_first=False)
+        assert not store.list_runs()
+    else:
+        claimed = dispatcher.claim_next("worker", ("repository",), reconcile_first=False)
+        assert claimed["envelope"]["baseline_commit"] == historical

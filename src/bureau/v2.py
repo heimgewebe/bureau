@@ -654,6 +654,132 @@ def _coordinated_claim_auto_idempotency_key(
     return f"claim-intent:{request_sha256}{suffix}"
 
 
+def _initial_task_source(connection: sqlite3.Connection, task_id: str) -> str | None:
+    row = connection.execute(
+        "SELECT source FROM task_spec_revisions WHERE task_id=? AND revision=1",
+        (task_id,),
+    ).fetchone()
+    return str(row["source"]) if row is not None else None
+
+
+def _uses_current_followup_baseline(task: legacy.Task, initial_source: str | None) -> bool:
+    return (
+        task.execution.get("baseline_commit") is None
+        and initial_source == "operator-intake-authorized-proposal"
+        and _task_uses_worktree_workspace(task)
+    )
+
+
+def _current_followup_baseline_plan(
+    registry: Registry, store: StateStore, task: legacy.Task
+) -> dict[str, Any]:
+    # Reuse canonical repository/remote resolution; no remote-tracking ref fallback.
+    from . import fetch_orchestration, repo_scan
+
+    working = task.execution.get("working_repository")
+    if not isinstance(working, str) or not working.strip():
+        raise legacy.StateError("current baseline working repository missing")
+    repo = Path(working).expanduser().resolve()
+    ids = [
+        r.id
+        for r in registry.resources.values()
+        if r.type == "git-repository" and r.path and Path(r.path).expanduser().resolve() == repo
+    ]
+    if len(ids) != 1:
+        raise legacy.StateError("current baseline repository binding is not singular")
+    plan = fetch_orchestration.repo_fetch_plan(
+        registry.root,
+        registry,
+        ids[0],
+        task_id=task.id,
+        state_db=store.path,
+        discovery_registry_path=repo_scan.DEFAULT_DISCOVERY_REGISTRY,
+    )
+    if not plan["allowed"] or not plan["source"]["commit_sha"]:
+        raise legacy.StateError("current baseline remote unavailable")
+    return plan
+
+
+def _current_followup_identity(repo: Path) -> str:
+    from . import fetch_orchestration, repo_scan
+
+    remote = repo_scan._git_read(repo, "remote", "get-url", "origin")
+    if remote.returncode or not remote.stdout.strip():
+        raise legacy.StateError("current baseline remote identity unavailable")
+    return legacy.sha256_json(
+        {
+            "common_dir": str(fetch_orchestration._git_common_dir(repo)),
+            "remote_url": remote.stdout.strip(),
+        }
+    )
+
+
+def _materialize_current_followup_baseline(
+    registry: Registry,
+    store: StateStore,
+    task: legacy.Task,
+    intent: dict[str, Any],
+    lease_binding: dict[str, Any] | None,
+    resource_db: Path,
+) -> str:
+    from . import fetch_orchestration
+
+    workspace = intent.get("workspace")
+    if not isinstance(workspace, dict):
+        raise legacy.StateError("current baseline workspace missing")
+    expected = workspace["baseline_commit"]
+    identity = intent["operator_approval"].get("current_baseline_identity_sha256")
+    if identity != _current_followup_identity(Path(workspace["repository"])):
+        raise legacy.StateError("current baseline repository identity changed after intent")
+    plan = _current_followup_baseline_plan(registry, store, task)
+    if (
+        plan["source"]["commit_sha"] != expected
+        or plan["repo"]["path"] != workspace["repository"]
+        or identity != _current_followup_identity(Path(workspace["repository"]))
+    ):
+        raise legacy.StateError("current baseline changed after intent")
+    # Only the existing task-bound live lease authorizes preclaim object import.
+    if not intent["required_resource_keys"]:
+        raise legacy.StateError("current baseline object import requires a lease")
+    try:
+        runtime_refresh.validate_live_lease_binding(
+            intent,
+            lease_binding,
+            resource_db=resource_db,
+            min_remaining_seconds=COORDINATED_CLAIM_MIN_LEASE_SECONDS,
+            required_metadata={
+                "task_id": task.id,
+                "run_id": intent["run_id"],
+                "claim_intent_sha256": intent["intent_sha256"],
+            },
+        )
+    except runtime_refresh.RuntimeRefreshError as exc:
+        raise legacy.StateError(f"current baseline lease validation failed: {exc.code}") from exc
+    repo = Path(workspace["repository"])
+    if _git(repo, "cat-file", "-e", f"{expected}^{{commit}}", check=False).returncode:
+        # Import only Git objects, never change branch, FETCH_HEAD, or tracking refs.
+        result = fetch_orchestration._run_git_write(
+            repo,
+            [
+                "fetch",
+                "--no-tags",
+                "--no-write-fetch-head",
+                "--no-recurse-submodules",
+                "--refmap=",
+                plan["source"]["remote"],
+                plan["source"]["ref"],
+            ],
+        )
+        if result.returncode:
+            raise legacy.StateError("current baseline object import failed")
+        after = _current_followup_baseline_plan(registry, store, task)
+        if after["source"] != plan["source"] or after["repo"] != plan["repo"]:
+            raise legacy.StateError("current baseline changed during object import")
+    if _git(repo, "cat-file", "-t", expected, check=False).stdout.strip() != "commit":
+        raise legacy.StateError("current baseline exact commit unavailable")
+    return expected
+
+
 def _workspace_baseline_for_task(registry: Registry, task: legacy.Task) -> str | None:
     baseline = task.execution.get("baseline_commit")
     initiative = registry.initiatives[task.initiative]
@@ -5854,7 +5980,22 @@ class Dispatcher(legacy.Dispatcher):
             )
         approval_evidence = {**approval_evidence, **approval_extensions}
         current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
-        baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
+        with self.store.connect() as connection:
+            initial_source = _initial_task_source(connection, selected.id)
+        if _uses_current_followup_baseline(selected, initial_source):
+            repo = Path(selected.execution["working_repository"]).expanduser().resolve()
+            identity = _current_followup_identity(repo)
+            baseline = _current_followup_baseline_plan(
+                fresh_initiative_registry, self.store, selected
+            )["source"]["commit_sha"]
+            if _current_followup_identity(repo) != identity:
+                raise legacy.StateError("current baseline repository changed during observation")
+            approval_evidence = {
+                **approval_evidence,
+                "current_baseline_identity_sha256": identity,
+            }
+        else:
+            baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
         workspace = _planned_workspace(
             fresh_initiative_registry, selected, run_id, base_dir, baseline
         )
@@ -6034,6 +6175,13 @@ class Dispatcher(legacy.Dispatcher):
             raise legacy.StateError("coordinated claim has unexpected lease binding")
         if not intent["worker_id"] or len(intent["worker_id"]) > 200:
             raise legacy.StateError("worker_id must contain 1-200 characters")
+        with self.store.connect() as connection:
+            initial_source = _initial_task_source(connection, task.id)
+        current_baseline = None
+        if _uses_current_followup_baseline(task, initial_source):
+            current_baseline = _materialize_current_followup_baseline(
+                self.registry, self.store, task, intent, lease_binding, resource_db,
+            )
         envelope: dict[str, Any]
         run: dict[str, Any]
         with self.store.immediate() as connection:
@@ -6070,8 +6218,22 @@ class Dispatcher(legacy.Dispatcher):
                     if isinstance(intent.get("workspace"), dict)
                     else None
                 ),
-                _workspace_baseline_for_task(fresh_initiative_registry, task),
+                current_baseline
+                if current_baseline is not None
+                else _workspace_baseline_for_task(fresh_initiative_registry, task),
             )
+            if current_baseline is not None:
+                repo = Path(intent["workspace"]["repository"])
+                if (
+                    _current_followup_identity(repo)
+                    != approval_data.get("current_baseline_identity_sha256")
+                    or _git(
+                        repo, "cat-file", "-t", current_baseline, check=False
+                    ).stdout.strip() != "commit"
+                ):
+                    raise legacy.StateError(
+                        "current baseline local identity or object changed before claim CAS"
+                    )
             if expected_workspace != intent["workspace"]:
                 raise legacy.StateError("coordinated claim workspace changed after intent")
             if isinstance(intent.get("workspace"), dict):
@@ -6385,6 +6547,13 @@ class Dispatcher(legacy.Dispatcher):
                     overlays,
                     initiative_registry=fresh_initiative_registry,
                 )
+                if not reasons and _uses_current_followup_baseline(
+                    task, _initial_task_source(connection, task.id)
+                ):
+                    reasons.append(
+                        "current follow-up baseline requires coordinated pickup "
+                        "(claim-intent / claim-commit)"
+                    )
                 if (
                     not reasons
                     and open_pr_reservations is None
@@ -6422,12 +6591,7 @@ class Dispatcher(legacy.Dispatcher):
             now = legacy.utc_now()
             initiative = fresh_initiative_registry.initiatives[selected.initiative]
             current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
-            baseline = selected.execution.get("baseline_commit")
-            if baseline is None and initiative.current_plan:
-                working = selected.execution.get("working_repository")
-                plan_repository = initiative.current_plan.get("repository")
-                if working and Path(working).name == plan_repository:
-                    baseline = initiative.current_plan.get("commit")
+            baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
             envelope = {
                 "schema_version": 1,
                 "run_id": run_id,
@@ -10217,6 +10381,14 @@ def create_workspace(
     branch_task = re.sub(r"[^A-Za-z0-9._-]+", "-", task.id).lower()
     branch = f"bureau/{branch_task}/{run_id.rsplit('-', 1)[-1].lower()}"
 
+    identity = (
+        envelope.get("claim_intent", {}).get("operator_approval", {})
+        .get("current_baseline_identity_sha256")
+    )
+    if identity and _current_followup_identity(repo) != identity:
+        raise legacy.StateError(
+            "current baseline repository identity changed before workspace creation"
+        )
     registered = _worktree_paths(repo)
     created = False
     if destination in registered:
@@ -10225,6 +10397,8 @@ def create_workspace(
             raise legacy.StateError(
                 f"existing workspace {destination} uses unexpected branch {current_branch}"
             )
+        if identity and _git(destination, "rev-parse", "HEAD").stdout.strip() != baseline:
+            raise legacy.StateError("existing unbound workspace does not match current baseline")
     elif destination.exists():
         raise legacy.StateError(
             f"workspace destination exists but is not registered: {destination}"
@@ -10241,6 +10415,10 @@ def create_workspace(
             == 0
         )
         if branch_exists:
+            if identity and (
+                _git(repo, "rev-parse", f"refs/heads/{branch}").stdout.strip() != baseline
+            ):
+                raise legacy.StateError("existing unbound branch does not match current baseline")
             _git(repo, "worktree", "add", str(destination), branch)
         else:
             _git(repo, "worktree", "add", "-b", branch, str(destination), baseline)

@@ -1789,52 +1789,81 @@ def test_claim_intent_replaces_broad_repository_lease_with_exact_scope_paths(
     assert f"repo:{root.resolve()}" not in result["intent"]["required_resource_keys"]
 
 
-def test_claim_intent_binds_nonconflict_and_commit_rejects_pr_head_drift(
-    registry_factory, tmp_path
+@pytest.mark.parametrize("case", [
+    "unchanged", "revision", "disjoint-paths", "overlap", "incomplete",
+    "same-revision-path-drift", "missing-lease", "foreign-binding",
+])
+def test_claim_commit_revalidates_disjoint_pr_revision_progress(
+    registry_factory, tmp_path, case
 ):
-    root = registry_factory(1, mode="write")
+    from dataclasses import replace
+
+    from test_v2 import coordinated_lease_database
+
+    root = registry_factory(3, mode="write")
     task_id = "BUR-TEST-001-T001"
-    _t068_bind_task_scope(
-        root,
-        [f"path:{root / 'src/feature.py'}"],
-        task_id=task_id,
-        isolation="none",
-    )
+    key = f"path:{root / 'src/feature.py'}"
+    _t068_bind_task_scope(root, [key], task_id=task_id, isolation="none")
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
-    current = [_t068_reservation(paths=("docs/other.md",), head_oid="b" * 40)]
+    original = _t068_reservation(
+        paths=("docs/other.md",), binding_status="valid",
+        task_ids=("BUR-TEST-001-T002",), binding_reason="bound to second task",
+    )
+    current = [original]
     dispatcher = Dispatcher(
-        registry,
-        store,
-        open_pr_reservations_provider=lambda _registry: list(current),
+        registry, store, open_pr_reservations_provider=lambda _registry: list(current),
     )
-
-    result = dispatcher.claim_intent(
-        "worker-t068",
-        ("repository",),
-        task_id=task_id,
-        approved=True,
-        approval_source="test-t068",
-    )
-    intent = result["intent"]
+    intent = dispatcher.claim_intent(
+        "worker-disjoint-revision", ("repository",), task_id=task_id,
+        approved=True, approval_source="test-disjoint-revision",
+    )["intent"]
     proof = intent["operator_approval"]["open_pr_nonconflict"]
-
-    assert proof["requires_evidence"] is True
+    intent_before = json.loads(json.dumps(intent))
     assert proof["reservations"][0]["classification"] == "scope-proven-disjoint"
-    assert proof["reservations"][0]["head_oid"] == "b" * 40
-    current[:] = [_t068_reservation(paths=("docs/other.md",), head_oid="c" * 40)]
-
-    with pytest.raises(
-        bureau_v2.legacy.StateError,
-        match="open PR nonconflict evidence changed after intent",
-    ):
-        dispatcher.commit_claim_intent(
-            intent,
-            {"owner_id": intent["lease_owner_id"], "task_id": task_id},
-        )
-
-    with store.connect() as connection:
-        assert store.active_runs(connection) == []
+    changes = {
+        "paths": ("docs/other.md",), "base_oid": "d" * 40, "head_oid": "c" * 40,
+        "binding_status": "valid", "task_ids": ("BUR-TEST-001-T002",),
+        "binding_reason": "bound to second task",
+    }
+    if case == "disjoint-paths":
+        changes["paths"] = ("docs/new.md", "docs/other.md")
+    if case == "overlap":
+        changes["paths"] = ("src/feature.py",)
+    if case == "same-revision-path-drift":
+        changes.update(paths=("docs/new.md",), base_oid="a" * 40, head_oid="b" * 40)
+    if case == "foreign-binding":
+        changes.update(task_ids=("BUR-TEST-001-T003",), binding_reason="bound to third task")
+    if case != "unchanged":
+        current[:] = [_t068_reservation(**changes)]
+    if case == "incomplete":
+        current[:] = [replace(current[0], file_scope_complete=False)]
+    binding, database = coordinated_lease_database(
+        tmp_path / "leases", intent, omit={key} if case == "missing-lease" else None,
+    )
+    if case not in {"unchanged", "revision", "disjoint-paths"}:
+        with pytest.raises(bureau_v2.legacy.StateError):
+            dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+        assert store.list_runs() == []
+        return
+    result = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert result["status"] == "claimed"
+    assert result["envelope"]["claim_intent"] == intent_before
+    assert intent == intent_before
+    assert result["run"]["run_id"] == intent["run_id"]
+    approval = result["envelope"]["operator_approval"]
+    if case == "unchanged":
+        assert "open_pr_nonconflict_at_commit" not in approval
+    else:
+        fresh = approval["open_pr_nonconflict_at_commit"]
+        assert fresh["assessment_sha256"] != proof["assessment_sha256"]
+        assert fresh["requested_scopes"] == proof["requested_scopes"]
+        assert fresh["reservations"][0]["head_oid"] == changes["head_oid"]
+        assert fresh["reservations"][0]["classification"] == "scope-proven-disjoint"
+    replay = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert replay["run"]["run_id"] == result["run"]["run_id"]
+    assert replay["envelope"] == result["envelope"]
+    assert len(store.list_runs()) == 1
 
 
 def test_claim_commit_rejects_disjoint_pr_task_binding_drift(

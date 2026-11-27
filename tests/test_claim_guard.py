@@ -3184,7 +3184,7 @@ def test_claim_provider_deferred_until_local_eligibility(
 
 
 @pytest.mark.parametrize("case", [
-    "exact", "head-drift", "base-drift", "count-drift", "missing",
+    "exact", "head-drift", "base-drift", "count-drift", "origin-drift", "missing",
     "new", "duplicate", "invalid", "primary-quota", "secondary-quota",
 ])
 def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypatch, case):
@@ -3195,6 +3195,10 @@ def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypat
             "baseRefOid": "a" * 40,
             "headRefOid": "b" * 40,
             "changedFiles": 1,
+            "headRefName": f"fix/{n}",
+            "baseRefName": "main",
+            "headRepository": {"nameWithOwner": "heimgewebe/example"},
+            "isCrossRepository": False,
             "files": [{"path": f"src/{n}.py", "changeType": "MODIFIED"}],
         }
         for n in (17, 18, 19)
@@ -3208,7 +3212,10 @@ def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypat
                 value = rows
             else:
                 calls.append("identity-batch")
-                assert set(fields) == {"number", "baseRefOid", "headRefOid", "changedFiles"}
+                assert set(fields) == {
+                    "number", "baseRefOid", "headRefOid", "changedFiles",
+                    "headRefName", "baseRefName", "headRepository", "isCrossRepository",
+                }
                 assert argv[argv.index("--state") + 1] == "open"
                 value = [{k: row[k] for k in fields} for row in rows]
                 if case == "head-drift":
@@ -3217,6 +3224,8 @@ def test_open_pr_multi_identity_readback_is_batched_and_revision_bound(monkeypat
                     value[0]["baseRefOid"] = "c" * 40
                 elif case == "count-drift":
                     value[0]["changedFiles"] = 2
+                elif case == "origin-drift":
+                    value[0]["headRefName"] = "fix/another"
                 elif case == "missing":
                     value.pop()
                 elif case == "new":
@@ -3510,3 +3519,301 @@ def test_primary_quota_latch_set_during_batch_revalidation(monkeypatch, mode):
     else:
         assert [item["number"] for item in seen["heimgewebe/a"]] == [17, 18]
         assert all(item["fileScope"]["changed_files"] == 1 for item in seen["heimgewebe/a"])
+
+
+
+@pytest.mark.parametrize("case", ["same", "fork", "changed", "missing", "ambiguous"])
+def test_open_pr_head_origin_revalidated_with_existing_readback(monkeypatch, case):
+    repo = "heimgewebe/example"
+    head_repo = repo if case != "fork" else "other/example"
+    row = {
+        "number": 17, "title": "continuation", "headRefName": "fix/owned",
+        "headRefOid": "b" * 40, "baseRefName": "main", "baseRefOid": "a" * 40,
+        "changedFiles": 1, "url": "https://github.com/heimgewebe/example/pull/17",
+        "body": "", "labels": [], "headRepository": {"nameWithOwner": head_repo},
+        "isCrossRepository": case == "fork",
+    }
+    if case == "ambiguous":
+        row["isCrossRepository"] = True
+    detail = {
+        "state": "open", "base": {"sha": "a" * 40, "ref": "main", "repo": {"full_name": repo}},
+        "head": {
+            "sha": "b" * 40, "ref": "fix/changed" if case == "changed" else "fix/owned",
+            "repo": {"full_name": head_repo},
+        },
+        "changed_files": 1,
+    }
+    if case == "missing":
+        detail["head"]["repo"] = None
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            value = [row]
+        elif argv[-1].endswith("/files?per_page=100"):
+            value = [[{"filename": "src/file.py", "status": "modified"}]]
+        else:
+            value = detail
+        return subprocess.CompletedProcess(argv, 0, json.dumps(value), "")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    if case == "changed":
+        with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="head origin changed"):
+            bureau_v2._github_open_pull_requests(repo)
+    else:
+        observed = bureau_v2._github_open_pull_requests(repo)[0]
+        if case in {"missing", "ambiguous"}:
+            assert observed["headOrigin"] is None
+        else:
+            assert observed["headOrigin"] == {
+                "head_repository": head_repo, "head_branch": "fix/owned",
+                "base_branch": "main", "cross_repository": case == "fork",
+            }
+    assert len(calls) == 3
+
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "exact",
+        "fork",
+        "missing-origin",
+        "wrong-task",
+        "incomplete",
+        "scope-escape",
+        "head-drift",
+        "base-drift",
+        "dirty",
+        "missing-lease",
+        "missing-canonical-branch-lease",
+        "missing-physical-branch-lease",
+        "other-pr-conflict",
+        "ordinary-unapproved",
+        "automatic",
+        "legacy-path",
+        "cleanup-race",
+        "scope-drift",
+        "foreign-lease",
+        "foreign-canonical-branch-lease",
+        "foreign-physical-branch-lease",
+        "ambiguous-second",
+        "revised-intake",
+        "repeat-transfer",
+    ],
+)
+def test_own_pr_continuation_reuses_exact_terminal_workspace(
+    registry_factory, tmp_path, monkeypatch, case
+):
+    from dataclasses import replace
+    from pathlib import Path
+
+    from test_v2 import coordinated_lease_database, git_output, init_clean_origin_main
+
+    root = registry_factory(1, mode="write")
+    task_id = "BUR-TEST-001-T001"
+    scope_path = root / "src/feature.py"
+    _t068_bind_task_scope(root, [f"path:{scope_path}"], isolation="worktree")
+    baseline = init_clean_origin_main(root)
+    git_output(root, "remote", "add", "origin", "git@github.com:heimgewebe/example.git")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    current = []
+    if case == "revised-intake":
+        spec = json.loads(json.dumps(registry.tasks[task_id].raw))
+        spec["execution"]["baseline_commit"] = baseline
+        store.put_task_spec(
+            spec,
+            idempotency_key="own-pr-intake-r1",
+            expected_revision=None,
+            source="operator-intake-authorized-proposal",
+        )
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: list(current),
+    )
+    prior_intent = dispatcher.claim_intent(
+        "prior-worker",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+    )["intent"]
+    old_binding, old_db = coordinated_lease_database(tmp_path / "old-leases", prior_intent)
+    prior = dispatcher.checkout_claim_intent(
+        prior_intent,
+        old_binding,
+        resource_db=old_db,
+    )["run"]
+    workspace = Path(prior["workspace_path"])
+    branch = prior["workspace_branch"]
+    (workspace / "src").mkdir(exist_ok=True)
+    (workspace / "src/feature.py").write_text("first useful change")
+    git_output(workspace, "add", "src/feature.py")
+    git_output(workspace, "commit", "-m", "publish real change")
+    head = git_output(workspace, "rev-parse", "HEAD")
+    bureau_v2.fail_run(store, prior["run_id"], "published PR; work remains")
+    bureau_v2.preserve_workspace(store, prior["run_id"], "open PR")
+    if case == "revised-intake":
+        del spec["execution"]["baseline_commit"]
+        store.put_task_spec(
+            spec,
+            idempotency_key="own-pr-intake-r2",
+            expected_revision=1,
+            source="operator-intake-authorized-proposal",
+        )
+        dispatcher = Dispatcher(
+            registry,
+            store,
+            open_pr_reservations_provider=lambda _registry: list(current),
+        )
+    pr = replace(
+        _t068_reservation(
+            paths=("src/feature.py",),
+            base_oid=baseline,
+            head_oid=head,
+            binding_status="valid",
+            task_ids=(task_id,),
+        ),
+        branch=branch,
+        head_repository="heimgewebe/example",
+        base_branch="main",
+        same_repository_head=True,
+    )
+    if case == "fork":
+        pr = replace(pr, head_repository="foreign/example", same_repository_head=False)
+    if case == "missing-origin":
+        pr = replace(pr, head_repository="", same_repository_head=False)
+    if case == "wrong-task":
+        pr = replace(pr, task_ids=("BUR-TEST-001-T002",))
+    if case == "incomplete":
+        pr = replace(pr, file_scope_complete=False)
+    if case == "scope-escape":
+        pr = replace(pr, changed_paths=("src/feature.py", "src/foreign.py"))
+    if case == "dirty":
+        (workspace / "src/feature.py").write_text("unpublished foreign change")
+    current[:] = [pr]
+    if case == "other-pr-conflict":
+        current.append(_t068_reservation(number=100, paths=("src/feature.py",)))
+    if case == "ambiguous-second":
+        current.append(
+            _t068_reservation(
+                number=101,
+                paths=("docs/other.md",),
+                binding_status="exception",
+                task_ids=(task_id, "BUR-TEST-001-T002"),
+            )
+        )
+    if case == "legacy-path":
+        with pytest.raises(NoEligibleTask):
+            dispatcher.claim_next("new-worker", ("repository",))
+        return
+    if case in {
+        "fork",
+        "missing-origin",
+        "wrong-task",
+        "incomplete",
+        "scope-escape",
+        "dirty",
+        "other-pr-conflict",
+        "ordinary-unapproved",
+        "automatic",
+        "ambiguous-second",
+    }:
+        with pytest.raises(NoEligibleTask):
+            dispatcher.claim_intent(
+                "new-worker",
+                ("repository",),
+                task_id=None if case == "automatic" else task_id,
+                approved=case != "ordinary-unapproved",
+            )
+        assert len(store.list_runs()) == 1
+        return
+    intent = dispatcher.claim_intent(
+        "new-worker",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+    )["intent"]
+    proof = intent["operator_approval"]["own_pr_continuation"]
+    assert proof["previous_run_id"] == prior["run_id"]
+    assert intent["workspace"]["workspace_path"] == str(workspace)
+    assert intent["workspace"]["workspace_branch"] == branch
+    assert intent["workspace"]["baseline_commit"] == head
+    workspace_key = f"path:{workspace}"
+    canonical_branch_key = f"repo:{root.resolve()}:branch:{branch}"
+    physical_branch_key = f"repo:{workspace}:branch:{branch}"
+    assert {workspace_key, canonical_branch_key, physical_branch_key}.issubset(
+        intent["required_resource_keys"]
+    )
+    lease_cases = {
+        "missing-lease": workspace_key,
+        "missing-canonical-branch-lease": canonical_branch_key,
+        "missing-physical-branch-lease": physical_branch_key,
+        "foreign-lease": workspace_key,
+        "foreign-canonical-branch-lease": canonical_branch_key,
+        "foreign-physical-branch-lease": physical_branch_key,
+    }
+    if case == "head-drift":
+        current[:] = [replace(pr, head_oid="c" * 40)]
+    if case == "base-drift":
+        current[:] = [replace(pr, base_oid="d" * 40)]
+    if case == "scope-drift":
+        current[:] = [replace(pr, file_scope_sha256="e" * 64)]
+    if case == "cleanup-race":
+        # Model a competing cleanup completing before the claim transaction.
+        bureau_v2.cleanup_workspace(store, prior["run_id"], force=True)
+    binding, db = coordinated_lease_database(
+        tmp_path / "new-leases",
+        intent,
+        omit={lease_cases[case]} if case.startswith("missing-") else None,
+    )
+    if case.startswith("foreign-"):
+        import sqlite3
+
+        with sqlite3.connect(db) as connection:
+            connection.execute(
+                "UPDATE leases SET owner_id='foreign-live-owner' WHERE resource_key=?",
+                (lease_cases[case],),
+            )
+    if case in {"head-drift", "base-drift", "cleanup-race", "scope-drift"} | lease_cases.keys():
+        with pytest.raises(bureau_v2.legacy.StateError):
+            dispatcher.commit_claim_intent(intent, binding, resource_db=db)
+        assert len(store.list_runs()) == 1
+        return
+    result = dispatcher.checkout_claim_intent(intent, binding, resource_db=db)
+    assert result["status"] == "claimed"
+    run = result["run"]
+    assert run["run_id"] != prior["run_id"]
+    assert run["workspace_path"] == str(workspace)
+    assert run["workspace_branch"] == branch
+    assert git_output(workspace, "rev-parse", "HEAD") == head
+    assert (workspace / "src/feature.py").read_text() == "first useful change"
+    assert bureau_v2.workspace_status(store, prior["run_id"])["state"] == "transferred"
+    assert bureau_v2.workspace_status(store, run["run_id"])["state"] == "active"
+    with pytest.raises(bureau_v2.legacy.StateError, match="transferred"):
+        bureau_v2.cleanup_workspace(store, prior["run_id"], force=True)
+    with pytest.raises(bureau_v2.legacy.StateError, match="transferred"):
+        bureau_v2.preserve_workspace(store, prior["run_id"], "stale cleanup")
+    replay = dispatcher.commit_claim_intent(intent, binding, resource_db=db)
+    assert replay["run"]["run_id"] == run["run_id"]
+    assert len(store.list_runs()) == 2
+    assert workspace.is_dir()
+    if case == "repeat-transfer":
+        bureau_v2.fail_run(store, run["run_id"], "more work remains")
+        bureau_v2.preserve_workspace(store, run["run_id"], "open PR")
+        third = dispatcher.claim_intent(
+            "third-worker",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+        )["intent"]
+        third_binding, third_db = coordinated_lease_database(tmp_path / "third", third)
+        again = dispatcher.checkout_claim_intent(third, third_binding, resource_db=third_db)
+        assert again["run"]["workspace_path"] == str(workspace)
+        assert again["run"]["workspace_branch"] == branch
+        assert third["operator_approval"]["own_pr_continuation"]["previous_run_id"] == run["run_id"]
+        assert bureau_v2.workspace_status(store, prior["run_id"])["state"] == "transferred"
+        assert bureau_v2.workspace_status(store, run["run_id"])["state"] == "transferred"
+        assert bureau_v2.workspace_status(store, again["run"]["run_id"])["state"] == "active"

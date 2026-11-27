@@ -1133,6 +1133,53 @@ def _github_pull_request_file_scope(
     return {**material, "file_scope_sha256": legacy.sha256_json(material)}
 
 
+def _open_pr_head_origin(
+    repository: str, head_repository: Any, head_branch: Any, base_branch: Any,
+    cross_repository: Any,
+) -> dict[str, Any] | None:
+    if (
+        not isinstance(head_repository, str)
+        or not legacy.GITHUB_REPOSITORY_SLUG_RE.fullmatch(head_repository)
+        or not isinstance(head_branch, str) or not head_branch
+        or not isinstance(base_branch, str) or not base_branch
+        or type(cross_repository) is not bool
+        or cross_repository != (head_repository.casefold() != repository.casefold())
+    ):
+        return None
+    return {
+        "head_repository": head_repository.casefold(),
+        "head_branch": head_branch,
+        "base_branch": base_branch,
+        "cross_repository": cross_repository,
+    }
+
+
+def _graphql_pr_head_origin(repository: str, row: dict[str, Any]) -> dict[str, Any] | None:
+    head = row.get("headRepository")
+    return _open_pr_head_origin(
+        repository, head.get("nameWithOwner") if isinstance(head, dict) else None,
+        row.get("headRefName"), row.get("baseRefName"), row.get("isCrossRepository"),
+    )
+
+
+def _rest_pr_head_origin(repository: str, row: dict[str, Any]) -> dict[str, Any] | None:
+    head, base = row.get("head"), row.get("base")
+    if not isinstance(head, dict) or not isinstance(base, dict):
+        return None
+    head_repo = head.get("repo")
+    base_repo = base.get("repo")
+    slug = head_repo.get("full_name") if isinstance(head_repo, dict) else None
+    base_slug = base_repo.get("full_name") if isinstance(base_repo, dict) else None
+    if not isinstance(slug, str) or not isinstance(base_slug, str):
+        return None
+    if base_slug.casefold() != repository.casefold():
+        return None
+    return _open_pr_head_origin(
+        repository, slug, head.get("ref"), base.get("ref"),
+        slug.casefold() != repository.casefold(),
+    )
+
+
 def _github_pull_request_identity(repository: str, number: int) -> dict[str, Any]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     try:
@@ -1187,6 +1234,7 @@ def _github_pull_request_identity(repository: str, number: int) -> dict[str, Any
         "base_oid": base_oid,
         "head_oid": head_oid,
         "changed_files": changed_files,
+        "head_origin": _rest_pr_head_origin(repository, value),
     }
 
 
@@ -1274,6 +1322,7 @@ def _github_open_pull_requests_rest(repository: str) -> list[dict[str, Any]]:
             "headRefName": head["ref"], "headRefOid": head["sha"],
             "baseRefName": base["ref"], "baseRefOid": base["sha"],
             "body": body or "", "labels": labels,
+            "headOrigin": _rest_pr_head_origin(repository, item),
         })
     return normalized
 
@@ -1317,7 +1366,8 @@ def _revalidate_open_pull_request_batch(
             [
                 binary, "pr", "list", "--repo", repository, "--state", "open",
                 "--limit", str(_open_pr_claim_guard_limit()), "--json",
-                "number,baseRefOid,headRefOid,changedFiles",
+                "number,baseRefOid,headRefOid,changedFiles,headRefName,baseRefName,"
+                "headRepository,isCrossRepository",
             ],
             text=True, capture_output=True, check=False, timeout=30,
         )
@@ -1353,6 +1403,7 @@ def _revalidate_open_pull_request_batch(
             f"open PR identity batch has invalid or incomplete coverage for {repository}"
         )
     identities = {}
+    observed_by_number = {item["number"]: item for item in observed}
     for row in rows:
         if not isinstance(row, dict):
             raise OpenPullRequestObservationError(f"invalid PR identity batch row for {repository}")
@@ -1368,6 +1419,16 @@ def _revalidate_open_pull_request_batch(
                 f"invalid or duplicate PR identity batch row for {repository}"
             )
         identities[number] = (base, head, count)
+        original = observed_by_number.get(number)
+        if original is not None:
+            current_origin = _graphql_pr_head_origin(repository, row)
+            if original.get("headOrigin") != current_origin:
+                if original.get("headOrigin") is not None and current_origin is not None:
+                    raise OpenPullRequestObservationError(
+                        "open PR head origin changed during file observation for "
+                        f"{repository}#{number}"
+                    )
+                original["headOrigin"] = None
     if identities != expected:
         raise OpenPullRequestObservationError(
             f"open PR inventory or identity changed during file observation for {repository}"
@@ -1400,7 +1461,7 @@ def _github_open_pull_requests(
                     limit,
                     "--json",
                     "number,title,headRefName,headRefOid,baseRefName,baseRefOid,"
-                    "changedFiles,url,body,labels,files",
+                    "changedFiles,url,body,labels,files,headRepository,isCrossRepository",
                 ],
                 text=True,
                 capture_output=True,
@@ -1516,7 +1577,13 @@ def _github_open_pull_requests(
             expected_changed_files=changed_files,
             graphql_files=item.get("files"),
         )
-        observed = {**item, "fileScope": file_scope}
+        observed = {
+            **item, "fileScope": file_scope,
+            "headOrigin": (
+                item.get("headOrigin") if rest_inventory
+                else _graphql_pr_head_origin(repository, item)
+            ),
+        }
         if not batch_readback:
             revalidate_one(observed)
         return observed
@@ -1529,10 +1596,17 @@ def _github_open_pull_requests(
             "head_oid": item["headRefOid"],
             "changed_files": item["changedFiles"],
         }
-        if identity != expected_identity:
+        current_origin = identity.get("head_origin")
+        if {key: identity.get(key) for key in expected_identity} != expected_identity:
             raise OpenPullRequestObservationError(
                 f"open PR {repository}#{number} identity changed during file observation"
             )
+        if item.get("headOrigin") != current_origin:
+            if item.get("headOrigin") is not None and current_origin is not None:
+                raise OpenPullRequestObservationError(
+                    f"open PR {repository}#{number} head origin changed during file observation"
+                )
+            item["headOrigin"] = None
 
     if len(value) < 2:
         return [observe_one(pair) for pair in enumerate(value)]
@@ -1750,6 +1824,9 @@ class OpenPullRequestReservation(legacy.Reservation):
     file_scope_sha256: str = ""
     file_scope_complete: bool = False
     file_scope_diagnostic: str = "file scope unavailable"
+    head_repository: str = ""
+    base_branch: str = ""
+    same_repository_head: bool = False
 
 
 OPEN_PR_ADOPTION_SCHEMA_VERSION = 1
@@ -2395,11 +2472,153 @@ def _repo_paths_overlap(left: str, right: str) -> bool:
     shared = min(len(left_parts), len(right_parts))
     return left_parts[:shared] == right_parts[:shared]
 
+def _own_pr_continuation(
+    connection: sqlite3.Connection,
+    task: legacy.Task,
+    reservations: list[legacy.Reservation],
+    registry: Registry,
+) -> dict[str, Any] | None:
+    """Derive a single exact continuation from a terminal run and live PR scope."""
+    if (
+        task.mode != "interactive-agent"
+        or not _task_uses_worktree_workspace(task)
+        or task.execution.get("baseline_commit") is not None
+    ):
+        return None
+    matches = [
+        item
+        for item in reservations
+        if isinstance(item, OpenPullRequestReservation) and task.id in item.task_ids
+    ]
+    if len(matches) != 1:
+        return None
+    pr = matches[0]
+    if (
+        pr.task_binding_status != "valid"
+        or pr.task_ids != (task.id,)
+        or pr.observation_failed
+        or not pr.file_scope_complete
+        or not pr.changed_paths
+        or not pr.same_repository_head
+        or pr.head_repository != pr.repository.casefold()
+        or pr.base_branch != "main"
+        or set(_open_pr_reservation_scopes(pr)) != {pr.resource}
+        or not pr.branch
+        or not all(_GIT_OID_RE.fullmatch(oid) for oid in (pr.base_oid, pr.head_oid))
+    ):
+        return None
+    resource = registry.resources.get(pr.resource)
+    scope = _task_write_scope_for_repository(task, resource)
+    if scope["classification"] != "scope-ready" or not all(
+        any(
+            PurePosixPath(changed).is_relative_to(PurePosixPath(allowed))
+            for allowed in scope["paths"]
+        )
+        for changed in pr.changed_paths
+    ):
+        return None
+    row = connection.execute(
+        """
+        SELECT r.*,w.state AS workspace_state,w.repository_path,
+               w.workspace_path AS stored_path,w.branch AS stored_branch,
+               w.baseline_commit AS stored_baseline
+        FROM runs r LEFT JOIN workspaces w ON w.run_id=r.run_id
+        WHERE r.task_id=? ORDER BY r.attempt DESC LIMIT 1
+        """,
+        (task.id,),
+    ).fetchone()
+    if (
+        row is None
+        or row["state"] != "failed"
+        or row["workspace_state"] not in {"active", "preserved"}
+        or row["repository_path"] != scope["repository"]
+        or row["workspace_branch"] != pr.branch
+        or row["stored_branch"] != pr.branch
+        or not row["workspace_path"]
+        or row["workspace_path"] != row["stored_path"]
+    ):
+        return None
+    if (
+        connection.execute(
+            """
+        SELECT 1 FROM runs WHERE state IN ('assigned','running','verifying')
+        AND (workspace_path=? OR (workspace_branch=? AND task_id=?)) LIMIT 1
+        """,
+            (row["workspace_path"], pr.branch, task.id),
+        ).fetchone()
+        is not None
+    ):
+        return None
+    try:
+        envelope = json.loads(row["envelope_json"])
+        old_intent = envelope["claim_intent"]
+        old_workspace = old_intent["workspace"]
+        if (
+            legacy.sha256_json(envelope) != row["envelope_sha256"]
+            or coordinated_claim_intent_sha256(old_intent) != old_intent["intent_sha256"]
+            or envelope["run_id"] != row["run_id"]
+            or envelope["task_id"] != task.id
+            or old_intent["run_id"] != row["run_id"]
+            or old_intent["task_id"] != task.id
+            or old_workspace["repository"] != scope["repository"]
+            or old_workspace["workspace_path"] != row["workspace_path"]
+            or old_workspace["workspace_branch"] != pr.branch
+            or old_workspace["baseline_commit"] != row["stored_baseline"]
+        ):
+            return None
+        repo = Path(scope["repository"])
+        path = Path(row["workspace_path"])
+        if (
+            path.resolve() != path
+            or path == repo
+            or path not in _worktree_paths(repo)
+            or (_github_repository_for_path(repo) or "").casefold() != pr.repository.casefold()
+            or _current_followup_identity(repo) != _current_followup_identity(path)
+            or _git(path, "branch", "--show-current").stdout.strip() != pr.branch
+            or _git(path, "rev-parse", "HEAD").stdout.strip() != pr.head_oid
+            or _git(path, "status", "--porcelain").stdout.strip()
+        ):
+            return None
+        identity = _current_followup_identity(repo)
+        source_head = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    except (
+        OSError,
+        KeyError,
+        TypeError,
+        ValueError,
+        legacy.StateError,
+        OpenPullRequestObservationError,
+    ):
+        return None
+    return {
+        "reservation_id": pr.run_id,
+        "repository": pr.repository,
+        "pull_request": pr.number,
+        "base_oid": pr.base_oid,
+        "head_oid": pr.head_oid,
+        "file_scope_sha256": pr.file_scope_sha256,
+        "scope_sha256": scope["scope_sha256"],
+        "previous_run_id": row["run_id"],
+        "previous_envelope_sha256": row["envelope_sha256"],
+        "previous_workspace_state": row["workspace_state"],
+        "repository_identity_sha256": identity,
+        "workspace": {
+            "repository": str(repo),
+            "workspace_path": str(path),
+            "workspace_branch": pr.branch,
+            "baseline_commit": pr.head_oid,
+            "source_head_at_intent": source_head,
+        },
+    }
+
+
 def _task_open_pr_scope_assessment(
     task: legacy.Task,
     reservations: list[legacy.Reservation],
     registry: legacy.Registry,
     overlays: dict[str, str] | None = None,
+    *,
+    continuation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     effective_overlays = overlays or {}
     scope_cache: dict[str, dict[str, Any]] = {}
@@ -2441,6 +2660,9 @@ def _task_open_pr_scope_assessment(
         ):
             classification = "merge-adopted"
             diagnostic = "exact open PR merge adoption contract satisfied"
+        elif continuation is not None and reservation.run_id == continuation["reservation_id"]:
+            classification = "same-task-continuation"
+            diagnostic = "exact prior run and same-repository PR workspace bound"
         elif reservation.task_binding_status == "valid" and task.id in reservation.task_ids:
             diagnostic = "task is already represented by this open PR"
         elif additional_conflicts:
@@ -2508,6 +2730,10 @@ def _task_open_pr_scope_assessment(
             "merge-adopted",
         )
     }
+    if continuation is not None:
+        counts["same-task-continuation"] = sum(
+            item["classification"] == "same-task-continuation" for item in ordered
+        )
     scopes = {key: scope_cache[key] for key in sorted(scope_cache)}
     material = {
         "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
@@ -2516,7 +2742,9 @@ def _task_open_pr_scope_assessment(
         "requested_scopes": scopes,
         "reservations": ordered,
         "classification_counts": counts,
-        "requires_evidence": counts["scope-proven-disjoint"] > 0,
+        "requires_evidence": (
+            counts["scope-proven-disjoint"] > 0 or counts.get("same-task-continuation", 0) > 0
+        ),
         "does_not_establish": [
             "merge readiness",
             "valid PR task binding",
@@ -2704,6 +2932,9 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             scope_resources = tuple(
                 dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
             )
+            origin = pull_request.get("headOrigin")
+            if not isinstance(origin, dict) or origin.get("head_branch") != branch:
+                origin = {}
             result.append(
                 OpenPullRequestReservation(
                     f"open-pr:{repository}#{number}",
@@ -2727,6 +2958,12 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
                     file_scope_sha256=str(file_scope.get("file_scope_sha256") or ""),
                     file_scope_complete=file_scope_complete,
                     file_scope_diagnostic=file_scope_diagnostic,
+                    head_repository=str(origin.get("head_repository") or ""),
+                    base_branch=str(origin.get("base_branch") or ""),
+                    same_repository_head=(
+                        origin.get("cross_repository") is False
+                        and origin.get("head_repository") == repository.casefold()
+                    ),
                 )
             )
     return result
@@ -2853,6 +3090,23 @@ def grabowski_resource_keys_for_task(
             continue
         keys.add(resource.grabowski_key)
     return keys
+
+
+def _own_pr_continuation_resource_keys(
+    continuation: dict[str, Any] | None,
+) -> set[str]:
+    if continuation is None:
+        return set()
+    workspace = continuation["workspace"]
+    # Work-acquire reserves the canonical repo branch; guarded local Git
+    # attempts reserve the physical checkout branch. A path lease does not
+    # conflict with either scoped repo key.
+    branch = workspace["workspace_branch"]
+    return {
+        f"path:{workspace['workspace_path']}",
+        f"repo:{workspace['repository']}:branch:{branch}",
+        f"repo:{workspace['workspace_path']}:branch:{branch}",
+    }
 
 
 def _coordinated_grabowski_resource_keys(
@@ -5857,6 +6111,7 @@ class Dispatcher(legacy.Dispatcher):
         )
         capabilities_set = set(capabilities)
         open_pr_reservations = None
+        continuation = None
         with self.store.connect() as connection:
             current_rows = connection.execute(
                 "SELECT * FROM runs WHERE worker_id=? "
@@ -5914,11 +6169,20 @@ class Dispatcher(legacy.Dispatcher):
                 ):
                     open_pr_reservations = self._open_pr_reservations(strict=True)
                     reservations += open_pr_reservations
+                    if task_id == task.id and (approved or break_glass):
+                        continuation = _own_pr_continuation(
+                            connection, task, open_pr_reservations, self.registry
+                        )
                     reasons = self.reasons(
                         task,
                         capabilities_set,
                         runs,
-                        reservations,
+                        [
+                            item for item in reservations
+                            if continuation is None
+                            or not isinstance(item, OpenPullRequestReservation)
+                            or item.run_id != continuation["reservation_id"]
+                        ],
                         overlays,
                         initiative_registry=fresh_initiative_registry,
                     )
@@ -5975,7 +6239,8 @@ class Dispatcher(legacy.Dispatcher):
             )
             approval_evidence = approval.as_dict()
         open_pr_scope = _task_open_pr_scope_assessment(
-            selected, open_pr_reservations, self.registry, overlays
+            selected, open_pr_reservations, self.registry, overlays,
+            continuation=continuation,
         )
         if open_pr_scope["requires_evidence"]:
             approval_evidence = {
@@ -5993,7 +6258,10 @@ class Dispatcher(legacy.Dispatcher):
         current_plan_sha = plan_sha256(fresh_initiative_registry, selected.initiative)
         with self.store.connect() as connection:
             initial_source = _initial_task_source(connection, selected.id)
-        if _uses_current_followup_baseline(selected, initial_source):
+        if continuation is not None:
+            approval_evidence["own_pr_continuation"] = continuation
+            baseline = continuation["head_oid"]
+        elif _uses_current_followup_baseline(selected, initial_source):
             repo = Path(selected.execution["working_repository"]).expanduser().resolve()
             identity = _current_followup_identity(repo)
             baseline = _current_followup_baseline_plan(
@@ -6008,13 +6276,22 @@ class Dispatcher(legacy.Dispatcher):
             }
         else:
             baseline = _workspace_baseline_for_task(fresh_initiative_registry, selected)
-        workspace = _planned_workspace(
-            fresh_initiative_registry, selected, run_id, base_dir, baseline
-        )
-        required_keys = sorted(
-            _coordinated_grabowski_resource_keys(
-                self.registry.resources, selected, open_pr_scope
+        if continuation is not None:
+            workspace = continuation["workspace"]
+            if (
+                base_dir is not None
+                and base_dir.resolve() != Path(workspace["workspace_path"]).parent
+            ):
+                raise legacy.StateError(
+                    "own PR continuation cannot relocate the existing workspace"
+                )
+        else:
+            workspace = _planned_workspace(
+                fresh_initiative_registry, selected, run_id, base_dir, baseline
             )
+        required_keys = sorted(
+            _coordinated_grabowski_resource_keys(self.registry.resources, selected, open_pr_scope)
+            | _own_pr_continuation_resource_keys(continuation)
         )
         revision = self.task_revisions.get(selected.id)
         if not isinstance(revision, dict):
@@ -6140,15 +6417,20 @@ class Dispatcher(legacy.Dispatcher):
             if self._claim_requires_open_pr_observation(task)
             else []
         )
+        continuation = approval_data.get("own_pr_continuation")
         with self.store.connect() as state_connection:
             fresh_overlays = self.store.overlays(state_connection, self.registry)
+            if continuation is not None and continuation != _own_pr_continuation(
+                state_connection, task, fresh_open_pr_reservations, self.registry
+            ):
+                raise legacy.StateError("own PR continuation changed after intent")
         fresh_open_pr_scope = _task_open_pr_scope_assessment(
-            task, fresh_open_pr_reservations, self.registry, fresh_overlays
+            task, fresh_open_pr_reservations, self.registry, fresh_overlays,
+            continuation=continuation,
         )
         required_keys = sorted(
-            _coordinated_grabowski_resource_keys(
-                self.registry.resources, task, fresh_open_pr_scope
-            )
+            _coordinated_grabowski_resource_keys(self.registry.resources, task, fresh_open_pr_scope)
+            | _own_pr_continuation_resource_keys(continuation)
         )
         if required_keys != intent["required_resource_keys"]:
             raise legacy.StateError("coordinated claim resources changed after intent")
@@ -6190,7 +6472,7 @@ class Dispatcher(legacy.Dispatcher):
         with self.store.connect() as connection:
             initial_source = _initial_task_source(connection, task.id)
         current_baseline = None
-        if _uses_current_followup_baseline(task, initial_source):
+        if continuation is None and _uses_current_followup_baseline(task, initial_source):
             current_baseline = _materialize_current_followup_baseline(
                 self.registry, self.store, task, intent, lease_binding, resource_db,
                 runtime_identity=self.runtime_identity,
@@ -6222,19 +6504,26 @@ class Dispatcher(legacy.Dispatcher):
             current_plan_sha = plan_sha256(fresh_initiative_registry, task.initiative)
             if current_plan_sha != intent["plan_sha256"]:
                 raise legacy.StateError("coordinated claim plan changed after intent")
-            expected_workspace = _planned_workspace(
-                fresh_initiative_registry,
-                task,
-                intent["run_id"],
-                (
-                    Path(intent["workspace"]["workspace_path"]).parent
-                    if isinstance(intent.get("workspace"), dict)
-                    else None
-                ),
-                current_baseline
-                if current_baseline is not None
-                else _workspace_baseline_for_task(fresh_initiative_registry, task),
-            )
+            if continuation is not None:
+                if continuation != _own_pr_continuation(
+                    connection, task, fresh_open_pr_reservations, self.registry
+                ):
+                    raise legacy.StateError("own PR continuation changed before claim CAS")
+                expected_workspace = continuation["workspace"]
+            else:
+                expected_workspace = _planned_workspace(
+                    fresh_initiative_registry,
+                    task,
+                    intent["run_id"],
+                    (
+                        Path(intent["workspace"]["workspace_path"]).parent
+                        if isinstance(intent.get("workspace"), dict)
+                        else None
+                    ),
+                    current_baseline
+                    if current_baseline is not None
+                    else _workspace_baseline_for_task(fresh_initiative_registry, task),
+                )
             if current_baseline is not None:
                 repo = Path(intent["workspace"]["repository"])
                 if (
@@ -6305,7 +6594,12 @@ class Dispatcher(legacy.Dispatcher):
                 task,
                 set(intent["capabilities"]),
                 runs,
-                reservations,
+                [
+                    item for item in reservations
+                    if continuation is None
+                    or not isinstance(item, OpenPullRequestReservation)
+                    or item.run_id != continuation["reservation_id"]
+                ],
                 overlays,
                 initiative_registry=fresh_initiative_registry,
             )
@@ -6408,6 +6702,29 @@ class Dispatcher(legacy.Dispatcher):
                     now,
                 ),
             )
+            if continuation is not None:
+                # The physical worktree is unchanged. Transfer its only live owner in
+                # the same transaction as the new run/reservations; retain history.
+                prior = continuation["previous_run_id"]
+                cursor = connection.execute(
+                    "UPDATE workspaces SET state='transferred', detail=?, updated_at=? "
+                    "WHERE run_id=? AND state=?",
+                    (intent["run_id"], now, prior, continuation["previous_workspace_state"]),
+                )
+                if cursor.rowcount != 1:
+                    raise legacy.StateError("own PR previous workspace ownership changed")
+                connection.execute(
+                    "UPDATE runs SET workspace_path=?,workspace_branch=? WHERE run_id=?",
+                    (expected_workspace["workspace_path"],
+                     expected_workspace["workspace_branch"], intent["run_id"]),
+                )
+                connection.execute(
+                    "INSERT INTO workspaces(run_id,repository_path,workspace_path,branch,"
+                    "baseline_commit,state,created_at,updated_at) VALUES(?,?,?,?,?,'active',?,?)",
+                    (intent["run_id"], expected_workspace["repository"],
+                     expected_workspace["workspace_path"], expected_workspace["workspace_branch"],
+                     expected_workspace["baseline_commit"], now, now),
+                )
             for claim in task.claims:
                 connection.execute(
                     "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
@@ -7709,7 +8026,8 @@ class Dispatcher(legacy.Dispatcher):
             stale_tasks = sorted(task for task, state in overlays.items() if state == "stale")
             for row in connection.execute(
                 "SELECT w.*,r.state AS run_state FROM workspaces w "
-                "LEFT JOIN runs r ON r.run_id=w.run_id WHERE w.state<>'removed'"
+                "LEFT JOIN runs r ON r.run_id=w.run_id "
+                "WHERE w.state NOT IN ('removed','transferred')"
             ):
                 path = Path(row["workspace_path"])
                 finding = None
@@ -10502,9 +10820,13 @@ def workspace_status(store: StateStore, run_id: str) -> dict[str, Any]:
 
 def preserve_workspace(store: StateStore, run_id: str, reason: str) -> dict[str, Any]:
     with store.immediate() as connection:
-        row = connection.execute("SELECT 1 FROM workspaces WHERE run_id=?", (run_id,)).fetchone()
+        row = connection.execute(
+            "SELECT state FROM workspaces WHERE run_id=?", (run_id,)
+        ).fetchone()
         if row is None:
             raise legacy.StateError(f"run {run_id} has no workspace")
+        if row["state"] == "transferred":
+            raise legacy.StateError("workspace ownership was transferred")
         connection.execute(
             "UPDATE workspaces SET state='preserved',detail=?,updated_at=? WHERE run_id=?",
             (reason, legacy.utc_now(), run_id),
@@ -10732,6 +11054,8 @@ def _cleanup_missing_workspace(
             raise legacy.StateError(f"run {run_id} has no workspace")
         if row["run_state"] not in TERMINAL_STATES:
             raise legacy.StateError("workspace cleanup requires a terminal run")
+        if row["state"] == "transferred":
+            raise legacy.StateError("workspace ownership was transferred")
         # is_dir()/exists() alone would misclassify regular files and dangling
         # symlinks as absent. Recheck the exact path inside the state transaction.
         try:
@@ -10770,6 +11094,8 @@ def cleanup_workspace(
     status = workspace_status(store, run_id)
     if status["run_state"] not in TERMINAL_STATES:
         raise legacy.StateError("workspace cleanup requires a terminal run")
+    if status["state"] == "transferred":
+        raise legacy.StateError("workspace ownership was transferred")
     if not status["exists"]:
         return _cleanup_missing_workspace(store, run_id, force=force)
     if status["dirty"] and not force:
@@ -10797,19 +11123,31 @@ def cleanup_workspace(
                 run_id,
                 "workspace changed during merge proof",
             )
-    _git(
-        repo,
-        "worktree",
-        "remove",
-        *(["--force"] if force else []),
-        status["workspace_path"],
-    )
-    if status["merged"]:
-        _git(repo, "branch", "-d", status["branch"], check=False)
     event_payload: dict[str, Any] = {"force": force}
     if merge_proof is not None:
         event_payload["merge_proof"] = merge_proof
     with store.immediate() as connection:
+        row = connection.execute(
+            "SELECT w.*,r.state AS run_state FROM workspaces w "
+            "JOIN runs r ON r.run_id=w.run_id WHERE w.run_id=?", (run_id,)
+        ).fetchone()
+        if (
+            row is None or row["state"] == "transferred"
+            or row["run_state"] not in TERMINAL_STATES
+            or row["workspace_path"] != status["workspace_path"]
+            or row["branch"] != status["branch"]
+        ):
+            raise legacy.StateError("workspace ownership changed before cleanup")
+        path = Path(status["workspace_path"])
+        if not force and (
+            _git(path, "rev-parse", "HEAD").stdout.strip() != status["head"]
+            or _git(path, "status", "--porcelain").stdout.strip()
+        ):
+            raise legacy.StateError("workspace changed before cleanup")
+        _git(repo, "worktree", "remove", *(["--force"] if force else []),
+             status["workspace_path"])
+        if status["merged"]:
+            _git(repo, "branch", "-d", status["branch"], check=False)
         connection.execute(
             "UPDATE workspaces SET state='removed',updated_at=? WHERE run_id=?",
             (legacy.utc_now(), run_id),

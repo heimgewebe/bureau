@@ -3995,3 +3995,51 @@ def test_large_pr_file_fallback_only_deferred_for_proven_irrelevant_scope(
         if case == "same-source":
             assessment = bureau_v2._task_open_pr_scope_assessment(target, reservations, registry)
             assert assessment["reservations"][0]["classification"] == "scope-proven-disjoint"
+
+
+def test_targeted_deferred_file_scopes_are_resolved_concurrently(
+    registry_factory, monkeypatch,
+):
+    from threading import Barrier, Lock
+
+    root = registry_factory(2, mode="write")
+    alpha, beta = _split_repository_resources(root)
+    registry = Registry.load(root)
+    target = registry.tasks["BUR-TEST-001-T002"]
+    slugs = ("heimgewebe/alpha", "heimgewebe/beta")
+
+    def row(repo, number):
+        return {
+            "number": number, "headRefName": "fix/large", "title": "large PR",
+            "url": f"https://github.com/{repo}/pull/{number}",
+            "baseRefOid": "a" * 40, "headRefOid": "b" * 40,
+            "changedFiles": 101, "files": [], "fileScopeDeferred": True,
+        }
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "2")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path",
+        lambda path: slugs[0] if path == alpha else slugs[1] if path == beta else None,
+    )
+    monkeypatch.setattr(
+        bureau_v2, "_observe_open_pull_requests",
+        lambda repositories, **kwargs: (
+            {slugs[0]: [row(slugs[0], 253)], slugs[1]: [row(slugs[1], 254)]}, {},
+        ),
+    )
+    barrier = Barrier(2, timeout=5)
+    lock = Lock()
+    calls = []
+
+    def resolve(repo, number, **kwargs):
+        with lock:
+            calls.append((repo, number))
+        barrier.wait()
+        raise bureau_v2.OpenPullRequestObservationError(f"unavailable {repo}")
+
+    monkeypatch.setattr(bureau_v2, "_github_pull_request_file_scope", resolve)
+    reservations = bureau_v2.open_pull_request_reservations(registry, target_task=target)
+    assert sorted(calls) == [(slugs[0], 253), (slugs[1], 254)]
+    assert [item.resource for item in reservations] == ["repo.alpha", "repo.beta"]
+    assert all(item.observation_failed for item in reservations)

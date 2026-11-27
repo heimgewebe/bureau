@@ -2857,7 +2857,8 @@ def open_pull_request_reservations(
     if os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1") in {"0", "false", "False"}:
         return []
 
-    result: list[legacy.Reservation] = []
+    Entry = legacy.Reservation | tuple[legacy.Resource, str, tuple[str, ...], dict[str, Any]]
+    entries: list[Entry] = []
     resources = [
         resource for resource in registry.resources.values() if resource.type == "git-repository"
     ]
@@ -2897,7 +2898,7 @@ def open_pull_request_reservations(
     for resource in resources:
         resource_error = resource_errors.get(resource.id)
         if resource_error is not None:
-            result.append(_repo_write_guard_failure_reservation(resource, resource_error))
+            entries.append(_repo_write_guard_failure_reservation(resource, resource_error))
             continue
         if resource.id in classification.alias_by_resource:
             continue
@@ -2906,7 +2907,7 @@ def open_pull_request_reservations(
             continue
         observation_error = observation_errors.get(repository)
         if observation_error is not None:
-            result.append(_repo_write_guard_failure_reservation(resource, observation_error))
+            entries.append(_repo_write_guard_failure_reservation(resource, observation_error))
             continue
         pull_requests = observed.get(repository, [])
         absorbed_scope_resources = tuple(
@@ -2921,7 +2922,7 @@ def open_pull_request_reservations(
             (str(pull_request.get("url") or "") for pull_request in pull_requests),
         )
         if contradictions:
-            result.append(
+            entries.append(
                 _repo_write_guard_failure_reservation(
                     resource,
                     f"observed pull requests for {repository} resolve to conflicting "
@@ -2929,132 +2930,156 @@ def open_pull_request_reservations(
                 )
             )
             continue
-        for pull_request in pull_requests:
-            number = pull_request.get("number")
-            if not isinstance(number, int):
-                continue
-            branch = str(pull_request.get("headRefName") or "")
-            title = str(pull_request.get("title") or "")
-            url = str(pull_request.get("url") or "")
-            task_ids, binding_status, binding_reason = _pull_request_task_binding(
-                pull_request, registry
-            )
-            bound_scopes = _open_pr_scope_resources_for_binding(
-                registry, resource.id, task_ids, binding_status
-            )
-            deferred = pull_request.get("fileScopeDeferred") is True
-            if deferred:
-                # Decide only after global alias classification. Use the
-                # conservative scope BEFORE complete-file evidence can remove
-                # cross-repository bindings. Unknown binding or origin must
-                # take the unchanged full observation path.
-                conservative_scopes = tuple(
-                    dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
-                )
-                origin = pull_request.get("headOrigin")
-                disjoint = (
-                    target_task is not None
-                    and binding_status == "valid"
-                    and target_task.id not in task_ids
-                    and isinstance(origin, dict)
-                    and origin.get("head_repository") == repository.casefold()
-                    and origin.get("cross_repository") is False
-                    and origin.get("head_branch") == branch
-                    and not any(
-                        legacy.overlaps(claim.resource, scope, registry.resources)
-                        and legacy.modes_conflict(claim.mode, "write-blocker")
-                        for claim in target_task.claims
-                        for scope in conservative_scopes
-                    )
-                )
-                if not disjoint:
-                    try:
-                        pull_request = {
-                            **pull_request,
-                            "fileScope": _github_pull_request_file_scope(
-                                repository, number,
-                                base_oid=pull_request["baseRefOid"],
-                                head_oid=pull_request["headRefOid"],
-                                expected_changed_files=pull_request["changedFiles"],
-                                graphql_files=pull_request.get("files"),
-                            ),
-                        }
-                        _revalidate_open_pull_request_identity(repository, pull_request)
-                    except OpenPullRequestObservationError as exc:
-                        # No exact-file evidence, no adoption/continuation
-                        # exemption. Preserve conservative blockers for all
-                        # potentially affected scopes, including aliases.
-                        for scope in conservative_scopes:
-                            result.append(_repo_write_guard_failure_reservation(
-                                registry.resources[scope], str(exc)
-                            ))
-                        continue
-                    deferred = False
-            file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
-                pull_request, repository, number
-            )
-            if deferred:
-                # Incomplete by construction, never a disjoint file proof.
-                file_scope_diagnostic = "large PR file scope deferred outside target task conflicts"
-                file_scope = {
-                    "base_oid": pull_request["baseRefOid"],
-                    "head_oid": pull_request["headRefOid"],
-                    "changed_files": pull_request["changedFiles"],
-                }
-            if file_scope_complete:
-                # Distinct, successfully observed repositories have their own
-                # PR reservations. Active run reservations remain independent.
-                bound_scopes = tuple(
-                    scope
-                    for scope in bound_scopes
-                    if (
-                        scope == resource.id
-                        or scope in absorbed_scope_resources
-                        or not repositories_by_resource.get(scope)
-                        or repositories_by_resource.get(scope) == repository
-                        or scope in resource_errors
-                        or repositories_by_resource.get(scope) in observation_errors
-                        or repositories_by_resource.get(scope) not in observed
-                    )
-                )
-            scope_resources = tuple(
+        entries.extend(
+            (resource, repository, absorbed_scope_resources, pull_request)
+            for pull_request in pull_requests
+        )
+
+    def reserve(
+        entry: Entry,
+    ) -> list[legacy.Reservation]:
+        if not isinstance(entry, tuple):
+            return [entry]
+        resource, repository, absorbed_scope_resources, pull_request = entry
+        result: list[legacy.Reservation] = []
+        number = pull_request.get("number")
+        if not isinstance(number, int):
+            return result
+        branch = str(pull_request.get("headRefName") or "")
+        title = str(pull_request.get("title") or "")
+        url = str(pull_request.get("url") or "")
+        task_ids, binding_status, binding_reason = _pull_request_task_binding(
+            pull_request, registry
+        )
+        bound_scopes = _open_pr_scope_resources_for_binding(
+            registry, resource.id, task_ids, binding_status
+        )
+        deferred = pull_request.get("fileScopeDeferred") is True
+        if deferred:
+            # Decide only after global alias classification. Use the
+            # conservative scope BEFORE complete-file evidence can remove
+            # cross-repository bindings. Unknown binding or origin must
+            # take the unchanged full observation path.
+            conservative_scopes = tuple(
                 dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
             )
             origin = pull_request.get("headOrigin")
-            if not isinstance(origin, dict) or origin.get("head_branch") != branch:
-                origin = {}
-            result.append(
-                OpenPullRequestReservation(
-                    f"open-pr:{repository}#{number}",
-                    resource.id,
-                    "write-blocker",
-                    1,
-                    repository=repository,
-                    number=number,
-                    task_ids=task_ids,
-                    branch=branch,
-                    title=title,
-                    url=url,
-                    task_binding_status=binding_status,
-                    task_binding_reason=binding_reason,
-                    scope_resources=scope_resources,
-                    base_oid=str(file_scope.get("base_oid") or ""),
-                    head_oid=str(file_scope.get("head_oid") or ""),
-                    changed_paths=tuple(file_scope.get("changed_paths") or ()),
-                    changed_paths_sha256=str(file_scope.get("changed_paths_sha256") or ""),
-                    changed_file_count=int(file_scope.get("changed_files") or 0),
-                    file_scope_sha256=str(file_scope.get("file_scope_sha256") or ""),
-                    file_scope_complete=file_scope_complete,
-                    file_scope_diagnostic=file_scope_diagnostic,
-                    head_repository=str(origin.get("head_repository") or ""),
-                    base_branch=str(origin.get("base_branch") or ""),
-                    same_repository_head=(
-                        origin.get("cross_repository") is False
-                        and origin.get("head_repository") == repository.casefold()
-                    ),
+            disjoint = (
+                target_task is not None
+                and binding_status == "valid"
+                and target_task.id not in task_ids
+                and isinstance(origin, dict)
+                and origin.get("head_repository") == repository.casefold()
+                and origin.get("cross_repository") is False
+                and origin.get("head_branch") == branch
+                and not any(
+                    legacy.overlaps(claim.resource, scope, registry.resources)
+                    and legacy.modes_conflict(claim.mode, "write-blocker")
+                    for claim in target_task.claims
+                    for scope in conservative_scopes
                 )
             )
-    return result
+            if not disjoint:
+                try:
+                    pull_request = {
+                        **pull_request,
+                        "fileScope": _github_pull_request_file_scope(
+                            repository, number,
+                            base_oid=pull_request["baseRefOid"],
+                            head_oid=pull_request["headRefOid"],
+                            expected_changed_files=pull_request["changedFiles"],
+                            graphql_files=pull_request.get("files"),
+                        ),
+                    }
+                    _revalidate_open_pull_request_identity(repository, pull_request)
+                except OpenPullRequestObservationError as exc:
+                    # No exact-file evidence, no adoption/continuation
+                    # exemption. Preserve conservative blockers for all
+                    # potentially affected scopes, including aliases.
+                    for scope in conservative_scopes:
+                        result.append(_repo_write_guard_failure_reservation(
+                            registry.resources[scope], str(exc)
+                        ))
+                    return result
+                deferred = False
+        file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
+            pull_request, repository, number
+        )
+        if deferred:
+            # Incomplete by construction, never a disjoint file proof.
+            file_scope_diagnostic = "large PR file scope deferred outside target task conflicts"
+            file_scope = {
+                "base_oid": pull_request["baseRefOid"],
+                "head_oid": pull_request["headRefOid"],
+                "changed_files": pull_request["changedFiles"],
+            }
+        if file_scope_complete:
+            # Distinct, successfully observed repositories have their own
+            # PR reservations. Active run reservations remain independent.
+            bound_scopes = tuple(
+                scope
+                for scope in bound_scopes
+                if (
+                    scope == resource.id
+                    or scope in absorbed_scope_resources
+                    or not repositories_by_resource.get(scope)
+                    or repositories_by_resource.get(scope) == repository
+                    or scope in resource_errors
+                    or repositories_by_resource.get(scope) in observation_errors
+                    or repositories_by_resource.get(scope) not in observed
+                )
+            )
+        scope_resources = tuple(
+            dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
+        )
+        origin = pull_request.get("headOrigin")
+        if not isinstance(origin, dict) or origin.get("head_branch") != branch:
+            origin = {}
+        result.append(
+            OpenPullRequestReservation(
+                f"open-pr:{repository}#{number}",
+                resource.id,
+                "write-blocker",
+                1,
+                repository=repository,
+                number=number,
+                task_ids=task_ids,
+                branch=branch,
+                title=title,
+                url=url,
+                task_binding_status=binding_status,
+                task_binding_reason=binding_reason,
+                scope_resources=scope_resources,
+                base_oid=str(file_scope.get("base_oid") or ""),
+                head_oid=str(file_scope.get("head_oid") or ""),
+                changed_paths=tuple(file_scope.get("changed_paths") or ()),
+                changed_paths_sha256=str(file_scope.get("changed_paths_sha256") or ""),
+                changed_file_count=int(file_scope.get("changed_files") or 0),
+                file_scope_sha256=str(file_scope.get("file_scope_sha256") or ""),
+                file_scope_complete=file_scope_complete,
+                file_scope_diagnostic=file_scope_diagnostic,
+                head_repository=str(origin.get("head_repository") or ""),
+                base_branch=str(origin.get("base_branch") or ""),
+                same_repository_head=(
+                    origin.get("cross_repository") is False
+                    and origin.get("head_repository") == repository.casefold()
+                ),
+            )
+        )
+        return result
+
+    # Alias classification is complete before any deferred file scope is
+    # resolved. Preserve bounded parallel network reads, and original output
+    # ordering, without spawning another pool for the ordinary inventory.
+    deferred_count = sum(
+        isinstance(entry, tuple) and entry[3].get("fileScopeDeferred") is True
+        for entry in entries
+    )
+    workers = _open_pr_claim_guard_workers(deferred_count)
+    if workers == 1:
+        return [reservation for entry in entries for reservation in reserve(entry)]
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="bureau-pr-deferred") as pool:
+        return [reservation for batch in pool.map(reserve, entries) for reservation in batch]
 
 
 def _grabowski_worker_policy() -> dict[str, Any]:

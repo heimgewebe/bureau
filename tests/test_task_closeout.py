@@ -879,7 +879,7 @@ def test_failed_run_history_requires_post_failure_acceptance(registry_factory, t
     bundle = json.loads(evidence.read_text())
     from datetime import datetime, timedelta, timezone
     before_failure = datetime.fromisoformat(
-        _failed_run_rows(store, task_id)[0]["updated_at"]
+        _failed_run_rows(store, task_id)[0]["updated_at"].replace("Z", "+00:00")
     ) - timedelta(seconds=1)
     for item in bundle["evidence"].values():
         item["observed_at"] = before_failure.astimezone(timezone.utc).isoformat()

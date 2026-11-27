@@ -3587,6 +3587,8 @@ def test_open_pr_head_origin_revalidated_with_existing_readback(monkeypatch, cas
         "base-drift",
         "dirty",
         "missing-lease",
+        "missing-canonical-branch-lease",
+        "missing-physical-branch-lease",
         "other-pr-conflict",
         "ordinary-unapproved",
         "automatic",
@@ -3594,6 +3596,8 @@ def test_open_pr_head_origin_revalidated_with_existing_readback(monkeypatch, cas
         "cleanup-race",
         "scope-drift",
         "foreign-lease",
+        "foreign-canonical-branch-lease",
+        "foreign-physical-branch-lease",
         "ambiguous-second",
         "revised-intake",
         "repeat-transfer",
@@ -3737,7 +3741,20 @@ def test_own_pr_continuation_reuses_exact_terminal_workspace(
     assert intent["workspace"]["workspace_path"] == str(workspace)
     assert intent["workspace"]["workspace_branch"] == branch
     assert intent["workspace"]["baseline_commit"] == head
-    assert f"path:{workspace}" in intent["required_resource_keys"]
+    workspace_key = f"path:{workspace}"
+    canonical_branch_key = f"repo:{root.resolve()}:branch:{branch}"
+    physical_branch_key = f"repo:{workspace}:branch:{branch}"
+    assert {workspace_key, canonical_branch_key, physical_branch_key}.issubset(
+        intent["required_resource_keys"]
+    )
+    lease_cases = {
+        "missing-lease": workspace_key,
+        "missing-canonical-branch-lease": canonical_branch_key,
+        "missing-physical-branch-lease": physical_branch_key,
+        "foreign-lease": workspace_key,
+        "foreign-canonical-branch-lease": canonical_branch_key,
+        "foreign-physical-branch-lease": physical_branch_key,
+    }
     if case == "head-drift":
         current[:] = [replace(pr, head_oid="c" * 40)]
     if case == "base-drift":
@@ -3750,24 +3767,17 @@ def test_own_pr_continuation_reuses_exact_terminal_workspace(
     binding, db = coordinated_lease_database(
         tmp_path / "new-leases",
         intent,
-        omit={f"path:{workspace}"} if case == "missing-lease" else None,
+        omit={lease_cases[case]} if case.startswith("missing-") else None,
     )
-    if case == "foreign-lease":
+    if case.startswith("foreign-"):
         import sqlite3
 
         with sqlite3.connect(db) as connection:
             connection.execute(
                 "UPDATE leases SET owner_id='foreign-live-owner' WHERE resource_key=?",
-                (f"path:{workspace}",),
+                (lease_cases[case],),
             )
-    if case in {
-        "head-drift",
-        "base-drift",
-        "missing-lease",
-        "cleanup-race",
-        "scope-drift",
-        "foreign-lease",
-    }:
+    if case in {"head-drift", "base-drift", "cleanup-race", "scope-drift"} | lease_cases.keys():
         with pytest.raises(bureau_v2.legacy.StateError):
             dispatcher.commit_claim_intent(intent, binding, resource_db=db)
         assert len(store.list_runs()) == 1

@@ -3096,6 +3096,8 @@ def _coordinated_grabowski_resource_keys(
     resources: dict[str, legacy.Resource],
     task: legacy.Task,
     open_pr_scope: dict[str, Any],
+    *,
+    continuation: dict[str, Any] | None = None,
 ) -> set[str]:
     # A pure interactive observation does not write or create a checkout.
     # Bureau still reserves its logical read claims. A caller needing a
@@ -3110,6 +3112,17 @@ def _coordinated_grabowski_resource_keys(
     keys = grabowski_resource_keys_for_task(
         resources, task, omit_implicit_read_repo_keys=read_observation
     )
+    if continuation is not None:
+        workspace = continuation["workspace"]
+        # Match both existing authorities: work-acquire reserves the canonical
+        # repo branch; guarded local Git attempts reserve the physical checkout
+        # branch. A path lease does not conflict with either scoped repo key.
+        branch = workspace["workspace_branch"]
+        keys.update({
+            f"path:{workspace['workspace_path']}",
+            f"repo:{workspace['repository']}:branch:{branch}",
+            f"repo:{workspace['workspace_path']}:branch:{branch}",
+        })
     if open_pr_scope.get("requires_evidence") is not True:
         return keys
     requested_scopes = open_pr_scope.get("requested_scopes")
@@ -6272,12 +6285,9 @@ class Dispatcher(legacy.Dispatcher):
             workspace = _planned_workspace(
                 fresh_initiative_registry, selected, run_id, base_dir, baseline
             )
-        required_keys = _coordinated_grabowski_resource_keys(
-            self.registry.resources, selected, open_pr_scope
-        )
-        if continuation is not None:
-            required_keys.add(f"path:{workspace['workspace_path']}")
-        required_keys = sorted(required_keys)
+        required_keys = sorted(_coordinated_grabowski_resource_keys(
+            self.registry.resources, selected, open_pr_scope, continuation=continuation,
+        ))
         revision = self.task_revisions.get(selected.id)
         if not isinstance(revision, dict):
             raise legacy.StateError(
@@ -6413,12 +6423,9 @@ class Dispatcher(legacy.Dispatcher):
             task, fresh_open_pr_reservations, self.registry, fresh_overlays,
             continuation=continuation,
         )
-        required_keys = _coordinated_grabowski_resource_keys(
-            self.registry.resources, task, fresh_open_pr_scope
-        )
-        if continuation is not None:
-            required_keys.add(f"path:{continuation['workspace']['workspace_path']}")
-        required_keys = sorted(required_keys)
+        required_keys = sorted(_coordinated_grabowski_resource_keys(
+            self.registry.resources, task, fresh_open_pr_scope, continuation=continuation,
+        ))
         if required_keys != intent["required_resource_keys"]:
             raise legacy.StateError("coordinated claim resources changed after intent")
         supplied_open_pr_scope = approval_data.get("open_pr_nonconflict")

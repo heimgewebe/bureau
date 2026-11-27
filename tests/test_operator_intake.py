@@ -2362,6 +2362,64 @@ def test_task_revision_publication_advances_and_replays_without_receipt(registry
     )
 
 
+def test_task_revision_reuses_bound_candidate_after_publication(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path, candidate, _ = _revision_proposal(registry, store, tmp_path)
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    first = publish_task_proposal(
+        registry,
+        store,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces-first",
+        receipt_path=tmp_path / "receipt-first.json",
+    )
+    task_id = first["task_id"]
+    assert first["task_spec_revision"]["revision"] == 2
+    latest = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:second-revision",
+        title=f"Revise {task_id}",
+        source_kind="runtime-diagnostic",
+        source_locator=f"bureau:{task_id}:second-revision",
+        source_sha256="8" * 64,
+        desired_outcome=f"Refine the exact existing TaskSpec {task_id}",
+        repo="repo.alpha",
+        task_id=task_id,
+        candidate_id=candidate["candidate_id"],
+        supersedes_event_id=candidate["event_id"],
+    )
+    revised = json.loads(json.dumps(store.task_spec(task_id)["spec"]))
+    revised["title"] += " with refined scope"
+    next_plan = tmp_path / "second-revision.proposal.json"
+    task_propose(
+        registry,
+        store,
+        event_id=latest["event_id"],
+        task_json=revised,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=next_plan,
+    )
+    _review(next_plan)
+    next_preview = publication_preview(registry, store, plan_path=next_plan)
+    second = publish_task_proposal(
+        registry,
+        store,
+        plan_path=next_plan,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(next_preview, tmp_path),
+        workspace_root=tmp_path / "workspaces-second",
+        receipt_path=tmp_path / "receipt-second.json",
+    )
+    assert second["task_spec_revision"]["revision"] == 3
+    assert second["task_spec_revision"]["parent_revision"] == 2
+    assert store.task_spec(task_id)["spec_sha256"] == second["task_spec_revision"]["spec_sha256"]
+
+
 def test_task_revision_recovers_exact_commit_after_pre_receipt_failure(
     registry_factory, tmp_path, monkeypatch
 ):

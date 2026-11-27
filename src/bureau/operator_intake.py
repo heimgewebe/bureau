@@ -3182,7 +3182,10 @@ def task_propose(
         blocking_duplicates = [
             item
             for item in blocking_duplicates
-            if not (item.get("kind") == "task-id" and item.get("task_id") == bound_task["id"])
+            if not (
+                item.get("kind") in {"task-id", "task-candidate-binding"}
+                and item.get("task_id") == bound_task["id"]
+            )
         ]
     if blocking_duplicates:
         raise OperatorIntakeError(

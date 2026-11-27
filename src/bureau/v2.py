@@ -1436,8 +1436,32 @@ def _revalidate_open_pull_request_batch(
     return True
 
 
+def _revalidate_open_pull_request_identity(
+    repository: str, item: dict[str, Any]
+) -> None:
+    number = item["number"]
+    identity = _github_pull_request_identity(repository, number)
+    expected_identity = {
+        "base_oid": item["baseRefOid"],
+        "head_oid": item["headRefOid"],
+        "changed_files": item["changedFiles"],
+    }
+    current_origin = identity.get("head_origin")
+    if {key: identity.get(key) for key in expected_identity} != expected_identity:
+        raise OpenPullRequestObservationError(
+            f"open PR {repository}#{number} identity changed during file observation"
+        )
+    if item.get("headOrigin") != current_origin:
+        if item.get("headOrigin") is not None and current_origin is not None:
+            raise OpenPullRequestObservationError(
+                f"open PR {repository}#{number} head origin changed during file observation"
+            )
+        item["headOrigin"] = None
+
+
 def _github_open_pull_requests(
-    repository: str, *, graphql_primary_exhausted: Event | None = None
+    repository: str, *, graphql_primary_exhausted: Event | None = None,
+    defer_large_file_scopes: bool = False,
 ) -> list[dict[str, Any]]:
     rest_inventory = (
         graphql_primary_exhausted is not None and graphql_primary_exhausted.is_set()
@@ -1569,13 +1593,21 @@ def _github_open_pull_requests(
             raise OpenPullRequestObservationError(
                 f"open PR {repository}#{number} has invalid changedFiles count"
             )
-        file_scope = _github_pull_request_file_scope(
+        # Only the measured expensive GraphQL truncation case is eligible.
+        # All PR identities are still revalidated in this observation pass.
+        files = item.get("files")
+        deferred = (
+            defer_large_file_scopes and not rest_inventory
+            and changed_files > 100 and isinstance(files, list)
+            and len(files) < changed_files
+        )
+        file_scope = None if deferred else _github_pull_request_file_scope(
             repository,
             number,
             base_oid=base_oid,
             head_oid=head_oid,
             expected_changed_files=changed_files,
-            graphql_files=item.get("files"),
+            graphql_files=files,
         )
         observed = {
             **item, "fileScope": file_scope,
@@ -1584,29 +1616,16 @@ def _github_open_pull_requests(
                 else _graphql_pr_head_origin(repository, item)
             ),
         }
+        # Never accept a deferred marker supplied by an observation payload.
+        observed.pop("fileScopeDeferred", None)
+        if deferred:
+            observed["fileScopeDeferred"] = True
         if not batch_readback:
             revalidate_one(observed)
         return observed
 
     def revalidate_one(item: dict[str, Any]) -> None:
-        number = item["number"]
-        identity = _github_pull_request_identity(repository, number)
-        expected_identity = {
-            "base_oid": item["baseRefOid"],
-            "head_oid": item["headRefOid"],
-            "changed_files": item["changedFiles"],
-        }
-        current_origin = identity.get("head_origin")
-        if {key: identity.get(key) for key in expected_identity} != expected_identity:
-            raise OpenPullRequestObservationError(
-                f"open PR {repository}#{number} identity changed during file observation"
-            )
-        if item.get("headOrigin") != current_origin:
-            if item.get("headOrigin") is not None and current_origin is not None:
-                raise OpenPullRequestObservationError(
-                    f"open PR {repository}#{number} head origin changed during file observation"
-                )
-            item["headOrigin"] = None
+        _revalidate_open_pull_request_identity(repository, item)
 
     if len(value) < 2:
         return [observe_one(pair) for pair in enumerate(value)]
@@ -1748,7 +1767,7 @@ def _batch_empty_open_pr_observation(
 
 
 def _observe_open_pull_requests(
-    repositories: Iterable[str],
+    repositories: Iterable[str], *, defer_large_file_scopes: bool = False,
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
     ordered = tuple(dict.fromkeys(repositories))
     observed: dict[str, list[dict[str, Any]]] = {}
@@ -1774,6 +1793,11 @@ def _observe_open_pull_requests(
             return observed, errors
 
     def observe(repository: str) -> list[dict[str, Any]]:
+        if defer_large_file_scopes:
+            return _github_open_pull_requests(
+                repository, graphql_primary_exhausted=graphql_primary_exhausted,
+                defer_large_file_scopes=True,
+            )
         return _github_open_pull_requests(
             repository, graphql_primary_exhausted=graphql_primary_exhausted
         )
@@ -2819,7 +2843,9 @@ def _repo_write_guard_failure_reservations(
     ]
 
 
-def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
+def open_pull_request_reservations(
+    registry: legacy.Registry, *, target_task: legacy.Task | None = None,
+) -> list[legacy.Reservation]:
     """Represent open GitHub PRs as conservative repo write blockers.
 
     Explicit ``github_slug`` bindings are authoritative for GitHub observation;
@@ -2855,7 +2881,13 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
         if repository is not None:
             repositories_by_resource[resource.id] = repository
 
-    observed, observation_errors = _observe_open_pull_requests(repositories_by_resource.values())
+    observed, observation_errors = (
+        _observe_open_pull_requests(
+            repositories_by_resource.values(), defer_large_file_scopes=True,
+        )
+        if target_task is not None
+        else _observe_open_pull_requests(repositories_by_resource.values())
+    )
 
     classification = github_repository.classify_repository_identities(
         repositories_by_resource, observed
@@ -2907,12 +2939,68 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             task_ids, binding_status, binding_reason = _pull_request_task_binding(
                 pull_request, registry
             )
-            file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
-                pull_request, repository, number
-            )
             bound_scopes = _open_pr_scope_resources_for_binding(
                 registry, resource.id, task_ids, binding_status
             )
+            deferred = pull_request.get("fileScopeDeferred") is True
+            if deferred:
+                # Decide only after global alias classification. Use the
+                # conservative scope BEFORE complete-file evidence can remove
+                # cross-repository bindings. Unknown binding or origin must
+                # take the unchanged full observation path.
+                conservative_scopes = tuple(
+                    dict.fromkeys((*bound_scopes, *absorbed_scope_resources))
+                )
+                origin = pull_request.get("headOrigin")
+                disjoint = (
+                    target_task is not None
+                    and binding_status == "valid"
+                    and target_task.id not in task_ids
+                    and isinstance(origin, dict)
+                    and origin.get("head_repository") == repository.casefold()
+                    and origin.get("cross_repository") is False
+                    and origin.get("head_branch") == branch
+                    and not any(
+                        legacy.overlaps(claim.resource, scope, registry.resources)
+                        and legacy.modes_conflict(claim.mode, "write-blocker")
+                        for claim in target_task.claims
+                        for scope in conservative_scopes
+                    )
+                )
+                if not disjoint:
+                    try:
+                        pull_request = {
+                            **pull_request,
+                            "fileScope": _github_pull_request_file_scope(
+                                repository, number,
+                                base_oid=pull_request["baseRefOid"],
+                                head_oid=pull_request["headRefOid"],
+                                expected_changed_files=pull_request["changedFiles"],
+                                graphql_files=pull_request.get("files"),
+                            ),
+                        }
+                        _revalidate_open_pull_request_identity(repository, pull_request)
+                    except OpenPullRequestObservationError as exc:
+                        # No exact-file evidence, no adoption/continuation
+                        # exemption. Preserve conservative blockers for all
+                        # potentially affected scopes, including aliases.
+                        for scope in conservative_scopes:
+                            result.append(_repo_write_guard_failure_reservation(
+                                registry.resources[scope], str(exc)
+                            ))
+                        continue
+                    deferred = False
+            file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
+                pull_request, repository, number
+            )
+            if deferred:
+                # Incomplete by construction, never a disjoint file proof.
+                file_scope_diagnostic = "large PR file scope deferred outside target task conflicts"
+                file_scope = {
+                    "base_oid": pull_request["baseRefOid"],
+                    "head_oid": pull_request["headRefOid"],
+                    "changed_files": pull_request["changedFiles"],
+                }
             if file_scope_complete:
                 # Distinct, successfully observed repositories have their own
                 # PR reservations. Active run reservations remain independent.
@@ -5612,7 +5700,8 @@ class Dispatcher(legacy.Dispatcher):
         )
 
     def _open_pr_reservations(
-        self, *, strict: bool, advisory: bool = False
+        self, *, strict: bool, advisory: bool = False,
+        target_task: legacy.Task | None = None,
     ) -> list[legacy.Reservation]:
         if advisory and self._advisory_open_pr_unknown():
             return _repo_write_guard_failure_reservations(
@@ -5623,6 +5712,11 @@ class Dispatcher(legacy.Dispatcher):
         # providers remain authoritative for their own explicit observations.
         _ = strict
         try:
+            if (
+                target_task is not None
+                and self.open_pr_reservations_provider is open_pull_request_reservations
+            ):
+                return open_pull_request_reservations(self.registry, target_task=target_task)
             return list(self.open_pr_reservations_provider(self.registry))
         except OpenPullRequestObservationError as exc:
             return _repo_write_guard_failure_reservations(self.registry, str(exc))
@@ -6167,7 +6261,9 @@ class Dispatcher(legacy.Dispatcher):
                     )
                     and self._claim_requires_open_pr_observation(task)
                 ):
-                    open_pr_reservations = self._open_pr_reservations(strict=True)
+                    open_pr_reservations = self._open_pr_reservations(
+                        strict=True, target_task=task if task_id is not None else None,
+                    )
                     reservations += open_pr_reservations
                     if task_id == task.id and (approved or break_glass):
                         continuation = _own_pr_continuation(
@@ -6413,7 +6509,7 @@ class Dispatcher(legacy.Dispatcher):
             required_level_override=_coordinated_task_declared_required_level(task),
         )
         fresh_open_pr_reservations = (
-            self._open_pr_reservations(strict=True)
+            self._open_pr_reservations(strict=True, target_task=task)
             if self._claim_requires_open_pr_observation(task)
             else []
         )

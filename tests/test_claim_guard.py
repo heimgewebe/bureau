@@ -3817,3 +3817,229 @@ def test_own_pr_continuation_reuses_exact_terminal_workspace(
         assert bureau_v2.workspace_status(store, prior["run_id"])["state"] == "transferred"
         assert bureau_v2.workspace_status(store, run["run_id"])["state"] == "transferred"
         assert bureau_v2.workspace_status(store, again["run"]["run_id"])["state"] == "active"
+
+@pytest.mark.parametrize("case", [
+    "disjoint", "commit-drift", "commit-binding", "same-source", "bound-extra",
+    "unknown-binding", "fork",
+    "missing-origin", "alias", "drift", "rest-failure", "unscoped", "small",
+    "complete",
+])
+def test_large_pr_file_fallback_only_deferred_for_proven_irrelevant_scope(
+    registry_factory, monkeypatch, tmp_path, case,
+):
+    root = registry_factory(2, mode="write")
+    alpha, beta = _split_repository_resources(root)
+    task_a = root / "registry/tasks/BUR-TEST-001-T001.json"
+    first = json.loads(task_a.read_text())
+    if case != "bound-extra":
+        first["claims"] = [
+            claim for claim in first["claims"] if claim["resource"] != "repo.beta"
+        ]
+    first["execution"]["working_repository"] = str(alpha)
+    task_a.write_text(json.dumps(first))
+    task_b = root / "registry/tasks/BUR-TEST-001-T002.json"
+    second = json.loads(task_b.read_text())
+    if case in {"same-source", "drift", "rest-failure"}:
+        second["claims"][0]["resource"] = "repo.alpha"
+        second["execution"]["working_repository"] = str(alpha)
+        second["execution"]["grabowski_resources"] = [f"path:{alpha / 'docs/target.md'}"]
+    else:
+        second["execution"]["working_repository"] = str(beta)
+        second["execution"]["grabowski_resources"] = [f"path:{beta / 'docs/target.md'}"]
+    if case in {"disjoint", "commit-drift", "commit-binding"}:
+        second["claims"][0]["isolation"] = "none"
+    task_b.write_text(json.dumps(second))
+    registry = Registry.load(root)
+    target = registry.tasks["BUR-TEST-001-T002"]
+    repo = "heimgewebe/alpha"
+    head_repo = "other/alpha" if case == "fork" else repo
+    changed = 2 if case == "small" else 101
+    paths = [f"src/file-{i}.py" for i in range(changed)]
+    files = [
+        {"path": name, "changeType": "MODIFIED"}
+        for name in paths[:changed if case == "complete" else min(changed - 1, 100)]
+    ]
+    row = {
+        "number": 253, "title": "large PR",
+        "url": f"https://github.com/{repo}/pull/253",
+        "headRefName": "fix/large", "baseRefName": "main",
+        "headRefOid": "b" * 40, "baseRefOid": "a" * 40,
+        "headRepository": {"nameWithOwner": head_repo},
+        "isCrossRepository": case == "fork",
+        "changedFiles": changed, "files": files, "labels": [],
+        "body": "" if case == "unknown-binding" else "Bureau-Task: BUR-TEST-001-T001",
+    }
+    calls = []
+    late_pr = False
+    real_run = subprocess.run
+
+    def fake_run(argv, **kwargs):
+        if argv[0] != "gh":
+            return real_run(argv, **kwargs)
+        if argv[1] == "pr":
+            slug = argv[argv.index("--repo") + 1]
+            calls.append(("inventory", slug))
+            value = [row] if slug == repo or case == "alias" else []
+            if late_pr and slug == "heimgewebe/beta":
+                value = [{
+                    **row, "number": 254, "url": f"https://github.com/{slug}/pull/254",
+                    "headRepository": {"nameWithOwner": slug},
+                    "body": f"Bureau-Task: {target.id}",
+                }]
+        elif argv[-1].endswith("/files?per_page=100"):
+            calls.append(("files", argv[-1]))
+            if case == "rest-failure":
+                return subprocess.CompletedProcess(argv, 1, "", "provider unavailable")
+            raw = [{"filename": name, "status": "modified"} for name in paths]
+            value = [raw[i:i+100] for i in range(0, len(raw), 100)]
+        else:
+            assert argv[-1].endswith(("/pulls/253", "/pulls/254"))
+            identity_repo = "heimgewebe/beta" if argv[-1].endswith("/pulls/254") else repo
+            identity_head_repo = identity_repo if identity_repo != repo else head_repo
+            calls.append(("identity", argv[-1]))
+            drift = case == "drift" and any(kind == "files" for kind, _ in calls)
+            value = {
+                "state": "open", "changed_files": changed,
+                "base": {"sha": "a" * 40, "ref": "main", "repo": {"full_name": identity_repo}},
+                "head": {
+                    "sha": ("c" if drift else "b") * 40, "ref": "fix/large",
+                    "repo": None if case == "missing-origin" else {"full_name": identity_head_repo},
+                },
+            }
+        return subprocess.CompletedProcess(argv, 0, json.dumps(value), "")
+
+    monkeypatch.setenv("BUREAU_GH_BIN", "gh")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "1")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path",
+        lambda path: repo if path == alpha else "heimgewebe/beta" if path == beta else None,
+    )
+    if case == "alias":
+        monkeypatch.setattr(bureau_v2.github_repository, "github_canonical_slug", lambda _: repo)
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+    reservations = bureau_v2.open_pull_request_reservations(
+        registry, target_task=None if case == "unscoped" else target,
+    )
+    assert {slug for kind, slug in calls if kind == "inventory"} == {repo, "heimgewebe/beta"}
+    file_calls = sum(kind == "files" for kind, _ in calls)
+    expected_file_calls = 0 if case in {
+        "disjoint", "commit-drift", "commit-binding", "complete",
+    } else 1
+    assert file_calls == expected_file_calls
+    if case in {"drift", "rest-failure"}:
+        assert any(
+            item.observation_failed and item.resource == "repo.alpha" for item in reservations
+        )
+        assert not any(item.file_scope_complete for item in reservations)
+        return
+    pr, = [item for item in reservations if item.number == 253]
+    if case in {"disjoint", "commit-drift", "commit-binding"}:
+        assert not pr.file_scope_complete
+        assert pr.file_scope_sha256 == ""
+        assert pr.changed_paths == ()
+        assert pr.base_oid == "a" * 40 and pr.head_oid == "b" * 40
+        assert pr.changed_file_count == changed
+        assert "deferred" in pr.file_scope_diagnostic
+        assessment = bureau_v2._task_open_pr_scope_assessment(target, reservations, registry)
+        assert assessment["reservations"] == []
+        assert not assessment["requires_evidence"]
+        # The same incomplete observation cannot authorize a conflicting task.
+        other = bureau_v2._task_open_pr_scope_assessment(
+            registry.tasks["BUR-TEST-001-T001"], reservations, registry,
+        )
+        assert other["reservations"][0]["classification"] == "repository-blocked"
+        assert sum(kind == "identity" for kind, _ in calls) == 1
+
+        # Exercise the native public coordinated-claim path, not only its
+        # inventory provider. All mutations stay in isolated test databases.
+        from test_v2 import coordinated_lease_database
+
+        calls.clear()
+        store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+        dispatcher = Dispatcher(registry, store)
+        issued = dispatcher.claim_intent(
+            "worker-large-pr", ("repository",), task_id=target.id, approved=True,
+        )
+        intent = issued["intent"]
+        assert not issued["ready_supply"]["open_pr_scope"]["reservations"]
+        assert not any(kind == "files" for kind, _ in calls)
+        binding, db = coordinated_lease_database(tmp_path / "leases", intent)
+        if case == "commit-drift":
+            late_pr = True
+            with pytest.raises(bureau_v2.legacy.StateError):
+                dispatcher.commit_claim_intent(intent, binding, resource_db=db)
+            assert any(kind == "files" for kind, _ in calls)
+            assert store.list_runs() == []
+        else:
+            if case == "commit-binding":
+                # A cross-repository task marker alone is not a conflict once
+                # complete file evidence and independent target observation
+                # prove that the PR belongs only to its source repository.
+                row["body"] = f"Bureau-Task: {target.id}"
+            result = dispatcher.commit_claim_intent(intent, binding, resource_db=db)
+            assert result["status"] == "claimed"
+            assert result["run"]["run_id"] == intent["run_id"]
+            assert any(kind == "files" for kind, _ in calls) == (case == "commit-binding")
+            before_replay = list(calls)
+            replay = dispatcher.commit_claim_intent(intent, binding, resource_db=db)
+            assert replay["run"]["run_id"] == intent["run_id"]
+            assert calls == before_replay
+            assert len(store.list_runs()) == 1
+    else:
+        assert pr.file_scope_complete
+        assert pr.changed_file_count == changed
+        assert len(pr.changed_paths) == changed
+        if case == "alias":
+            assert "repo.beta" in pr.scope_resources
+        if case == "same-source":
+            assessment = bureau_v2._task_open_pr_scope_assessment(target, reservations, registry)
+            assert assessment["reservations"][0]["classification"] == "scope-proven-disjoint"
+
+
+def test_targeted_deferred_file_scopes_are_resolved_concurrently(
+    registry_factory, monkeypatch,
+):
+    from threading import Barrier, Lock
+
+    root = registry_factory(2, mode="write")
+    alpha, beta = _split_repository_resources(root)
+    registry = Registry.load(root)
+    target = registry.tasks["BUR-TEST-001-T002"]
+    slugs = ("heimgewebe/alpha", "heimgewebe/beta")
+
+    def row(repo, number):
+        return {
+            "number": number, "headRefName": "fix/large", "title": "large PR",
+            "url": f"https://github.com/{repo}/pull/{number}",
+            "baseRefOid": "a" * 40, "headRefOid": "b" * 40,
+            "changedFiles": 101, "files": [], "fileScopeDeferred": True,
+        }
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "2")
+    monkeypatch.setattr(
+        bureau_v2, "_github_repository_for_path",
+        lambda path: slugs[0] if path == alpha else slugs[1] if path == beta else None,
+    )
+    monkeypatch.setattr(
+        bureau_v2, "_observe_open_pull_requests",
+        lambda repositories, **kwargs: (
+            {slugs[0]: [row(slugs[0], 253)], slugs[1]: [row(slugs[1], 254)]}, {},
+        ),
+    )
+    barrier = Barrier(2, timeout=5)
+    lock = Lock()
+    calls = []
+
+    def resolve(repo, number, **kwargs):
+        with lock:
+            calls.append((repo, number))
+        barrier.wait()
+        raise bureau_v2.OpenPullRequestObservationError(f"unavailable {repo}")
+
+    monkeypatch.setattr(bureau_v2, "_github_pull_request_file_scope", resolve)
+    reservations = bureau_v2.open_pull_request_reservations(registry, target_task=target)
+    assert sorted(calls) == [(slugs[0], 253), (slugs[1], 254)]
+    assert [item.resource for item in reservations] == ["repo.alpha", "repo.beta"]
+    assert all(item.observation_failed for item in reservations)

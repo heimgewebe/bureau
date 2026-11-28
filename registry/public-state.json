@@ -1,35 +1,35 @@
 {
   "counts": {
     "tasks_by_state": {
-      "blocked": 3,
-      "cancelled": 401,
+      "blocked": 0,
+      "cancelled": 406,
       "inbox": 1,
-      "planned": 57,
-      "ready": 290,
-      "superseded": 81,
-      "verified": 789
+      "planned": 34,
+      "ready": 255,
+      "superseded": 218,
+      "verified": 887
     },
-    "tasks_total": 1622
+    "tasks_total": 1801
   },
   "event_checkpoint": {
-    "id": 19229
+    "id": 21589
   },
   "frontier": {
-    "blocked": 1622,
-    "eligible": 0,
+    "blocked": 1785,
+    "eligible": 16,
     "tasks_by_effective_state": {
-      "blocked": 3,
-      "cancelled": 401,
+      "blocked": 0,
+      "cancelled": 406,
       "inbox": 1,
-      "planned": 57,
-      "ready": 53,
+      "planned": 34,
+      "ready": 83,
       "stale": 0,
-      "superseded": 81,
-      "verified": 1026
+      "superseded": 218,
+      "verified": 1059
     },
-    "tasks_total": 1622
+    "tasks_total": 1801
   },
-  "generated_at": "2026-11-14T20:21:43.513070Z",
+  "generated_at": "2026-11-28T13:02:11.410248Z",
   "kind": "bureau_public_state_snapshot",
   "redaction": {
     "fail_closed": true,
@@ -45,20 +45,20 @@
     "schema_version": 1
   },
   "release": {
-    "commit": "4954dcfaa5126fbf43f5457e6aec558ec413a091",
+    "commit": "5e0843aac89a27f2401a4f6027cb37bb147326af",
     "schema_version": 1
   },
   "repository": "heimgewebe/bureau",
   "roots": {
     "public_receipt_identities": {
-      "count": 317,
-      "merkle_sha256": "947de105dcd5c25c9d3c85ca28c734b16f100265a23a9484b631fe5dc56d142c"
+      "count": 320,
+      "merkle_sha256": "2f4929820df6c5c319eeb80639ac998ac88a289796a8faa2351bab3d5fa528a6"
     },
     "public_task_identities": {
-      "count": 1622,
-      "merkle_sha256": "1495a7583c5427944533b646aaa516f9cf321b029a7391adf7b45d8e04d51663"
+      "count": 1801,
+      "merkle_sha256": "43af31e28d113e577e4c17072a79ca434be6bcd003080742ef2879dd1125a8f6"
     }
   },
   "schema_version": 1,
-  "snapshot_sha256": "7b15188958a1b77c9256753f9e0f6955c66db6649a949447f31f5ea9ffaecb8c"
+  "snapshot_sha256": "8e4a5245524eafba9e1afaa38be8a03c5cc6812e46157bf745af3677634d51b8"
 }

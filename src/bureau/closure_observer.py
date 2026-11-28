@@ -4,8 +4,10 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import secrets
 import stat
+import subprocess
 import tempfile
 from collections.abc import Callable, Mapping
 from contextlib import suppress
@@ -1768,6 +1770,199 @@ def _github_evidence_matches_live(
     return all(claimed.get(name) == summary[name]["state"] for name in required_checks)
 
 
+
+_RUNTIME_CONTAINMENT_REPO = "heimgewebe/grabowski"
+_RUNTIME_CONTAINMENT_ADAPTER = "grabowski_deployment_identity+git-merge-base"
+_RUNTIME_IDENTITY_WORKER = r"""
+import asyncio
+import json
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+from grabowski_client_snapshot import _mcp_tool_payload
+
+async def read():
+    async with streamablehttp_client("http://127.0.0.1:18181/mcp") as (r, w, _):
+        async with ClientSession(r, w) as client:
+            await client.initialize()
+            payload = _mcp_tool_payload(
+                await client.call_tool("grabowski_deployment_identity", {
+                    "reason": "Bureau runtime containment observation",
+                    "user_intent": "Authenticate existing Bureau runtime acceptance",
+                }), label="deployment identity",
+            )
+            print(json.dumps({key: payload.get(key) for key in (
+                "identity", "integrity_contract", "integrity", "serving_process",
+            )}, allow_nan=False))
+
+asyncio.run(asyncio.wait_for(read(), timeout=20))
+"""
+
+
+def _verified_serving_head(payload: Mapping[str, Any]) -> str:
+    identity = payload.get("identity")
+    integrity = payload.get("integrity")
+    serving = payload.get("serving_process")
+    required_integrity = (
+        "manifest_parse_valid", "manifest_schema_valid", "repo_head_valid",
+        "agent_instructions_identity_valid", "runtime_binding_valid",
+        "environment_compatibility_valid", "provenance_valid", "artifact_integrity_valid",
+    )
+    if (
+        payload.get("integrity_contract") != "nixos-immutable-v1"
+        or not isinstance(identity, Mapping)
+        or not isinstance(integrity, Mapping)
+        or not isinstance(serving, Mapping)
+        or any(integrity.get(key) is not True for key in required_integrity)
+        or identity.get("completion_status") != "complete"
+    ):
+        raise ValueError("Grabowski immutable deployment integrity unavailable")
+    head = identity.get("repo_head")
+    release = identity.get("release_id")
+    if (
+        not isinstance(head, str) or re.fullmatch(r"[0-9a-f]{40}", head) is None
+        or not isinstance(release, str) or not release
+        or serving.get("process_identity_known") is not True
+        or serving.get("manifest_identity_known") is not True
+        or serving.get("process_repo_head") != head
+        or serving.get("manifest_repo_head") != head
+        or serving.get("process_release_id") != release
+        or serving.get("manifest_release_id") != release
+        or serving.get("matches_deployed_manifest") is not True
+        or serving.get("serves_deployed_release") is not True
+        or serving.get("stale") is not False
+        or serving.get("role") != "active"
+    ):
+        raise ValueError("Grabowski serving process does not prove active deployment identity")
+    return head
+
+
+def _git_runtime_contains(repo: Path, required: str, observed: str) -> bool:
+    if any(re.fullmatch(r"[0-9a-f]{40}", value) is None for value in (required, observed)):
+        raise ValueError("runtime containment requires exact commit hashes")
+    env = {**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
+
+    def git(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", "--no-replace-objects", "-C", str(repo), *args],
+            env=env, capture_output=True, text=True, timeout=10, check=False,
+        )
+
+    origin = git("config", "--local", "--get", "remote.origin.url")
+    if origin.returncode or origin.stdout.strip() not in {
+        "git@github.com:heimgewebe/grabowski.git",
+        "ssh://git@github.com/heimgewebe/grabowski.git",
+        "https://github.com/heimgewebe/grabowski.git",
+        "https://github.com/heimgewebe/grabowski",
+    }:
+        raise ValueError("runtime containment repository origin unavailable")
+    for sha in (required, observed):
+        obj = git("cat-file", "-t", sha)
+        if obj.returncode or obj.stdout.strip() != "commit":
+            raise ValueError("runtime containment commit object unavailable")
+    result = git("merge-base", "--is-ancestor", required, observed)
+    if result.returncode not in (0, 1):
+        raise ValueError("runtime commit ancestry unavailable")
+    return result.returncode == 0
+
+
+def _observe_grabowski_runtime_containment(required: str) -> dict[str, Any]:
+    from bureau.grabowski_adapter import _active_grabowski_python
+
+    try:
+        interpreter = _active_grabowski_python()
+        if interpreter is None:
+            raise ValueError("active Grabowski interpreter unavailable")
+        result = subprocess.run(
+            [str(interpreter), "-I", "-B", "-c", _RUNTIME_IDENTITY_WORKER],
+            capture_output=True, text=True, timeout=25, check=False,
+        )
+        if result.returncode or len(result.stdout) > 1024 * 1024:
+            raise ValueError("Grabowski serving identity read unavailable")
+        payload = json.loads(result.stdout)
+        if not isinstance(payload, Mapping):
+            raise ValueError("Grabowski serving identity response invalid")
+        observed = _verified_serving_head(payload)
+        observed_at = legacy.utc_now()
+        contains = _git_runtime_contains(Path.home() / "repos/grabowski", required, observed)
+        return {
+            "repository": _RUNTIME_CONTAINMENT_REPO,
+            "observed_at": observed_at,
+            "facts": {
+                "required_commit": required,
+                "observed_commit": observed,
+                "contains_required_commit": contains,
+            },
+            "deployment_identity_sha256": legacy.sha256_json(payload),
+        }
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise EvidenceAdapterUnavailable(
+            authority="grabowski", adapter=_RUNTIME_CONTAINMENT_ADAPTER,
+            target={"repository": _RUNTIME_CONTAINMENT_REPO, "required_commit": required},
+            detail=str(exc),
+        ) from exc
+
+
+RuntimeContainmentReader = Callable[[str], Mapping[str, Any]]
+
+
+def _runtime_containment_item(
+    run: Mapping[str, Any], criterion_id: str, required: str, live: Mapping[str, Any],
+) -> dict[str, Any]:
+    facts = live.get("facts")
+    observed = facts.get("observed_commit") if isinstance(facts, Mapping) else None
+    if (
+        live.get("repository") != _RUNTIME_CONTAINMENT_REPO
+        or not isinstance(facts, Mapping)
+        or facts.get("required_commit") != required
+        or not isinstance(observed, str) or re.fullmatch(r"[0-9a-f]{40}", observed) is None
+        or type(facts.get("contains_required_commit")) is not bool
+        or not isinstance(live.get("observed_at"), str)
+    ):
+        raise ValueError("runtime containment observation binding invalid")
+    return {
+        "schema_version": 1, "kind": EVIDENCE_KIND, "criterion_id": criterion_id,
+        "evidence_type": "runtime_commit_contains",
+        "source": {
+            "authority": "grabowski",
+            "reference": f"grabowski-runtime:{_RUNTIME_CONTAINMENT_REPO}@{observed}",
+        },
+        "observed_at": live["observed_at"],
+        "revision": {
+            "task_sha256": run.get("task_sha256"), "plan_sha256": run.get("plan_sha256"),
+            "required_commit": required, "observed_commit": observed,
+        },
+        "facts": dict(facts),
+    }
+
+
+def _add_runtime_containment_evidence(
+    run: Mapping[str, Any], envelope: Mapping[str, Any], evidence: Mapping[str, Any],
+    reader: RuntimeContainmentReader,
+) -> dict[str, Any]:
+    result = dict(evidence)
+    task = envelope.get("task")
+    criteria = task.get("acceptance") if isinstance(task, Mapping) else None
+    for criterion in criteria if isinstance(criteria, list) else ():
+        if not isinstance(criterion, Mapping):
+            continue
+        contract = criterion_contract(criterion)
+        if contract is None or contract["verifier"] != "runtime_commit_contains":
+            continue
+        config = contract["verifier_config"]
+        criterion_id = criterion.get("id")
+        if (
+            config.get("repository") != _RUNTIME_CONTAINMENT_REPO
+            or not isinstance(criterion_id, str)
+            or criterion_id in result
+        ):
+            continue
+        required = config["required_commit"]
+        result[criterion_id] = _runtime_containment_item(
+            run, criterion_id, required, reader(required)
+        )
+    return result
+
+
 def authenticate_state_evidence(
     run: dict[str, Any],
     envelope: dict[str, Any],
@@ -1776,6 +1971,7 @@ def authenticate_state_evidence(
     github: GitHubReader = runtime_refresh.gh_json,
     store: StateStore | None = None,
     authentication_unavailable: list[dict[str, Any]] | None = None,
+    runtime_reader: RuntimeContainmentReader = _observe_grabowski_runtime_containment,
 ) -> dict[str, dict[str, Any]]:
     """Authenticate bundle claims against primary observers.
 
@@ -1859,6 +2055,32 @@ def authenticate_state_evidence(
             if authentication_unavailable is None:
                 raise unavailable
             authentication_unavailable.append(unavailable.payload())
+            continue
+        if (
+            verifier == "runtime_commit_contains"
+            and config.get("repository") == _RUNTIME_CONTAINMENT_REPO
+        ):
+            required = config["required_commit"]
+            live = runtime_reader(required)
+            expected = _runtime_containment_item(run, criterion_id, required, live)
+            if all(claimed.get(key) == expected[key] for key in (
+                "schema_version", "kind", "criterion_id", "evidence_type",
+                "source", "revision", "facts",
+            )):
+                authenticated[criterion_id] = {
+                    "schema_version": 1,
+                    "kind": "bureau.acceptance_source_authentication",
+                    "criterion_id": criterion_id,
+                    "authority": "grabowski",
+                    "observer": _RUNTIME_CONTAINMENT_ADAPTER,
+                    "source_reference": expected["source"]["reference"],
+                    "target": {
+                        "repository": _RUNTIME_CONTAINMENT_REPO,
+                        "required_commit": required,
+                    },
+                    "live_facts": expected["facts"],
+                    "live_observation_sha256": legacy.sha256_json(live),
+                }
             continue
         adapter = PRODUCTION_AUTHENTICATION_ADAPTERS.get(str(verifier))
         if adapter is None:
@@ -1976,18 +2198,28 @@ def reconcile_state_evidence(
     now: str | None = None,
     completion: Completion = _complete_run_after_typed_evaluation,
     github: GitHubReader = runtime_refresh.gh_json,
+    runtime_reader: RuntimeContainmentReader = _observe_grabowski_runtime_containment,
 ) -> dict[str, Any]:
-    """Consume typed bundles from the canonical StateStore root.
+    """Consume typed bundles and native runtime observations from the StateStore root.
 
     The existing Bureau reconcile service is the production caller and remains
-    the only StateStore writer. Evidence producers only publish bound bundles;
-    absent or invalid bundles remain open and cannot terminalize a run.
+    the only StateStore writer. Native runtime criteria use the primary observer;
+    other absent or invalid evidence remains open.
     """
 
     retirement_before = retire_terminal_evidence_bundles(registry, store)
 
+    runtime_cache: dict[str, Mapping[str, Any]] = {}
+
+    def read_runtime(required: str) -> Mapping[str, Any]:
+        if required not in runtime_cache:
+            runtime_cache[required] = runtime_reader(required)
+        return runtime_cache[required]
+
     def provider(run: dict[str, Any], envelope: dict[str, Any]) -> Mapping[str, Any]:
-        return load_state_evidence_bundle(store, run, envelope)
+        runtime_cache.clear()
+        evidence = load_state_evidence_bundle(store, run, envelope)
+        return _add_runtime_containment_evidence(run, envelope, evidence, read_runtime)
 
     unavailable_by_run: dict[str, list[dict[str, Any]]] = {}
 
@@ -2002,6 +2234,7 @@ def reconcile_state_evidence(
             github=github,
             store=store,
             authentication_unavailable=unavailable,
+            runtime_reader=read_runtime,
         )
         if unavailable:
             unavailable_by_run[str(run["run_id"])] = unavailable

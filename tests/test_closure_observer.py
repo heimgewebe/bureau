@@ -2650,3 +2650,214 @@ def test_retargeted_github_pr_stays_open(
         "evidence-source-unauthenticated"
     )
     assert store.run(run["run_id"])["state"] == "assigned"
+
+RUNTIME_REQUIRED = "c" * 40
+RUNTIME_OBSERVED = "d" * 40
+
+
+def runtime_containment_criterion(repository="heimgewebe/grabowski"):
+    return {
+        "id": "runtime",
+        "assertion": "live runtime contains the required commit",
+        "evidence_type": "object",
+        "verifier": "runtime_commit_contains",
+        "verifier_config": {"repository": repository, "required_commit": RUNTIME_REQUIRED},
+    }
+
+
+def runtime_containment_observation(*, contains=True):
+    return {
+        "repository": "heimgewebe/grabowski",
+        "observed_at": "2026-08-10T19:59:00Z",
+        "facts": {
+            "required_commit": RUNTIME_REQUIRED,
+            "observed_commit": RUNTIME_OBSERVED,
+            "contains_required_commit": contains,
+        },
+        "deployment_identity_sha256": "e" * 64,
+    }
+
+
+def runtime_containment_claim(*, contains=True):
+    return {
+        "schema_version": 1,
+        "kind": EVIDENCE_KIND,
+        "criterion_id": "runtime",
+        "evidence_type": "runtime_commit_contains",
+        "source": {
+            "authority": "grabowski",
+            "reference": f"grabowski-runtime:heimgewebe/grabowski@{RUNTIME_OBSERVED}",
+        },
+        "observed_at": "2026-08-10T19:59:00Z",
+        "revision": {
+            "task_sha256": TASK_SHA,
+            "plan_sha256": PLAN_SHA,
+            "required_commit": RUNTIME_REQUIRED,
+            "observed_commit": RUNTIME_OBSERVED,
+        },
+        "facts": runtime_containment_observation(contains=contains)["facts"],
+    }
+
+
+def test_grabowski_runtime_containment_authenticates_primary_observation():
+    run = {"task_sha256": TASK_SHA, "plan_sha256": PLAN_SHA}
+    envelope = {"task": {"acceptance": [runtime_containment_criterion()]}}
+    result = authenticate_state_evidence(
+        run, envelope, {"runtime": runtime_containment_claim()},
+        runtime_reader=lambda required: runtime_containment_observation(),
+    )
+    assert result["runtime"]["authority"] == "grabowski"
+    assert result["runtime"]["live_facts"]["contains_required_commit"] is True
+
+
+@pytest.mark.parametrize(
+    "change", ["different-head", "wrong-required", "wrong-source", "false-claim", "different-task"]
+)
+def test_runtime_containment_claim_cannot_override_live_facts(change):
+    run = {"task_sha256": TASK_SHA, "plan_sha256": PLAN_SHA}
+    evidence = runtime_containment_claim()
+    if change == "different-head":
+        evidence["facts"]["observed_commit"] = "1" * 40
+    elif change == "wrong-required":
+        evidence["revision"]["required_commit"] = "2" * 40
+    elif change == "wrong-source":
+        evidence["source"]["reference"] = "caller:unbound"
+    elif change == "false-claim":
+        evidence["facts"]["contains_required_commit"] = False
+    else:
+        evidence["revision"]["task_sha256"] = "3" * 64
+    result = authenticate_state_evidence(
+        run, {"task": {"acceptance": [runtime_containment_criterion()]}},
+        {"runtime": evidence}, runtime_reader=lambda required: runtime_containment_observation(),
+    )
+    assert result == {}
+
+
+def test_missing_runtime_claim_is_derived_from_primary_observation():
+    run = {"task_sha256": TASK_SHA, "plan_sha256": PLAN_SHA}
+    envelope = {"task": {"acceptance": [runtime_containment_criterion()]}}
+    calls = []
+    def reader(required):
+        calls.append(required)
+        return runtime_containment_observation()
+    evidence = closure_observer._add_runtime_containment_evidence(run, envelope, {}, reader)
+    assert evidence["runtime"] == runtime_containment_claim()
+    assert calls == [RUNTIME_REQUIRED]
+    existing = {"runtime": {"untrusted": True}}
+    assert closure_observer._add_runtime_containment_evidence(
+        run, envelope, existing, reader
+    ) == existing
+    assert calls == [RUNTIME_REQUIRED]
+
+
+def test_nonancestor_cannot_authenticate_claimed_containment():
+    run = {"task_sha256": TASK_SHA, "plan_sha256": PLAN_SHA}
+    result = authenticate_state_evidence(
+        run, {"task": {"acceptance": [runtime_containment_criterion()]}},
+        {"runtime": runtime_containment_claim()},
+        runtime_reader=lambda required: runtime_containment_observation(contains=False),
+    )
+    assert result == {}
+
+
+def _serving_identity_payload():
+    release = "release"
+    return {
+        "identity": {
+            "repo_head": RUNTIME_OBSERVED,
+            "release_id": release,
+            "completion_status": "complete",
+        },
+        "integrity_contract": "nixos-immutable-v1",
+        "integrity": {key: True for key in (
+            "manifest_parse_valid", "manifest_schema_valid", "repo_head_valid",
+            "agent_instructions_identity_valid", "runtime_binding_valid",
+            "environment_compatibility_valid", "provenance_valid", "artifact_integrity_valid",
+        )},
+        "serving_process": {
+            "process_identity_known": True, "manifest_identity_known": True,
+            "process_release_id": release, "manifest_release_id": release,
+            "process_repo_head": RUNTIME_OBSERVED, "manifest_repo_head": RUNTIME_OBSERVED,
+            "matches_deployed_manifest": True, "serves_deployed_release": True,
+            "stale": False, "role": "active",
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "change", ["stale", "wrong-role", "wrong-head", "integrity", "unknown", "incomplete"]
+)
+def test_runtime_identity_requires_actual_serving_release(change):
+    payload = _serving_identity_payload()
+    if change == "stale":
+        payload["serving_process"]["stale"] = True
+    elif change == "wrong-role":
+        payload["serving_process"]["role"] = "standby"
+    elif change == "wrong-head":
+        payload["serving_process"]["process_repo_head"] = "9" * 40
+    elif change == "integrity":
+        payload["integrity"]["artifact_integrity_valid"] = False
+    elif change == "unknown":
+        payload["serving_process"]["process_identity_known"] = False
+    else:
+        payload["identity"]["completion_status"] = "incomplete"
+    with pytest.raises(ValueError):
+        closure_observer._verified_serving_head(payload)
+
+
+def test_runtime_identity_positive():
+    assert closure_observer._verified_serving_head(_serving_identity_payload()) == RUNTIME_OBSERVED
+
+
+@pytest.mark.parametrize("contains", [True, False])
+def test_native_runtime_evidence_uses_existing_cas_without_caller_bundle(
+    registry_factory, tmp_path, monkeypatch, contains
+):
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["acceptance"] = [runtime_containment_criterion()]
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+    state_root = tmp_path / "runtime-state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state_root))
+    registry = Registry.load(root)
+    store = StateStore(state_root / "bureau.sqlite3")
+    run = Dispatcher(registry, store).claim_next("worker", ("repository",))["run"]
+    calls = []
+
+    def reader(required):
+        calls.append(required)
+        return runtime_containment_observation(contains=contains)
+
+    result = reconcile_state_evidence(registry, store, now=NOW, runtime_reader=reader)
+    assert calls == [RUNTIME_REQUIRED]
+    assert result["terminalized_count"] == int(contains)
+    assert store.run(run["run_id"])["state"] == ("succeeded" if contains else "assigned")
+    if contains:
+        receipt = store.receipt(run["run_id"])
+        assert receipt["evidence"]["runtime"]["_source_authentication"]["authority"] == "grabowski"
+
+
+def test_exact_runtime_git_ancestry_and_origin(tmp_path):
+    import subprocess
+
+    def git(*args):
+        return subprocess.check_output(
+            ["git", "-C", str(tmp_path), *args], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+
+    git("init")
+    git("config", "user.name", "test")
+    git("config", "user.email", "test@example.invalid")
+    git("remote", "add", "origin", "git@github.com:heimgewebe/grabowski.git")
+    git("commit", "--allow-empty", "-m", "required")
+    required = git("rev-parse", "HEAD")
+    git("commit", "--allow-empty", "-m", "observed")
+    observed = git("rev-parse", "HEAD")
+    assert closure_observer._git_runtime_contains(tmp_path, required, observed)
+    assert not closure_observer._git_runtime_contains(tmp_path, observed, required)
+    with pytest.raises(ValueError, match="commit object unavailable"):
+        closure_observer._git_runtime_contains(tmp_path, "0" * 40, observed)
+    git("remote", "set-url", "origin", "https://example.invalid/github.com/heimgewebe/grabowski.git")
+    with pytest.raises(ValueError, match="repository origin unavailable"):
+        closure_observer._git_runtime_contains(tmp_path, required, observed)

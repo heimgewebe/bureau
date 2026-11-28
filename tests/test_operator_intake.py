@@ -2242,8 +2242,9 @@ def test_task_revision_ignores_terminal_candidate_bound_to_same_task(registry_fa
     )
 
 
-def test_task_revision_still_rejects_other_active_candidate_for_same_task(
-    registry_factory, tmp_path
+@pytest.mark.parametrize("prior_status", ["observed", "paused"])
+def test_task_revision_preserves_other_pending_candidate_for_same_task(
+    registry_factory, tmp_path, prior_status
 ):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -2252,78 +2253,56 @@ def test_task_revision_still_rejects_other_active_candidate_for_same_task(
     prior = candidate_record(
         registry,
         store,
-        idempotency_key="source:active-prior-revision",
-        title="Competing active revision candidate",
+        idempotency_key="source:pending-prior-revision",
+        title="Different pending revision request",
         source_kind="runtime-diagnostic",
-        source_locator="bureau:active-prior",
+        source_locator="bureau:pending-prior",
         source_sha256="6" * 64,
-        desired_outcome="Keep this competing revision request open",
+        desired_outcome="Keep this independent revision request open",
         repo="repo.alpha",
         task_id=task_id,
     )
-
-    with pytest.raises(OperatorIntakeError) as caught:
-        _revision_proposal(
+    if prior_status == "paused":
+        live_register_record(
             registry,
             store,
-            tmp_path,
-            task_id=task_id,
-            key="source:revision-with-active-competitor",
+            kind="candidate_task",
+            title="Different pending revision request",
+            source="operator-intake-test",
+            candidate_id=prior["candidate_id"],
+            supersedes_event_id=prior["event_id"],
+            status="paused",
+            promotion_required=True,
+            note="Preserve this independently pending request.",
         )
-
-    assert caught.value.code == "exact-duplicate"
-    assert any(
-        finding.get("kind") == "candidate-task-id"
-        and finding.get("candidate_id") == prior["candidate_id"]
-        for finding in caught.value.details["findings"]
+    before = operator_intake_module.current_candidate_record(
+        store, candidate_id=prior["candidate_id"]
     )
-
-
-def test_task_revision_still_rejects_paused_candidate_for_same_task(registry_factory, tmp_path):
-    _, registry = _committed_registry(registry_factory)
-    store = StateStore(tmp_path / "state.sqlite3")
-    store.import_registry_task_specs(registry)
-    task_id = "BUR-TEST-001-T002"
-    prior = candidate_record(
+    plan_path, _, _ = _revision_proposal(
+        registry, store, tmp_path, task_id=task_id, key="source:independent-revision"
+    )
+    plan = json.loads(plan_path.read_text())
+    assert plan["task_spec"]["operation"] == "revise"
+    assert any(
+        item["kind"] == "candidate-task-id"
+        and item["candidate_id"] == prior["candidate_id"]
+        for item in plan["assessment"]["exact_duplicates"]
+    )
+    _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    result = publish_task_proposal(
         registry,
         store,
-        idempotency_key="source:paused-prior-revision",
-        title="Paused competing revision candidate",
-        source_kind="runtime-diagnostic",
-        source_locator="bureau:paused-prior",
-        source_sha256="5" * 64,
-        desired_outcome="Keep this revision request on hold without terminating it",
-        repo="repo.alpha",
-        task_id=task_id,
+        plan_path=plan_path,
+        lease_binding=_lease_binding(),
+        resource_db=_lease_db(preview, tmp_path),
+        workspace_root=tmp_path / "workspaces",
+        receipt_path=tmp_path / "receipt.json",
     )
-    live_register_record(
-        registry,
-        store,
-        kind="candidate_task",
-        title="Paused competing revision candidate",
-        source="operator-intake-test",
-        candidate_id=prior["candidate_id"],
-        supersedes_event_id=prior["event_id"],
-        status="paused",
-        promotion_required=True,
-        note="Paused is non-terminal and must continue to block competing revisions.",
-    )
-
-    with pytest.raises(OperatorIntakeError) as caught:
-        _revision_proposal(
-            registry,
-            store,
-            tmp_path,
-            task_id=task_id,
-            key="source:revision-with-paused-competitor",
-        )
-
-    assert caught.value.code == "exact-duplicate"
-    assert any(
-        finding.get("kind") == "candidate-task-id"
-        and finding.get("candidate_id") == prior["candidate_id"]
-        for finding in caught.value.details["findings"]
-    )
+    assert result["task_spec_revision"]["revision"] == 2
+    assert operator_intake_module.current_candidate_record(
+        store, candidate_id=prior["candidate_id"]
+    ) == before
 
 
 def test_task_revision_publication_advances_and_replays_without_receipt(registry_factory, tmp_path):

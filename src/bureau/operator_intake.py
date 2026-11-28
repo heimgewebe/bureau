@@ -3179,11 +3179,15 @@ def task_propose(
     )
     blocking_duplicates = list(assessment["exact_duplicates"])
     if task_spec_binding["operation"] == "revise":
+        # Distinct candidate requests may legitimately target the same existing
+        # TaskSpec. Keep their findings in the reviewed proposal; do not close
+        # or promote them. The exact revision CAS serializes publication, so
+        # competing proposals cannot both advance the same baseline.
         blocking_duplicates = [
             item
             for item in blocking_duplicates
             if not (
-                item.get("kind") in {"task-id", "task-candidate-binding"}
+                item.get("kind") in {"task-id", "task-candidate-binding", "candidate-task-id"}
                 and item.get("task_id") == bound_task["id"]
             )
         ]
